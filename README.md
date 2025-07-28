@@ -98,6 +98,6 @@ MIT License – Free to use and modify in personal or commercial projects. Credi
 
 ## 💬 Contact & Support
 
-- Instagram: [@bumimobile.idn](https://instagram.com/kode.kreasi)
-- Email: kamu@email.com
+- Instagram: [@bumistudio.idn](https://www.instagram.com/bumistudio.idn/)
+- Email: mobile@bumistudio.co.id
 - Bug reports & suggestions: [GitHub Issues](https://github.com/username/repo/issues)
