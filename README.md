@@ -78,10 +78,7 @@ Assets/
 │ ├── Scripts/
 │ ├── Shaders/
 │ └── Textures/
-├── Prefabs/
-├── Scenes/
-├── Scripts/
-└── UI/
+└──
 ```
 
 ---
