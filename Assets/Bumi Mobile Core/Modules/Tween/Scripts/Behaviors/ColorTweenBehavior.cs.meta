@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c74b9b079a961a14da44c8b0f4cd97ae
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/Tween/Scripts/Behaviors/ColorTweenBehavior.cs
+  uploadId: 734325

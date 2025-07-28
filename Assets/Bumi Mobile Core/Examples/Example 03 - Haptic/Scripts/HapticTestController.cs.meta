@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 8ab46004340b4a84e91144419e3e109b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Examples/Example 03 - Haptic/Scripts/HapticTestController.cs
+  uploadId: 734325

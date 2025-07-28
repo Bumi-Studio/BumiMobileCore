@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 686204fe151cc0a40b7383defa323255
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Scripts/Toggle Types/Editor/ToggleTypesPropertyDrawer.cs
+  uploadId: 734325

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 7e4ef68f715e75c4abf3f12e7d3c697a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/Currency/Scripts/Editor/CurrencyPricePropertyDrawer.cs
+  uploadId: 734325

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 7ccebc1d66570a64882cffdf9b183d92
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/Inspector/Editor/Drawers/Groups/FoldoutPropertyGrouper.cs
+  uploadId: 734325

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e5f2b83d87e0c784a95c2057485b6d7f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/UI/Scripts/World Space UI/WorldSpaceRaycaster.cs
+  uploadId: 734325

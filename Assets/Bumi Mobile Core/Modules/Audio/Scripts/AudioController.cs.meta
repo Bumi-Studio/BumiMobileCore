@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: e6b90249c41313745bac56dc90c74b79
+timeCreated: 1515929258
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/Audio/Scripts/AudioController.cs
+  uploadId: 734325

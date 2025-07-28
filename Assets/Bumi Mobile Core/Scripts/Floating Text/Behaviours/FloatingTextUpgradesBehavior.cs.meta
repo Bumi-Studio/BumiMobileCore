@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 062dae6ca9d85ff4b89ac54f76e8c6f3
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Scripts/Floating Text/Behaviours/FloatingTextUpgradesBehavior.cs
+  uploadId: 734325

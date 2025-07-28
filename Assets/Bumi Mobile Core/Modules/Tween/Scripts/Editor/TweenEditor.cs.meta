@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e065e0ecf04ad984b9f0a7467566d048
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/Tween/Scripts/Editor/TweenEditor.cs
+  uploadId: 734325

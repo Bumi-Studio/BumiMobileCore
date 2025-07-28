@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 914ac1fc1d12b5b4eae60083d19000fd
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/Watermelon Core/Modules/UI/Scripts/Editor/UIControllerEditor.cs
+  uploadId: 734325
