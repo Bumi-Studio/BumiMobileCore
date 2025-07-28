@@ -30,7 +30,7 @@ Perfect for mobile, hyper-casual, and rapid prototyping projects.
 
 ## 🚀 Installation
 
-1. Download the `.unitypackage` from the [Releases](https://github.com/Bumi-Studio/BumiMobileCore/)
+1. Download the `.unitypackage` from the [Releases](https://github.com/Bumi-Studio/BumiMobileCore/releases/latest)
 2. In Unity, go to: `Assets > Import Package > Custom Package`
 3. Select the `UnityModularToolkit.unitypackage` file
 4. Click `Import` to include all files into your project
@@ -38,11 +38,7 @@ Perfect for mobile, hyper-casual, and rapid prototyping projects.
 ---
 
 ## ⚙️ Usage Guide
-
-Each module includes its own documentation inside its folder.  
-Example: `Assets/BumiMobileCore/Audio/README.md`
-
-You can also visit the documentation site:  
+You can visit the documentation site:  
 [📘 GitHub Wiki](https://github.com/Bumi-Studio/BumiMobileCore/wiki)
 
 ---
