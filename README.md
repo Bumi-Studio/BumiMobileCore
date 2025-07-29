@@ -66,19 +66,19 @@ Assets/
 ├── BumiMobileCore/
 └── ProjectFiles/
 ├── Data/
-├── Game/
-│ ├── Animations/
-│ ├── Audio/
-│ ├── Fonts/
-│ ├── Images/
-│ ├── Materials/
-│ ├── Models/
-│ ├── Prefabs/
-│ ├── Scenes/
-│ ├── Scripts/
-│ ├── Shaders/
-│ └── Textures/
-└──
+└── Game/
+  ├── Animations/
+  ├── Audio/
+  ├── Fonts/
+  ├── Images/
+  ├── Materials/
+  ├── Models/
+  ├── Prefabs/
+  ├── Scenes/
+  ├── Scripts/
+  ├── Shaders/
+  └── Textures/
+
 ```
 
 ---
