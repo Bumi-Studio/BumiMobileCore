@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6847611902462135519
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6502da7177729af4fbe4808c93025ab3, type: 3}
+  m_Name: BumiMobile.TweenInitModule
+  m_EditorClassIdentifier: 
+  customEasingFunctions: []
+  tweensUpdateCount: 300
+  tweensFixedUpdateCount: 30
+  tweensLateUpdateCount: 0
+  verboseLogging: 0
+--- !u!114 &-3885650857204502142
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e5e1099f825a04db642913c56517c0, type: 3}
+  m_Name: BumiMobile.SaveInitModule
+  m_EditorClassIdentifier: 
+  autoSaveDelay: 0
+  cleanSaveStart: 0
+--- !u!114 &-2897676397294170632
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d448ec3af5e46f04aa350a8a9ccbb3ef, type: 3}
+  m_Name: BumiMobile.InitializerInitModule
+  m_EditorClassIdentifier: 
+  manualControlMode: 0
+  systemMessagesPrefab: {fileID: 6951761026347705287, guid: 15892f63869a33e41aa27c6098e3caf3, type: 3}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5a0258cb7d17964493174ceaf8d2867, type: 3}
+  m_Name: Project Init Settings
+  m_EditorClassIdentifier: 
+  modules:
+  - {fileID: -2897676397294170632}
+  - {fileID: -3885650857204502142}
+  - {fileID: -6847611902462135519}
+  - {fileID: 3638651225850931729}
+--- !u!114 &3638651225850931729
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27433fc73d0e094491cb89c195d0cf8, type: 3}
+  m_Name: BumiMobile.AudioInitModule
+  m_EditorClassIdentifier: 
+  audioSettings: {fileID: 11400000, guid: 6727cd9f7b0504440b47028611a61ccb, type: 2}
+  audioSourcesPoolSize: 4
+  maxDistance: 30
+  spread: 180
+  rolloffCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
