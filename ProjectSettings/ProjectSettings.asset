@@ -817,6 +817,7 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
+    Android: MODULE_INPUT_SYSTEM;MODULE_TMP
     Standalone: MODULE_INPUT_SYSTEM;MODULE_TMP
   additionalCompilerArguments: {}
   platformArchitecture: {}
