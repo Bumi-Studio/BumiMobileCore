@@ -1,4 +1,9 @@
-Key,English,Indonesian,MandarinSimplified,Japanese,Korean,Italian,Spanish,French,German,Vietnamese,Portuguese,Filipino
-Setting.Title,Setting,Pengaturan,设置,せってい,설정,Impostazioni,configuración,Paramètres,Einstellungen,Cài đặt,Configurações,Setting
-Setting.On,On,Nyala,开,オン,켜짐,Attivo,Activado,Activé,Ein,Bật,Ligado,Naka-on
-Setting.Off,Off,Mati,关,オフ,꺼짐,Disattivo,Desactivado,Désactivé,Aus,Tắt,Desligado,Naka-off
+Key,English,German,Russian
+Settings.Example.Title,Settings,Einstellungen,Настройки
+Settings.Example.Difficulty,Difficulty,Schwierigkeit,Сложность
+Settings.Example.Difficulty.Easy,Easy,Einfach,Легко
+Settings.Example.Difficulty.Normal,Medium,Mittel,Средне
+Settings.Example.Difficulty.Hard,Hard,Hart,Сложно
+Settings.Example.SfxVolume,Effects volume,Effektlautstärke,Громкость звуков
+Settings.Example.MusicVolume,Music volume,Musiklautstärke,Громкость музыки
+Settings.Example.PlayTime,Play time: {0:N1} h.,Spielzeit: {0:N1} h.,Время в игре: {0:N1} ч.
