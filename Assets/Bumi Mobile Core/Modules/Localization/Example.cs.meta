@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: caf1d26d60166ca40bc5c5f552235e03
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 120113
+  packageName: Simple Localization with Google Sheets
+  packageVersion: 2.4
+  assetPath: Assets/SimpleLocalization/Example.cs
+  uploadId: 619973

@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace BumiMobile
 {
-    public class NativeShareExampleScript : MonoBehaviour
+    public static class NativeShareExampleScript
     {
-        public void TakeScreenshotAndShare()
+        public static void TakeScreenshotAndShare()
         {
-            StartCoroutine(TakeScreenshotAndShareCoroutine());
+            Tween.InvokeCoroutine(TakeScreenshotAndShareCoroutine());
         }
         
-        private IEnumerator TakeScreenshotAndShareCoroutine()
+        private static IEnumerator TakeScreenshotAndShareCoroutine()
         {
             yield return new WaitForEndOfFrame();
 
@@ -23,12 +23,12 @@ namespace BumiMobile
             File.WriteAllBytes( filePath, ss.EncodeToPNG() );
 
             // To avoid memory leaks
-            Destroy( ss );
+            Object.Destroy(ss);
 
             new NativeShare()
-                .AddFile("shared img.png", filePath )
-                .SetSubject( "Download Gear Wiz" )
-                .SetText( "Play Gear Wiz on Play Store!" )
+                .AddFile(filePath)
+                .SetSubject("Download Super Bolts Puzzle" )
+                .SetText( "Super Bolts Puzzle on Play Store!" )
                 .SetUrl( "\nhttps://t.ly/gearwizonplaystore" )
                 .SetCallback( ( result, shareTarget ) => Debug.Log( "Share result: " + result + ", selected app: " + shareTarget ) )
                 .Share();
