@@ -1,0 +1,9 @@
+Key,English,Indonesian,MandarinSimplified,Japanese,Korean,Italian,Spanish,French,German,Vietnamese,Portuguese,Filipino
+Game.Level,Level,Level,关卡,レベル,레벨,Livello,Nivel,Niveau,Stufe,Màn chơi,Nível,Level
+Game.Congratulations,Well Done,Kerja Bagus,干得好,よくやった,잘했어요,Ben Fatto,Bien Hecho,Bien Joué,Gut Gemacht,Làm tốt lắm,Muito Bem,Ayos!
+Game.NoMore,No more move,Tidak Ada Gerakan Lagi,没有更多移动了,これ以上動けません,더 이상 움직일 수 없습니다,Nessuna Mossa Disponibile,No Hay Más Movimientos,Plus Aucun Mouvement,Keine Weitere Bewegung,Hết Nước Đi,Sem Mais Movimentos,Wala Nang Galaw
+Game.TimeOut,Time out,Waktu Habis,时间到,タイムアウト,시간 초과,Tempo Scaduto,Tiempo Agotado,Temps Écoulé,Zeit Abgelaufen,Hết Giờ,Tempo Esgotado,Wala Nang Oras
+Game.Lose,You lose,Kamu Kalah,你输了,あなたの負けです,당신은 패배했습니다,Hai Perso,Has Perdido,Tu as Perdu,Du Hast Verloren,Bạn Đã Thua,Você Perdeu,Talo Ka
+Game.Failed,Failed,Gagal,失败,失敗した,실패,Fallito,Fallado,Échoué,Gescheitert,Thất Bại,Falhou,Nabigo
+Game.Victory,Victory,Menang,胜利,勝利,승리,Vittoria,Victoria,Victoire,Sieg,Chiến Thắng,Vitória,Panalo
+Game.Active,Active,Aktif,活跃,アクティブ,활성화됨,Attivo,Activo,Actif,Aktiv,Đang hoạt động,Ativo,Aktibo
