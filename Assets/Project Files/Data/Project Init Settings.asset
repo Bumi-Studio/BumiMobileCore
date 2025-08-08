@@ -1,5 +1,18 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7995184475690896147
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606b82550493b85489cd5944b2f308f1, type: 3}
+  m_Name: BumiMobile.MonetizationInitModule
+  m_EditorClassIdentifier: 
+  settings: {fileID: 11400000, guid: 28b5dfcf79226444e8ec7d92ca7e5faa, type: 2}
 --- !u!114 &-6631627206695088848
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -89,6 +102,20 @@ MonoBehaviour:
   - {fileID: -6631627206695088848}
   - {fileID: -3710809068691355065}
   - {fileID: -3709426821206833146}
+  - {fileID: 3369934492297283536}
+  - {fileID: -7995184475690896147}
+--- !u!114 &3369934492297283536
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba3b736ee722b41829293968937d7ed8, type: 3}
+  m_Name: NotificationInitModule
+  m_EditorClassIdentifier: 
 --- !u!114 &7935977482372536523
 MonoBehaviour:
   m_ObjectHideFlags: 1

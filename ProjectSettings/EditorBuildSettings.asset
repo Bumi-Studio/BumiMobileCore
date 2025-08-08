@@ -6,14 +6,25 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
     path: Assets/Project Files/Game/Scenes/Init.unity
     guid: 02ebb709fb3fed6408cf5463ac4a7856
   - enabled: 1
-    path: Assets/Project Files/Game/Scenes/Game.unity
-    guid: fd77e0504a4152c469c20ab7c8426a25
+    path: Assets/Bumi Mobile Core/Examples/Example Scene.unity
+    guid: eeb54558fdfba447fb63d018ac1d4da1
+  - enabled: 1
+    path: Assets/Bumi Mobile Core/Examples/Example 01 - Tween/Scene/Tween Example
+      Scene.unity
+    guid: ca53f48f0d7d64dff8f57ddcb934152e
+  - enabled: 1
+    path: Assets/Bumi Mobile Core/Examples/Example 03 - Haptic/Scenes/Haptic Example
+      Scene.unity
+    guid: e730434b98fac584ba6dc410b97c41f5
+  - enabled: 1
+    path: Assets/Bumi Mobile Core/Examples/Example 04 - Ads/Scenes/Ads Example Scene.unity
+    guid: 4723a3e64b3234444b1393548554ce46
+  - enabled: 1
+    path: Assets/Bumi Mobile Core/Examples/Example 05 - IAP/Scenes/IAP Example Scene.unity
+    guid: 1fa0af1cfa177214190feceacdb69e68
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

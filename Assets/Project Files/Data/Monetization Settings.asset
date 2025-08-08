@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9098631497496148436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f28faf74e3de2b4bb5f8724582e5ceb, type: 3}
+  m_Name: IAP Settings
+  m_EditorClassIdentifier: 
+  storeItems: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34b796d4f76ccb5488f711694f61a821, type: 3}
+  m_Name: Monetization Settings
+  m_EditorClassIdentifier: 
+  iapSettings: {fileID: -9098631497496148436}
+  adsSettings: {fileID: 4417301515568529814}
+  isModuleActive: 1
+  verboseLogging: 0
+  debugMode: 0
+  testDevices: []
+  privacyLink: 
+  termsOfUseLink: 
+--- !u!114 &4417301515568529814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15ddb41bf72d53a48a6bdc593d706f94, type: 3}
+  m_Name: Ads Settings
+  m_EditorClassIdentifier: 
+  bannerType: 1
+  interstitialType: 1
+  rewardedVideoType: 1
+  loadAdsOnStart: 1
+  interstitialFirstStartDelay: 40
+  interstitialStartDelay: 40
+  interstitialShowingDelay: 30
+  autoShowInterstitial: 0
+  loadingAdDuration: 0
+  loadingMessage: Ad is loading..
+  isUMPEnabled: 1
+  umpTagForUnderAgeOfConsent: 0
+  umpDebugMode: 0
+  umpDebugGeography: 0
+  isIDFAEnabled: 0
+  trackingDescription: Your data will be used to deliver personalized ads to you.
+  adMobContainer:
+    androidAppId: 
+    iosAppId: 
+    androidBannerID: ca-app-pub-3940256099942544/6300978111
+    iOSBannerID: ca-app-pub-3940256099942544/2934735716
+    androidInterstitialID: ca-app-pub-3940256099942544/1033173712
+    iOSInterstitialID: ca-app-pub-3940256099942544/4411468910
+    androidRewardedVideoID: ca-app-pub-3940256099942544/5224354917
+    iOSRewardedVideoID: ca-app-pub-3940256099942544/1712485313
+    useAppOpenAd: 0
+    androidAppOpenAdID: ca-app-pub-3940256099942544/9257395921
+    iOSAppOpenAdID: ca-app-pub-3940256099942544/5575463023
+    appOpenAdExpirationHoursTime: 4
+    bannerType: 0
+    bannerPosition: 0
+  unityAdsContainer:
+    androidAppID: 1234567
+    iOSAppID: 1234567
+    androidBannerID: banner
+    iOSBannerID: banner
+    androidInterstitialID: video
+    iOSInterstitialID: video
+    androidRewardedVideoID: rewardedVideo
+    iOSRewardedVideoID: rewardedVideo
+    bannerPosition: 4
+  levelPlayContainer:
+    androidAppKey: 85460dcd
+    iOSAppKey: 8545d445
+    androidBannerID: thnfvcsog13bhn08
+    iOSBannerID: iep3rxsyp9na3rw8
+    androidInterstitialID: aeyqi3vqlv6o8sh9
+    iOSInterstitialID: wmgt0712uuux8ju4
+    bannerPosition: 0
+    bannerType: 0
+  dummyContainer:
+    bannerPosition: 0
