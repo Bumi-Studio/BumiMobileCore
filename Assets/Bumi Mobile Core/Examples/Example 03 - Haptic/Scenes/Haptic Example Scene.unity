@@ -692,26 +692,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab46004340b4a84e91144419e3e109b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  durationSlider: {fileID: 196397311}
-  intensitySlider: {fileID: 529386419}
+  durationSlider: {fileID: 1051529974}
+  intensitySlider: {fileID: 432867147}
   advanceToggle: {fileID: 1150031924}
   dynamicToggle: {fileID: 1871064316}
-  minDelaySlider: {fileID: 36890041}
-  minIntensitySlider: {fileID: 283399444}
-  maxIntensitySlider: {fileID: 12371263}
-  intensityStepSlider: {fileID: 2066516417}
-  intensityResetTimerSlider: {fileID: 547789202}
-  longHapticHandler:
-    duration: 5.62
-    intensity: 0.2
-    advancedSettings: 1
-    minDelay: 0
-    dynamicIntensity: 1
-    intensityRange:
-      firstValue: 0
-      secondValue: 1
-    intensitySteps: 10
-    intensityResetTime: 1
+  minDelaySlider: {fileID: 896645729}
+  minIntensitySlider: {fileID: 448195284}
+  maxIntensitySlider: {fileID: 1053435710}
+  intensityStepSlider: {fileID: 972809482}
+  intensityResetTimerSlider: {fileID: 440589273}
   backButton: {fileID: 314265471}
 --- !u!114 &178628511
 MonoBehaviour:
@@ -1521,10 +1510,10 @@ RectTransform:
   - {fileID: 946698601}
   m_Father: {fileID: 178628514}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 540, y: -1670}
-  m_SizeDelta: {x: 980, y: 134.0059}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 250}
+  m_SizeDelta: {x: 980, y: 134.00586}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &314265469
 MonoBehaviour:
@@ -1821,6 +1810,7 @@ GameObject:
   - component: {fileID: 432867144}
   - component: {fileID: 432867145}
   - component: {fileID: 432867146}
+  - component: {fileID: 432867147}
   m_Layer: 5
   m_Name: Intensity Panel
   m_TagString: Untagged
@@ -1889,6 +1879,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &432867147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 432867143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 529386419}
+  text: {fileID: 949503395}
+  nameSettings: 'Intensity:'
 --- !u!1 &440589269
 GameObject:
   m_ObjectHideFlags: 0
@@ -1900,6 +1905,7 @@ GameObject:
   - component: {fileID: 440589270}
   - component: {fileID: 440589272}
   - component: {fileID: 440589271}
+  - component: {fileID: 440589273}
   m_Layer: 5
   m_Name: Intensity Reset Panel
   m_TagString: Untagged
@@ -1968,6 +1974,21 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &440589273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440589269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 547789202}
+  text: {fileID: 1069785143}
+  nameSettings: 'Intensity Reset Time:'
 --- !u!1 &448195280
 GameObject:
   m_ObjectHideFlags: 0
@@ -1979,6 +2000,7 @@ GameObject:
   - component: {fileID: 448195281}
   - component: {fileID: 448195282}
   - component: {fileID: 448195283}
+  - component: {fileID: 448195284}
   m_Layer: 5
   m_Name: Intensity Max
   m_TagString: Untagged
@@ -2047,6 +2069,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &448195284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448195280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 12371263}
+  text: {fileID: 2026328130}
+  nameSettings: 'Intensity Max:'
 --- !u!1 &457814612
 GameObject:
   m_ObjectHideFlags: 0
@@ -3261,6 +3298,7 @@ GameObject:
   - component: {fileID: 896645726}
   - component: {fileID: 896645728}
   - component: {fileID: 896645727}
+  - component: {fileID: 896645729}
   m_Layer: 5
   m_Name: Min Delay Panel
   m_TagString: Untagged
@@ -3329,6 +3367,21 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &896645729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896645725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 36890041}
+  text: {fileID: 626019582}
+  nameSettings: 'Min Delay:'
 --- !u!1 &939332549
 GameObject:
   m_ObjectHideFlags: 0
@@ -3815,6 +3868,7 @@ GameObject:
   - component: {fileID: 972809479}
   - component: {fileID: 972809481}
   - component: {fileID: 972809480}
+  - component: {fileID: 972809482}
   m_Layer: 5
   m_Name: Intensity Step Panel
   m_TagString: Untagged
@@ -3883,6 +3937,21 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &972809482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972809478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 2066516417}
+  text: {fileID: 991404193}
+  nameSettings: 'Intensity Step:'
 --- !u!1 &991404191
 GameObject:
   m_ObjectHideFlags: 0
@@ -4030,6 +4099,7 @@ GameObject:
   - component: {fileID: 1051529971}
   - component: {fileID: 1051529972}
   - component: {fileID: 1051529973}
+  - component: {fileID: 1051529974}
   m_Layer: 5
   m_Name: Duration Panel
   m_TagString: Untagged
@@ -4098,6 +4168,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &1051529974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051529970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 196397311}
+  text: {fileID: 30713567}
+  nameSettings: 'Duration:'
 --- !u!1 &1053435706
 GameObject:
   m_ObjectHideFlags: 0
@@ -4109,6 +4194,7 @@ GameObject:
   - component: {fileID: 1053435707}
   - component: {fileID: 1053435708}
   - component: {fileID: 1053435709}
+  - component: {fileID: 1053435710}
   m_Layer: 5
   m_Name: Intensity Min
   m_TagString: Untagged
@@ -4177,6 +4263,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &1053435710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053435706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fbc4bf84c8e45a1934a9d10c2c8e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 283399444}
+  text: {fileID: 1178383519}
+  nameSettings: 'Intensity Min:'
 --- !u!1 &1063725035
 GameObject:
   m_ObjectHideFlags: 0

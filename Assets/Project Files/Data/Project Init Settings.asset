@@ -84,6 +84,19 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-1910410897867687098
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 739328186e8220e4dbd35270e195d7cf, type: 3}
+  m_Name: BumiMobile.HapticInitModule
+  m_EditorClassIdentifier: 
+  verboseLogging: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,6 +117,7 @@ MonoBehaviour:
   - {fileID: -3709426821206833146}
   - {fileID: 3369934492297283536}
   - {fileID: -7995184475690896147}
+  - {fileID: -1910410897867687098}
 --- !u!114 &3369934492297283536
 MonoBehaviour:
   m_ObjectHideFlags: 1

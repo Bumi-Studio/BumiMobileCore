@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,10 +9,10 @@ namespace BumiMobile
     {
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider durationSlider;
+        private SettingsTestHaptic durationSlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider intensitySlider;
+        private SettingsTestHaptic intensitySlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
         private Toggle advanceToggle;
@@ -20,21 +21,19 @@ namespace BumiMobile
         private Toggle dynamicToggle;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider minDelaySlider;
+        private SettingsTestHaptic minDelaySlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider minIntensitySlider;
+        private SettingsTestHaptic minIntensitySlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider maxIntensitySlider;
+        private SettingsTestHaptic maxIntensitySlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider intensityStepSlider;
+        private SettingsTestHaptic intensityStepSlider;
         [BoxGroup("Reference", "Settings")]
         [SerializeField]
-        private Slider intensityResetTimerSlider;
-        
-        [SerializeField] HapticHandler longHapticHandler;
+        private SettingsTestHaptic intensityResetTimerSlider;
         
         [BoxGroup("Components", "Button")]
         [SerializeField] private Button backButton;
