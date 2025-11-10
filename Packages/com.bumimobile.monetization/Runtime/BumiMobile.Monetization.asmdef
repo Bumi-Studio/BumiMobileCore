@@ -1,0 +1,15 @@
+{
+  "name": "BumiMobile.Monetization",
+  "references": [
+    "BumiMobile.Core",
+    "BumiMobile.Defines"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

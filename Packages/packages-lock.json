@@ -1,5 +1,145 @@
 {
   "dependencies": {
+    "com.bumimobile.audio": {
+      "version": "file:com.bumimobile.audio",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.core": {
+      "version": "file:com.bumimobile.core",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.textmeshpro": "3.0.9"
+      }
+    },
+    "com.bumimobile.currency": {
+      "version": "file:com.bumimobile.currency",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.defines": {
+      "version": "file:com.bumimobile.defines",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.extensions": {
+      "version": "file:com.bumimobile.extensions",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.haptic": {
+      "version": "file:com.bumimobile.haptic",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.inspector": {
+      "version": "file:com.bumimobile.inspector",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.localization": {
+      "version": "file:com.bumimobile.localization",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0",
+        "com.unity.textmeshpro": "3.0.6"
+      }
+    },
+    "com.bumimobile.monetization": {
+      "version": "file:com.bumimobile.monetization",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.nativeshare": {
+      "version": "file:com.bumimobile.nativeshare",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.pool": {
+      "version": "file:com.bumimobile.pool",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.pushnotification": {
+      "version": "file:com.bumimobile.pushnotification",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.reward": {
+      "version": "file:com.bumimobile.reward",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.currency": "0.1.0"
+      }
+    },
+    "com.bumimobile.save": {
+      "version": "file:com.bumimobile.save",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
+    "com.bumimobile.skins": {
+      "version": "file:com.bumimobile.skins",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.reward": "0.1.0"
+      }
+    },
+    "com.bumimobile.ui": {
+      "version": "file:com.bumimobile.ui",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0",
+        "com.unity.textmeshpro": "3.0.6"
+      }
+    },
+    "com.bumimobile.utilities": {
+      "version": "file:com.bumimobile.utilities",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.5",
       "depth": 0,
@@ -86,6 +226,14 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.mobile.notifications": {
+      "version": "file:com.unity.mobile.notifications",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.modules.androidjni": "1.0.0"
+      }
+    },
     "com.unity.multiplayer.center": {
       "version": "1.0.0",
       "depth": 0,
@@ -100,6 +248,12 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "file:com.unity.nuget.newtonsoft-json",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.render-pipelines.core": {
       "version": "17.0.3",
@@ -180,6 +334,14 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "com.unity.textmeshpro": {
+      "version": "3.0.9",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.ugui": "2.0.0"
+      }
     },
     "com.unity.timeline": {
       "version": "1.8.7",

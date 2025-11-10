@@ -1,0 +1,17 @@
+{
+  "name": "com.bumimobile.reward",
+  "displayName": "Bumi Mobile Reward",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Reward system utilities and timer-based rewards for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "reward",
+    "module"
+  ],
+  "category": "Gameplay",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0",
+    "com.bumimobile.currency": "0.1.0"
+  }
+}

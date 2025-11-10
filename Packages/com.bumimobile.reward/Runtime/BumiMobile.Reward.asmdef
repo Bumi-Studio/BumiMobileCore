@@ -1,0 +1,15 @@
+{
+  "name": "BumiMobile.Reward",
+  "references": [
+    "BumiMobile.Core",
+    "BumiMobile.Currency"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

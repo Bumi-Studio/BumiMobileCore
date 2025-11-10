@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.extensions",
+  "displayName": "Bumi Mobile Extensions",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Common extensions and utility helpers shared across Bumi Mobile modules.",
+  "keywords": [
+    "bumi",
+    "extensions",
+    "utilities"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}

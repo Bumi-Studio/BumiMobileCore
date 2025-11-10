@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.inspector",
+  "displayName": "Bumi Mobile Inspector",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Inspector tooling, property drawers, and editor themes for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "inspector",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}

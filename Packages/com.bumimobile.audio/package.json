@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.audio",
+  "displayName": "Bumi Mobile Audio",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Audio playback, pooling, and configuration module for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "audio",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}

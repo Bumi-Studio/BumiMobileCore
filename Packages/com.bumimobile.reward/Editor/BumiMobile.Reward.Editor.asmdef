@@ -1,0 +1,18 @@
+{
+  "name": "BumiMobile.Reward.Editor",
+  "references": [
+    "BumiMobile.Reward",
+    "BumiMobile.Core.Editor",
+    "BumiMobile.Currency"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+  "name": "BumiMobile.Audio.Editor",
+  "references": [
+    "BumiMobile.Audio",
+    "BumiMobile.Core.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

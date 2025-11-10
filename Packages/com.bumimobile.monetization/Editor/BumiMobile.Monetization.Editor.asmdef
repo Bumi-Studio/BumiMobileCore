@@ -1,0 +1,18 @@
+{
+  "name": "BumiMobile.Monetization.Editor",
+  "references": [
+    "BumiMobile.Monetization",
+    "BumiMobile.Core.Editor",
+    "BumiMobile.Defines"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}
