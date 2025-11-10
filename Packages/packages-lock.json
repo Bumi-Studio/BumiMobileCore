@@ -5,7 +5,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.core": {
@@ -13,6 +14,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "com.bumimobile.tween": "0.1.0",
         "com.unity.textmeshpro": "3.0.9"
       }
     },
@@ -21,7 +23,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.defines": {
@@ -29,7 +32,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.extensions": {
@@ -37,7 +41,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.haptic": {
@@ -45,7 +50,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.inspector": {
@@ -53,7 +59,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.localization": {
@@ -62,7 +69,8 @@
       "source": "embedded",
       "dependencies": {
         "com.bumimobile.core": "0.1.0",
-        "com.unity.textmeshpro": "3.0.6"
+        "com.bumimobile.tween": "0.1.0",
+        "com.unity.textmeshpro": "3.0.9"
       }
     },
     "com.bumimobile.monetization": {
@@ -70,7 +78,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.nativeshare": {
@@ -86,7 +95,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.pushnotification": {
@@ -94,7 +104,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.reward": {
@@ -103,7 +114,8 @@
       "source": "embedded",
       "dependencies": {
         "com.bumimobile.core": "0.1.0",
-        "com.bumimobile.currency": "0.1.0"
+        "com.bumimobile.currency": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.save": {
@@ -111,7 +123,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.bumimobile.skins": {
@@ -120,7 +133,17 @@
       "source": "embedded",
       "dependencies": {
         "com.bumimobile.core": "0.1.0",
-        "com.bumimobile.reward": "0.1.0"
+        "com.bumimobile.currency": "0.1.0",
+        "com.bumimobile.reward": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
+      }
+    },
+    "com.bumimobile.tween": {
+      "version": "file:com.bumimobile.tween",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.textmeshpro": "3.0.9"
       }
     },
     "com.bumimobile.ui": {
@@ -129,7 +152,8 @@
       "source": "embedded",
       "dependencies": {
         "com.bumimobile.core": "0.1.0",
-        "com.unity.textmeshpro": "3.0.6"
+        "com.bumimobile.tween": "0.1.0",
+        "com.unity.textmeshpro": "3.0.9"
       }
     },
     "com.bumimobile.utilities": {
@@ -137,7 +161,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.bumimobile.tween": "0.1.0"
       }
     },
     "com.unity.ai.navigation": {

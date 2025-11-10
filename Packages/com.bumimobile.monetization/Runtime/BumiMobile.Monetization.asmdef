@@ -2,7 +2,7 @@
   "name": "BumiMobile.Monetization",
   "references": [
     "BumiMobile.Core",
-    "BumiMobile.Defines"
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

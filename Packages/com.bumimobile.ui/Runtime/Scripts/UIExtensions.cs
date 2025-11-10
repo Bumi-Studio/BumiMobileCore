@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -16,9 +13,11 @@ namespace BumiMobile
 
             Tween.NextFrame(() =>
             {
-                var eventData = new PointerEventData(EventSystem.current);
+                var eventData = new PointerEventData(EventSystem.current)
+                {
+                    button = PointerEventData.InputButton.Left
+                };
 
-                eventData.button = PointerEventData.InputButton.Left;
                 button.OnPointerClick(eventData);
 
                 Tween.DelayedCall(0.2f, () => EventSystem.current.SetSelectedGameObject(null));
@@ -32,13 +31,14 @@ namespace BumiMobile
 
         public static void AddEvent(this GameObject behaviour, EventTriggerType triggerType, Action<PointerEventData> call)
         {
-            EventTrigger trigger = behaviour.GetComponent<EventTrigger>();
+            var trigger = behaviour.GetComponent<EventTrigger>();
             if (trigger == null)
+            {
                 trigger = behaviour.gameObject.AddComponent<EventTrigger>();
+            }
 
-            EventTrigger.Entry entry = new EventTrigger.Entry();
-            entry.eventID = triggerType;
-            entry.callback.AddListener((data) => { call((PointerEventData)data); });
+            var entry = new EventTrigger.Entry { eventID = triggerType };
+            entry.callback.AddListener(data => call((PointerEventData)data));
 
             trigger.triggers.Add(entry);
         }

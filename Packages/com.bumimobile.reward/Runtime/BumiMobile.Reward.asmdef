@@ -2,7 +2,7 @@
   "name": "BumiMobile.Reward",
   "references": [
     "BumiMobile.Core",
-    "BumiMobile.Currency"
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

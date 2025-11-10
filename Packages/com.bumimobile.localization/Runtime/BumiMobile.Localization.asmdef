@@ -2,7 +2,7 @@
   "name": "BumiMobile.Localization",
   "references": [
     "BumiMobile.Core",
-    "Unity.TextMeshPro"
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

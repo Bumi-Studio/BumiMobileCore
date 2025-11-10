@@ -10,7 +10,9 @@ namespace BumiMobile
 #if UNITY_IOS
             bool deviceIsIpad = UnityEngine.iOS.Device.generation.ToString().Contains("iPad");
             if (deviceIsIpad)
+            {
                 return true;
+            }
 
             return false;
 #else

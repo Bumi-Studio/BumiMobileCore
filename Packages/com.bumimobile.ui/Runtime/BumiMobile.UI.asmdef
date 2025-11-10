@@ -2,6 +2,7 @@
   "name": "BumiMobile.UI",
   "references": [
     "BumiMobile.Core",
+    "BumiMobile.Tween",
     "Unity.TextMeshPro"
   ],
   "includePlatforms": [],

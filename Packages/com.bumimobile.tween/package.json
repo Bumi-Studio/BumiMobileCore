@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.tween",
+  "displayName": "Bumi Mobile Tween",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Tweening engine, easing helpers, and static unload utilities for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "tween",
+    "animation"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.9"
+  }
+}

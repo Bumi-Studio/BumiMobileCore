@@ -2,7 +2,8 @@
     "name": "Core.Inspector",
     "rootNamespace": "",
     "references": [
-        "BumiMobile.Core"
+        "BumiMobile.Core",
+        "BumiMobile.Tween"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

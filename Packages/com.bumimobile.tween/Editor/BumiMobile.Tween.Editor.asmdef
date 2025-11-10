@@ -1,10 +1,11 @@
 {
-  "name": "BumiMobile.Defines",
+  "name": "BumiMobile.Tween.Editor",
   "references": [
-    "BumiMobile.Core",
     "BumiMobile.Tween"
   ],
-  "includePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

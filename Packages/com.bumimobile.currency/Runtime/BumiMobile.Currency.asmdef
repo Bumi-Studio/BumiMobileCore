@@ -1,7 +1,8 @@
 {
   "name": "BumiMobile.Currency",
   "references": [
-    "BumiMobile.Core"
+    "BumiMobile.Core",
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

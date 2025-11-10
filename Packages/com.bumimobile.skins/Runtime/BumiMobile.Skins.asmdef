@@ -3,7 +3,7 @@
   "references": [
     "BumiMobile.Core",
     "BumiMobile.Reward",
-    "BumiMobile.Save"
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

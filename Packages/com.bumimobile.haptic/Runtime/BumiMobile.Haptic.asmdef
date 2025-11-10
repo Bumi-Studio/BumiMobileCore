@@ -1,7 +1,8 @@
 {
   "name": "BumiMobile.Haptic",
   "references": [
-    "BumiMobile.Core"
+    "BumiMobile.Core",
+    "BumiMobile.Tween"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
