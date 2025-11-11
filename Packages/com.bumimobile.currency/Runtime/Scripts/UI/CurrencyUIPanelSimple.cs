@@ -1,5 +1,4 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace BumiMobile
@@ -14,7 +13,7 @@ namespace BumiMobile
         [SerializeField] bool useFormattedAmount = true;
 
         [Space]
-        [SerializeField] TextMeshProUGUI text;
+    [SerializeField] Text text;
         [SerializeField] Image icon;
         [SerializeField] Button addButton;
 

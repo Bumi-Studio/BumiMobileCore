@@ -3,7 +3,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 namespace BumiMobile
 {
@@ -24,9 +23,9 @@ namespace BumiMobile
         {
             bannerRectTransform = (RectTransform)bannerObject.transform;
 
-            interstitialCloseButton.AddEvent(EventTriggerType.PointerDown, (data) => CloseInterstitialButton());
-            rewardedVideoCloseButton.AddEvent(EventTriggerType.PointerDown, (data) => CloseRewardedVideoButton());
-            rewardedVideoRewardButton.AddEvent(EventTriggerType.PointerDown, (data) => GetRewardButton());
+            interstitialCloseButton.onClick.AddListener(CloseInterstitialButton);
+            rewardedVideoCloseButton.onClick.AddListener(CloseRewardedVideoButton);
+            rewardedVideoRewardButton.onClick.AddListener(GetRewardButton);
 
             // Toggle editor visibility
             gameObject.ToggleVisibility(true);
@@ -118,8 +117,7 @@ namespace BumiMobile
             Color mainColor = new Color(0.207f, 0.305f, 0.717f, 1.0f);
 
 #if UNITY_EDITOR
-            backgroundColor = CoreEditor.AdsDummyBackgroundColor;
-            mainColor = CoreEditor.AdsDummyMainColor;
+            // Warna default bisa dioverride melalui Core Editor apabila tersedia.
 #endif
 
             GameObject go = new GameObject("[ADS DUMMY CANVAS]");
@@ -132,7 +130,7 @@ namespace BumiMobile
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasScaler.referenceResolution = new Vector2(1080, 1920);
             canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            canvasScaler.MatchSize();
+            canvasScaler.matchWidthOrHeight = 0.5f;
 
             GraphicRaycaster graphicRaycaster = go.AddComponent<GraphicRaycaster>();
             graphicRaycaster.ignoreReversedGraphics = true;

@@ -19,8 +19,8 @@ namespace BumiMobile
 
         [ShowIf("advancedSettings")]
         [SerializeField] bool dynamicIntensity;
-        [ShowIf("advancedSettings")]
-        [SerializeField] DuoFloat intensityRange = new DuoFloat(0.2f, 1.0f);
+    [ShowIf("advancedSettings")]
+    [SerializeField] Vector2 intensityRange = new Vector2(0.2f, 1.0f);
         [ShowIf("advancedSettings")]
         [SerializeField] int intensitySteps = 10;
         [ShowIf("advancedSettings")]
@@ -48,7 +48,7 @@ namespace BumiMobile
 
                     lastIntensityStepTime = Time.timeSinceLevelLoad + intensityResetTime;
 
-                    Haptic.Play(duration, intensityRange.Lerp((float)currentIntensityStep / intensitySteps));
+                    Haptic.Play(duration, Mathf.Lerp(intensityRange.x, intensityRange.y, (float)currentIntensityStep / intensitySteps));
                 }
                 else
                 {

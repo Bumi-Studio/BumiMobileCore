@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +6,7 @@ namespace BumiMobile
     [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
     public class CurrencyUI : MonoBehaviour
     {
-        [SerializeField] TextMeshProUGUI text;
+    [SerializeField] Text text;
         [SerializeField] Image icon;
 
         private CanvasGroup canvasGroup;

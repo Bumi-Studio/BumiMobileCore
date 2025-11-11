@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 #if UNITY_EDITOR
-using UnityEditor.SceneManagement;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 using UnityEngine;
 using System.IO;
@@ -37,7 +37,7 @@ namespace BumiMobile
 
             if (!File.Exists(presetPath))
             {
-                Debug.LogError(string.Format("[Save Presets]: Preset  at path {0} doesn�t  exist!", presetPath));
+                Debug.LogError(string.Format("[Save Presets]: Preset at path {0} doesn't exist!", presetPath));
                 return;
             }
 
@@ -45,7 +45,15 @@ namespace BumiMobile
 
             if (currentSceneName.Equals("Init") || (currentSceneName.Equals("Level Editor")))
             {
-                EditorSceneManager.OpenScene(Path.Combine(CoreEditor.FOLDER_SCENES, "Game.unity"));
+                string gameScenePath = FindGameScenePath();
+                if (!string.IsNullOrEmpty(gameScenePath))
+                {
+                    EditorSceneManager.OpenScene(gameScenePath);
+                }
+                else
+                {
+                    Debug.LogWarning("[Save Presets]: Unable to locate the Game scene. Please open it manually before loading a preset.");
+                }
             }
 
             // Replace current save file with the preset
@@ -90,7 +98,7 @@ namespace BumiMobile
             {
                 if (!File.Exists(savePath))
                 {
-                    Debug.LogError("[Save Presets]: Save file doesn�t exist!");
+                    Debug.LogError("[Save Presets]: Save file doesn't exist!");
 
                     return;
                 }
@@ -162,7 +170,7 @@ namespace BumiMobile
 
             if (presetPath.Length == 0)
             {
-                Debug.LogError(string.Format("[Save Presets]: Preset with id {0} doesn�t  exist!", id));
+                Debug.LogError(string.Format("[Save Presets]: Preset with id {0} doesn't exist!", id));
                 return;
             }
 
@@ -199,7 +207,7 @@ namespace BumiMobile
         {
             string presetPath = GetPresetPathById(id);
 
-            if(presetPath.Length == 0) // id isn`t found
+            if (presetPath.Length == 0) // id isn't found
             {
                 return false;
             }
@@ -221,7 +229,7 @@ namespace BumiMobile
         {
             string presetPath = GetPresetPathById(id);
 
-            if (presetPath.Length == 0) // id isn`t found
+            if (presetPath.Length == 0) // id isn't found
             {
                 return;
             }
@@ -269,5 +277,22 @@ namespace BumiMobile
         {
             return Path.GetDirectoryName(path);
         }
+#if UNITY_EDITOR
+        private static string FindGameScenePath()
+        {
+            string[] sceneGuids = AssetDatabase.FindAssets("Game t:Scene");
+            for (int i = 0; i < sceneGuids.Length; i++)
+            {
+                string scenePath = AssetDatabase.GUIDToAssetPath(sceneGuids[i]);
+                if (!string.IsNullOrEmpty(scenePath))
+                {
+                    return scenePath;
+                }
+            }
+
+            return string.Empty;
+        }
+#endif
+
     }
 }

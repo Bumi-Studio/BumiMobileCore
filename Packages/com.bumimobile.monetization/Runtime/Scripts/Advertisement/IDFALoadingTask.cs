@@ -18,7 +18,7 @@ namespace BumiMobile
 
         public override string TaskName => "IDFA";
 
-        public override void OnTaskActivated()
+    protected override void OnTaskActivated()
         {
             if (!settings.AdsSettings.IsIDFAEnabled)
             {

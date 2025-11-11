@@ -11,8 +11,7 @@
   ],
   "category": "UI",
   "dependencies": {
-    "com.bumimobile.core": "0.1.0",
-    "com.bumimobile.tween": "0.1.0",
-    "com.unity.textmeshpro": "3.0.9"
+  "com.bumimobile.core": "0.1.0",
+  "com.unity.textmeshpro": "3.0.9"
   }
 }

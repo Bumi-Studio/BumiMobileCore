@@ -1,7 +1,8 @@
 {
   "name": "BumiMobile.Core.Editor",
   "references": [
-    "BumiMobile.Core"
+    "BumiMobile.Core",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [
     "Editor"

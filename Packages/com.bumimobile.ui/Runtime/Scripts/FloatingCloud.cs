@@ -19,6 +19,7 @@ namespace BumiMobile
                 RegisterCase(floatingCloudCases[i]);
             }
 
+#if MODULE_CURRENCY
             Currency[] currencies = CurrencyController.Currencies;
             if(!currencies.IsNullOrEmpty())
             {
@@ -44,6 +45,7 @@ namespace BumiMobile
                     }
                 }
             }
+#endif
         }
 
         public static void Clear()
@@ -145,8 +147,8 @@ namespace BumiMobile
             [SerializeField] float cloudRadius;
             public float CloudRadius => cloudRadius;
 
-            private Pool pool;
-            public Pool Pool => pool;
+            private readonly List<GameObject> pooledObjects = new List<GameObject>();
+            private Transform container;
 
             public Data(FloatingCloudSettings settings)
             {
@@ -161,14 +163,100 @@ namespace BumiMobile
 
             public void Init()
             {
-                pool = new Pool(prefab, "FloatingCloud_" + name);
+                if (prefab == null)
+                {
+                    Debug.LogError($"Floating Cloud ({name}) initialization failed. Prefab is missing.");
+                    return;
+                }
+
+                GameObject containerObject = new GameObject($"FloatingCloud_{name}_Pool");
+                container = containerObject.transform;
+                container.hideFlags = HideFlags.HideInHierarchy;
             }
 
             public void Destroy()
             {
-                PoolManager.DestroyPool(pool);
+                for (int i = 0; i < pooledObjects.Count; i++)
+                {
+                    GameObject pooledObject = pooledObjects[i];
+                    if (pooledObject == null)
+                    {
+                        continue;
+                    }
 
-                pool = null;
+#if UNITY_EDITOR
+                    if (!Application.isPlaying)
+                    {
+                        Object.DestroyImmediate(pooledObject);
+                    }
+                    else
+#endif
+                    {
+                        Object.Destroy(pooledObject);
+                    }
+                }
+
+                pooledObjects.Clear();
+
+                if (container != null)
+                {
+#if UNITY_EDITOR
+                    if (!Application.isPlaying)
+                    {
+                        Object.DestroyImmediate(container.gameObject);
+                    }
+                    else
+#endif
+                    {
+                        Object.Destroy(container.gameObject);
+                    }
+                }
+
+                container = null;
+            }
+
+            public GameObject GetInstance()
+            {
+                for (int i = 0; i < pooledObjects.Count; i++)
+                {
+                    GameObject pooledObject = pooledObjects[i];
+                    if (pooledObject == null)
+                    {
+                        continue;
+                    }
+
+                    if (!pooledObject.activeSelf)
+                    {
+                        return pooledObject;
+                    }
+                }
+
+                if (prefab == null)
+                {
+                    return null;
+                }
+
+                Transform targetParent = container != null ? container : null;
+                GameObject instance = Object.Instantiate(prefab, targetParent);
+                instance.SetActive(false);
+                pooledObjects.Add(instance);
+
+                return instance;
+            }
+
+            public void Release(GameObject instance)
+            {
+                if (instance == null)
+                {
+                    return;
+                }
+
+                if (container != null)
+                {
+                    instance.transform.SetParent(container, false);
+                }
+
+                instance.SetActive(false);
             }
         }
 
@@ -209,8 +297,10 @@ namespace BumiMobile
                 tweenCaseCollection = Tween.BeginTweenCaseCollection();
 
                 // Play appear sound
+#if MODULE_AUDIO
                 if (floatingCloudData.AppearAudioClip != null)
                     AudioController.PlaySound(floatingCloudData.AppearAudioClip);
+#endif
 
                 float cloudRadius = floatingCloudData.CloudRadius;
                 Vector3 centerPoint = rectTransform.position;
@@ -222,7 +312,11 @@ namespace BumiMobile
                 for (int i = 0; i < elementsAmount; i++)
                 {
                     TweenCase currencyTweenCase = null;
-                    GameObject elementObject = floatingCloudData.Pool.GetPooledObject();
+                    GameObject elementObject = floatingCloudData.GetInstance();
+                    if (elementObject == null)
+                    {
+                        continue;
+                    }
 
                     RectTransform elementRectTransform = (RectTransform)elementObject.transform;
 
@@ -272,7 +366,11 @@ namespace BumiMobile
                                 {
                                     // Play collect sound
                                     if (floatingCloudData.CollectAudioClip != null)
+                                    {
+#if MODULE_AUDIO
                                         AudioController.PlaySound(floatingCloudData.CollectAudioClip, pitch: defaultPitch);
+#endif
+                                    }
 
                                     defaultPitch += 0.01f;
 
@@ -286,8 +384,7 @@ namespace BumiMobile
                                     tweenCaseCollection.AddTween(currencyTweenCase);
                                 }
 
-                                elementObject.transform.SetParent(floatingCloudData.Pool.ObjectsContainer);
-                                elementObject.SetActive(false);
+                                floatingCloudData.Release(elementObject);
 
                                 finishedElementsAmount++;
                                 if (finishedElementsAmount >= elementsAmount)

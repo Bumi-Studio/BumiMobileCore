@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,7 +21,7 @@ namespace BumiMobile
         [Space]
         [SerializeField] Button button;
         [SerializeField] Image buttonImage;
-        [SerializeField] TMP_Text buttonText;
+    [SerializeField] Text buttonText;
         [SerializeField] Image currencyImage;
         [SerializeField] CanvasGroup textAndIconCanvasGroup;
 
@@ -135,8 +132,6 @@ namespace BumiMobile
 #if MODULE_HAPTIC
             Haptic.Play(Haptic.HAPTIC_LIGHT);
 #endif
-
-            AudioController.PlaySound(AudioController.AudioClips.buttonSound);
 
             if (CurrencyController.HasAmount(currencyType, currentPrice))
             {

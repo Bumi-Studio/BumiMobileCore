@@ -1,5 +1,4 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace BumiMobile
@@ -28,11 +27,7 @@ namespace BumiMobile
                 if (currencyData.CurrencyImage != null)
                     currencyData.CurrencyImage.sprite = currency.Icon;
 
-                if (currencyData.AmountText != null)
-                {
-                    string numberText = currencyData.FormatTheNumber ? CurrencyHelper.Format(currencyData.Amount) : currencyData.Amount.ToString();
-                    currencyData.AmountText.text = string.Format(currencyData.TextFormating == "" ? "{0}" : currencyData.TextFormating, numberText);
-                }
+                currencyData.UpdateTextDisplay();
             }
         }
 
@@ -46,14 +41,7 @@ namespace BumiMobile
                 }
             }
 
-            if(spawnCurrencyCloud)
-            {
-                FloatingCloud.SpawnCurrency(currencyCloudType.ToString(), currencyCloudSpawnPoint, currencyCloudTargetPoint, cloudElementsAmount, "", ApplyCurrency);
-            }
-            else
-            {
-                ApplyCurrency();
-            }
+            ApplyCurrency();
         }
 
         [System.Serializable]
@@ -69,14 +57,22 @@ namespace BumiMobile
             [SerializeField] Image currencyImage;
             public Image CurrencyImage => currencyImage;
 
-            [SerializeField] TextMeshProUGUI amountText;
-            public TextMeshProUGUI AmountText => amountText;
+            [SerializeField] Text amountText;
+            public Text AmountText => amountText;
 
             [SerializeField] string textFormating = "x{0}";
             public string TextFormating => textFormating;
 
             [SerializeField] bool formatTheNumber;
             public bool FormatTheNumber => formatTheNumber;
+
+            public void UpdateTextDisplay()
+            {
+                if (amountText == null) return;
+
+                string numberText = formatTheNumber ? CurrencyHelper.Format(amount) : amount.ToString();
+                amountText.text = string.Format(string.IsNullOrEmpty(textFormating) ? "{0}" : textFormating, numberText);
+            }
         }
     }
 }

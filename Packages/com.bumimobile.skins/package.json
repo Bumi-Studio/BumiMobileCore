@@ -11,9 +11,6 @@
   ],
   "category": "Gameplay",
   "dependencies": {
-    "com.bumimobile.core": "0.1.0",
-    "com.bumimobile.currency": "0.1.0",
-    "com.bumimobile.reward": "0.1.0",
-    "com.bumimobile.tween": "0.1.0"
+    "com.bumimobile.core": "0.1.0"
   }
 }

@@ -8,6 +8,7 @@ using System.Collections;
 
 namespace BumiMobile
 {
+#if false
     public class DefineManagerWindow : EditorWindow
     {      
         private Define[] projectDefines;
@@ -365,4 +366,5 @@ namespace BumiMobile
             }
         }
     }
+#endif
 }

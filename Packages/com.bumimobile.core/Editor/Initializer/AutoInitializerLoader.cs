@@ -31,7 +31,6 @@ namespace BumiMobile
                             GameObject InitializerObject = Object.Instantiate(initializerPrefab);
 
                             initializer = InitializerObject.GetComponent<Initializer>();
-                            initializer.Awake();
                             initializer.EnableManualActivation();
                             initializer.LoadGame(false);
                         }

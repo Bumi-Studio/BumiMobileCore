@@ -8,14 +8,12 @@ using System.Collections;
 namespace BumiMobile
 {
     [StaticUnload]
-    [Define("MODULE_ADMOB", "GoogleMobileAds.Api.MobileAds")]
-    [Define("MODULE_UNITYADS", "UnityEngine.Advertisements.Advertisement")]
-    [Define("MODULE_LEVELPLAY", "IronSource")]
     public static class AdsManager
     {
-        private const int INIT_ATTEMPTS_AMOUNT = 30;
+    private const int INIT_ATTEMPTS_AMOUNT = 30;
 
-        private const string FIRST_LAUNCH_PREFS = "FIRST_LAUNCH";
+    private const string FIRST_LAUNCH_PREFS = "FIRST_LAUNCH";
+    private const string FORCED_AD_PREFS_KEY = "BumiMobile.AdsManager.ForcedAd";
 
         private static AdProviderHandler[] AD_PROVIDERS;
 
@@ -36,10 +34,43 @@ namespace BumiMobile
 
         private static bool isBannerActive = true;
 
-        private static Coroutine loadingCoroutine;
-        private static TweenCase delayTweenCase;
+    private static Coroutine loadingCoroutine;
+    private static TweenCase delayTweenCase;
 
-        private static Dictionary<AdProvider, AdProviderHandler> advertisingActiveModules = new Dictionary<AdProvider, AdProviderHandler>();
+    private static Dictionary<AdProvider, AdProviderHandler> advertisingActiveModules = new Dictionary<AdProvider, AdProviderHandler>();
+
+    private static void LoadForcedAdState()
+    {
+#if MODULE_SAVE
+        save = SaveController.GetSaveObject<AdSave>("advertisement_forced_ad");
+#else
+        forcedAdEnabled = PlayerPrefs.GetInt(FORCED_AD_PREFS_KEY, 1) == 1;
+#endif
+    }
+
+    private static bool IsForcedAdAllowed()
+    {
+#if MODULE_SAVE
+        return save == null || save.IsForcedAdEnabled;
+#else
+        return forcedAdEnabled;
+#endif
+    }
+
+    private static void UpdateForcedAdState(bool isEnabled)
+    {
+#if MODULE_SAVE
+        if (save != null)
+        {
+        save.IsForcedAdEnabled = isEnabled;
+        SaveController.MarkAsSaveIsRequired();
+        }
+#else
+        forcedAdEnabled = isEnabled;
+        PlayerPrefs.SetInt(FORCED_AD_PREFS_KEY, isEnabled ? 1 : 0);
+        PlayerPrefs.Save();
+#endif
+    }
 
         // Events
         public static event SimpleCallback ForcedAdDisabled;
@@ -51,7 +82,11 @@ namespace BumiMobile
 
         public static AdsBoolCallback InterstitialConditions;
 
-        private static AdSave save;
+#if MODULE_SAVE
+    private static AdSave save;
+#else
+    private static bool forcedAdEnabled = true;
+#endif
 
         private static List<LoadingTask> loadingTasks;
 
@@ -70,7 +105,7 @@ namespace BumiMobile
 
             settings = monetizationSettings.AdsSettings;
 
-            save = SaveController.GetSaveObject<AdSave>("advertisement_forced_ad");
+            LoadForcedAdState();
 
             if (settings == null)
             {
@@ -356,7 +391,7 @@ namespace BumiMobile
 
             AdProvider advertisingModules = settings.InterstitialType;
 
-            if (!save.IsForcedAdEnabled || !IsModuleActive(advertisingModules))
+            if (!IsForcedAdAllowed() || !IsModuleActive(advertisingModules))
                 return false;
 
             return advertisingActiveModules[advertisingModules].IsInterstitialLoaded();
@@ -373,7 +408,7 @@ namespace BumiMobile
 
             AdProvider advertisingModules = settings.InterstitialType;
 
-            if (!save.IsForcedAdEnabled || !IsModuleActive(advertisingModules) || !advertisingActiveModules[advertisingModules].IsInitialized || advertisingActiveModules[advertisingModules].IsInterstitialLoaded())
+            if (!IsForcedAdAllowed() || !IsModuleActive(advertisingModules) || !advertisingActiveModules[advertisingModules].IsInitialized || advertisingActiveModules[advertisingModules].IsInterstitialLoaded())
                 return;
 
             advertisingActiveModules[advertisingModules].RequestInterstitial();
@@ -394,7 +429,7 @@ namespace BumiMobile
 
             interstitalCallback = callback;
 
-            if (!save.IsForcedAdEnabled || !IsModuleActive(advertisingModules) || (!ignoreConditions && (!CheckInterstitialTime() || !CheckExtraInterstitialCondition())) || !advertisingActiveModules[advertisingModules].IsInitialized || !advertisingActiveModules[advertisingModules].IsInterstitialLoaded())
+            if (!IsForcedAdAllowed() || !IsModuleActive(advertisingModules) || (!ignoreConditions && (!CheckInterstitialTime() || !CheckExtraInterstitialCondition())) || !advertisingActiveModules[advertisingModules].IsInitialized || !advertisingActiveModules[advertisingModules].IsInterstitialLoaded())
             {
                 ExecuteInterstitialCallback(false);
 
@@ -587,7 +622,7 @@ namespace BumiMobile
 
             AdProvider advertisingModule = settings.BannerType;
             
-            if (!save.IsForcedAdEnabled || !IsModuleActive(advertisingModule) ||
+            if (!IsForcedAdAllowed() || !IsModuleActive(advertisingModule) ||
                 !advertisingActiveModules[advertisingModule].IsInitialized)
             {
                 return;
@@ -713,18 +748,16 @@ namespace BumiMobile
         #region Forced Ad
         public static bool IsForcedAdEnabled()
         {
-            return save.IsForcedAdEnabled;
+            return IsForcedAdAllowed();
         }
 
         public static void DisableForcedAd()
         {
-            if (!save.IsForcedAdEnabled) return;
+            if (!IsForcedAdAllowed()) return;
 
             Debug.Log("[Ads Manager]: Banners and interstitials are disabled!");
 
-            save.IsForcedAdEnabled = false;
-
-            NotchSaveArea.Refresh(true);
+            UpdateForcedAdState(false);
 
             ForcedAdDisabled?.Invoke();
 
@@ -838,7 +871,11 @@ namespace BumiMobile
 
             InterstitialConditions = null;
 
+#if MODULE_SAVE
             save = null;
+#else
+            forcedAdEnabled = true;
+#endif
 
             loadingTasks = null;
 

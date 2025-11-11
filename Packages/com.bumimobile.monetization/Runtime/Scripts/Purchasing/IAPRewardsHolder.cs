@@ -11,7 +11,11 @@ namespace BumiMobile
         [Group("Settings")]
         [SerializeField] IAPButton purchaseButton;
 
-        private SimpleBoolSave save;
+    private const string FallbackSaveKeyPrefix = "IAPProduct_";
+
+#if MODULE_SAVE
+    private SimpleBoolSave save;
+#endif
         private ProductData product;
 
         private void Start()
@@ -41,8 +45,9 @@ namespace BumiMobile
         {
             // Get the product save file to check if it was previously purchased
             // This data is stored only locally so after the game reinstall it will be reset
+#if MODULE_SAVE
             save = SaveController.GetSaveObject<SimpleBoolSave>($"IAPProduct_{productKey}");
-            
+#endif
             // Get product data wrapper
             // To acess Unity IAP product use product.Product property
             product = IAPManager.GetProductData(productKey);
@@ -51,7 +56,16 @@ namespace BumiMobile
             // If there is problem with the internet connection or server didn't return product data loading animation appeared
             purchaseButton.UpdateState(product);
 
-            if(product.IsPurchased || product.ProductType == ProductType.NonConsumable && save.Value)
+            bool isPreviouslyPurchased = false;
+
+#if MODULE_SAVE
+            isPreviouslyPurchased = save.Value;
+#else
+            string fallbackKey = FallbackSaveKeyPrefix + productKey;
+            isPreviouslyPurchased = PlayerPrefs.GetInt(fallbackKey, 0) == 1;
+#endif
+
+            if(product.IsPurchased || product.ProductType == ProductType.NonConsumable && isPreviouslyPurchased)
             {
                 // Disable holder if it's an one time purchase (non-consumable) product 
                 if (product.ProductType == ProductType.NonConsumable)
@@ -91,10 +105,13 @@ namespace BumiMobile
                 }
 
                 // Change local save data
+#if MODULE_SAVE
                 save.Value = true;
-
-                // Mark save as dirty to make sure changes will be stored
                 SaveController.MarkAsSaveIsRequired();
+#else
+                PlayerPrefs.SetInt(FallbackSaveKeyPrefix + productKey, 1);
+                PlayerPrefs.Save();
+#endif
             }
         }
     }

@@ -80,14 +80,17 @@ namespace BumiMobile
 
             if (manualControlMode)
             {
-                Tween.DelayedCall(10, () =>
-                {
-                    if (!isReadyToHide)
-                        Debug.LogError("[Loading]: Seems like you forget to call MarkAsReadyToHide method to finish the loading process.");
-                });
+                float manualWarningTime = Time.realtimeSinceStartup + 10.0f;
+                bool warningLogged = false;
 
                 while (!isReadyToHide)
                 {
+                    if (!warningLogged && Time.realtimeSinceStartup >= manualWarningTime)
+                    {
+                        Debug.LogError("[Loading]: Seems like you forget to call MarkAsReadyToHide method to finish the loading process.");
+                        warningLogged = true;
+                    }
+
                     yield return null;
                 }
             }
@@ -98,6 +101,8 @@ namespace BumiMobile
 
             onSceneLoaded?.Invoke();
             OnLoadingFinished?.Invoke();
+
+            loadingOperation = null;
         }
 
         private static IEnumerator SimpleLoadCoroutine(SimpleCallback onSceneLoaded = null)
@@ -134,12 +139,12 @@ namespace BumiMobile
 
         public static void LoadGameScene(SimpleCallback onSceneLoaded = null)
         {
-            Tween.InvokeCoroutine(LoadSceneCoroutine(onSceneLoaded));
+            Initializer.RunCoroutine(LoadSceneCoroutine(onSceneLoaded));
         }
 
         public static void SimpleLoad(SimpleCallback onSceneLoaded = null)
         {
-            Tween.InvokeCoroutine(SimpleLoadCoroutine(onSceneLoaded));
+            Initializer.RunCoroutine(SimpleLoadCoroutine(onSceneLoaded));
         }
 
         public delegate void LoadingCallback(float state, string message);

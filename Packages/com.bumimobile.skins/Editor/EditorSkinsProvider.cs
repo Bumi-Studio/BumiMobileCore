@@ -39,7 +39,7 @@ namespace BumiMobile
 
         public static AbstractSkinDatabase GetSkinsProvider(Type providerType)
         {
-            if (!skinsDatabases.IsNullOrEmpty())
+            if (skinsDatabases != null && skinsDatabases.Count > 0)
             {
                 foreach (AbstractSkinDatabase database in skinsDatabases)
                 {
@@ -53,7 +53,7 @@ namespace BumiMobile
 
         public static bool HasSkinsProvider(AbstractSkinDatabase provider)
         {
-            if (!skinsDatabases.IsNullOrEmpty())
+            if (skinsDatabases != null && skinsDatabases.Count > 0)
             {
                 foreach (AbstractSkinDatabase database in skinsDatabases)
                 {

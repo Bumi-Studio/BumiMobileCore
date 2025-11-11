@@ -7,15 +7,10 @@ namespace BumiMobile
 {
     public class ExampleScript : MonoBehaviour
     {
-        [BoxGroup("Components", "Button")]
         [SerializeField] private Button tweenButton;
-        [BoxGroup("Components", "Button")]
         [SerializeField] private Button localizationButton;
-        [BoxGroup("Components", "Button")]
         [SerializeField] private Button hapticButton;
-        [BoxGroup("Components", "Button")]
         [SerializeField] private Button adsButton;
-        [BoxGroup("Components", "Button")]
         [SerializeField] private Button iapButton;
 
         private void Awake()

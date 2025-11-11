@@ -39,11 +39,7 @@ namespace BumiMobile
                     Debug.LogError(string.Format("[Currency Syste]: Currency with type {0} added to database twice!", currencies[i].CurrencyType));
                 }
 
-                Currency.Save save = SaveController.GetSaveObject<Currency.Save>("currency" + ":" + (int)currencies[i].CurrencyType);
-                if(save.Amount == -1)
-                    save.Amount = currencies[i].DefaultAmount;
-
-                currencies[i].SetSave(save);
+                currencies[i].Amount = currencies[i].DefaultAmount;
             }
 
             isInitialized = true;
@@ -91,9 +87,6 @@ namespace BumiMobile
 
             currency.Amount = amount;
 
-            // Change save state to required
-            SaveController.MarkAsSaveIsRequired();
-
             // Invoke currency change event
             currency.InvokeChangeEvent(0);
         }
@@ -104,9 +97,6 @@ namespace BumiMobile
 
             currency.Amount += amount;
 
-            // Change save state to required
-            SaveController.MarkAsSaveIsRequired();
-
             // Invoke currency change event;
             currency.InvokeChangeEvent(amount);
         }
@@ -116,9 +106,6 @@ namespace BumiMobile
             Currency currency = currencies[currenciesLink[currencyType]];
 
             currency.Amount -= amount;
-
-            // Change save state to required
-            SaveController.MarkAsSaveIsRequired();
 
             // Invoke currency change event
             currency.InvokeChangeEvent(-amount);

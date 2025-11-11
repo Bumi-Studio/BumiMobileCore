@@ -1,8 +1,7 @@
 {
   "name": "BumiMobile.Pool",
   "references": [
-    "BumiMobile.Core",
-    "BumiMobile.Tween"
+    "BumiMobile.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

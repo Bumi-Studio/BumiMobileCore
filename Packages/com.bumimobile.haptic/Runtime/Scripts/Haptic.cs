@@ -11,17 +11,13 @@ namespace BumiMobile
 
         public static readonly HapticPattern PATTERN_LIGHT = new HapticPattern("light", new HapticEvent[] { new HapticEvent() { Duration = 0.3f, Intensity = 1.0f, Sharpness = 0.0f, StartTime = 0.0f } });
 
-        private static bool isActive;
+    private static bool isActive = true;
         public static bool IsActive
         {
             get { return isActive; }
             set
             {
                 isActive = value;
-
-                save.IsActive = value;
-
-                SaveController.MarkAsSaveIsRequired();
 
                 if (VerboseLogging)
                     Debug.Log(string.Format("[Haptic]: Haptic state changed: {0}", isActive ? "Active" : "Disabled"));
@@ -35,17 +31,11 @@ namespace BumiMobile
 
         private static readonly BaseHapticWrapper WRAPPER = GetPlatformWrapper();
 
-        private static HapticSave save;
-
         public static event SimpleBoolCallback StateChanged;
 
         public static void Init()
         {
-            // Get saved state
-            save = SaveController.GetSaveObject<HapticSave>("haptic");
-
-            // Set saved state
-            isActive = save.IsActive;
+            isActive = true;
 
             if (WRAPPER == null)
             {
@@ -131,8 +121,6 @@ namespace BumiMobile
 
             IsInitialized = false;
             VerboseLogging = false;
-
-            save = null;
 
             StateChanged = null;
         }

@@ -1,9 +1,7 @@
 {
   "name": "BumiMobile.Skins",
   "references": [
-    "BumiMobile.Core",
-    "BumiMobile.Reward",
-    "BumiMobile.Tween"
+  "BumiMobile.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -12,5 +10,12 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
-  "noEngineReferences": false
+  "noEngineReferences": false,
+  "versionDefines": [
+    {
+      "name": "com.bumimobile.save",
+      "expression": "0.0.0",
+      "define": "MODULE_SAVE"
+    }
+  ]
 }

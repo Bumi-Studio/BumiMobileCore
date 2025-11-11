@@ -1,9 +1,8 @@
 {
   "name": "BumiMobile.Skins.Editor",
   "references": [
-    "BumiMobile.Skins",
-    "BumiMobile.Core.Editor",
-    "BumiMobile.Reward"
+  "BumiMobile.Skins",
+  "BumiMobile.Core.Editor"
   ],
   "includePlatforms": [
     "Editor"

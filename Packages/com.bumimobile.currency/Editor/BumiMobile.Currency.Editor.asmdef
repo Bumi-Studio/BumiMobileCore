@@ -2,7 +2,8 @@
   "name": "BumiMobile.Currency.Editor",
   "references": [
     "BumiMobile.Currency",
-    "BumiMobile.Core.Editor"
+    "BumiMobile.Core.Editor",
+    "Unity.TextMeshPro.Editor"
   ],
   "includePlatforms": [
     "Editor"

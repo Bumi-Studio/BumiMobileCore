@@ -14,15 +14,24 @@ namespace BumiMobile
         [Group("Settings")]
         [SerializeField] bool disableAfterPurchase;
 
-        private SimpleBoolSave save;
+#if MODULE_SAVE
+    private SimpleBoolSave save;
+#else
+    private bool hasReceivedReward;
+#endif
 
         private void Awake()
         {
             InitializeComponents();
 
+#if MODULE_SAVE
             save = SaveController.GetSaveObject<SimpleBoolSave>($"CurrencyProduct_{rewardID}");
+            bool rewardClaimed = save.Value;
+#else
+            bool rewardClaimed = hasReceivedReward;
+#endif
 
-            if (disableAfterPurchase && save.Value)
+            if (disableAfterPurchase && rewardClaimed)
             {
                 // Disable holder game object
                 gameObject.SetActive(false);
@@ -51,7 +60,9 @@ namespace BumiMobile
             Haptic.Play(Haptic.HAPTIC_LIGHT);
 #endif
 
+#if MODULE_AUDIO
             AudioController.PlaySound(AudioController.AudioClips.buttonSound);
+#endif
 
             AdsManager.ShowRewardBasedVideo((reward) =>
             {
@@ -59,7 +70,7 @@ namespace BumiMobile
                 {
                     ApplyRewards();
 
-                    save.Value = true;
+                    bool wasClaimed = true;
 
                     if (disableAfterPurchase)
                     {
@@ -67,7 +78,12 @@ namespace BumiMobile
                         gameObject.SetActive(false);
                     }
 
+#if MODULE_SAVE
+                    save.Value = wasClaimed;
                     SaveController.MarkAsSaveIsRequired();
+#else
+                    hasReceivedReward = wasClaimed;
+#endif
                 }
             });
         }

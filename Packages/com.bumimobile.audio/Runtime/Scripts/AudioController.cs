@@ -14,7 +14,9 @@ namespace BumiMobile
         private static AudioListener audioListener;
         public static AudioListener AudioListener => audioListener;
 
-        private static AudioSave save;
+#if MODULE_SAVE
+    private static AudioSave save;
+#endif
 
         // Default 3D audio settings
         private static float maxDistance = 30;
@@ -34,17 +36,19 @@ namespace BumiMobile
                 return;
             }
 
-            // Get volume save
+            volumeDictionary = new Dictionary<AudioType, float>();
+#if MODULE_SAVE
+            // Get volume save when module is available
             save = SaveController.GetSaveObject<AudioSave>("audio");
 
-            volumeDictionary = new Dictionary<AudioType, float>();
-            if(save.VolumeDatas != null)
+            if (save.VolumeDatas != null)
             {
                 foreach (AudioSave.VolumeData volumeData in save.VolumeDatas)
                 {
-                    volumeDictionary.Add(volumeData.AudioType, volumeData.Volume);
+                    volumeDictionary[volumeData.AudioType] = volumeData.Volume;
                 }
             }
+#endif
 
             // Create audio listener
             CreateAudioListener();
@@ -179,7 +183,9 @@ namespace BumiMobile
 
             volumeDictionary[audioType] = volume;
 
+#if MODULE_SAVE
             SaveController.MarkAsSaveIsRequired();
+#endif
 
             VolumeChanged?.Invoke(audioType, volume);
         }
@@ -204,7 +210,9 @@ namespace BumiMobile
             audioClips = null;
             audioListener = null;
 
+#if MODULE_SAVE
             save = null;
+#endif
 
             volumeDictionary = null;
 

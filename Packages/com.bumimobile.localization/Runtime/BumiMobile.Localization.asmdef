@@ -2,9 +2,9 @@
   "name": "BumiMobile.Localization",
   "references": [
     "BumiMobile.Core",
-    "BumiMobile.Tween"
+    "Unity.TextMeshPro",
+    "Unity.EditorCoroutines.Editor"
   ],
-  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

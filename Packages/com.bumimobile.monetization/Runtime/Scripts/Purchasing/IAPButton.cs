@@ -65,7 +65,7 @@ namespace BumiMobile
             Haptic.Play(Haptic.HAPTIC_LIGHT);
 #endif
 
-            AudioController.PlaySound(AudioController.AudioClips.buttonSound);
+            //AudioController.PlaySound(AudioController.AudioClips.buttonSound);
 
             IAPManager.BuyProduct(key);
         }

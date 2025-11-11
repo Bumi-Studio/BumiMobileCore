@@ -13,15 +13,11 @@ namespace BumiMobile
         [SerializeField] Transform parentTrasnform;
         public Transform PanelsParent => parentTrasnform;
 
-        private Pool panelPool;
-
         private Dictionary<CurrencyType, CurrencyUI> activePanelsUI;
         private List<CurrencyType> currenciesToHide = new List<CurrencyType>();
 
         public void Init(Currency[] currencies)
         {
-            panelPool = new Pool(panelObject, parentTrasnform);
-
             activePanelsUI = new Dictionary<CurrencyType, CurrencyUI>();
 
             for(int i = 0; i < staticPanels.Length; i++)
@@ -39,11 +35,7 @@ namespace BumiMobile
             {
                 if (!activePanelsUI.ContainsKey(currencies[i].CurrencyType) && (currencies[i].Data.DisplayAlways || currencies[i].Amount > 0))
                 {
-                    GameObject currencyObject = panelPool.GetPooledObject();
-                    currencyObject.transform.SetParent(parentTrasnform);
-                    currencyObject.transform.ResetLocal();
-                    currencyObject.transform.SetAsLastSibling();
-                    currencyObject.SetActive(true);
+                    GameObject currencyObject = CreatePanelInstance();
 
                     CurrencyUI currencyUI = currencyObject.GetComponent<CurrencyUI>();
                     currencyUI.Init(currencies[i]);
@@ -62,7 +54,6 @@ namespace BumiMobile
 
             activePanelsUI = null;
 
-            panelPool?.Destroy();
         }
 
         public CurrencyUI GetCurrencyUI(CurrencyType type)
@@ -126,11 +117,7 @@ namespace BumiMobile
                     return null;
 
                 // Get object from pool
-                GameObject currencyObject = panelPool.GetPooledObject();
-                currencyObject.transform.SetParent(parentTrasnform);
-                currencyObject.transform.ResetLocal();
-                currencyObject.transform.SetAsLastSibling();
-                currencyObject.SetActive(true);
+                GameObject currencyObject = CreatePanelInstance();
 
                 // Get currency from database
                 Currency currency = CurrencyController.GetCurrency(type);
@@ -184,6 +171,16 @@ namespace BumiMobile
         {
             public CurrencyType CurrencyType;
             public CurrencyUI CurrencyPanel;
+        }
+
+        private GameObject CreatePanelInstance()
+        {
+            GameObject currencyObject = Object.Instantiate(panelObject, parentTrasnform);
+            currencyObject.transform.ResetLocal();
+            currencyObject.transform.SetAsLastSibling();
+            currencyObject.SetActive(true);
+
+            return currencyObject;
         }
     }
 }

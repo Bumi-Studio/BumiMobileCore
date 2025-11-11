@@ -17,8 +17,8 @@ namespace BumiMobile
 
         [ShowIf("advancedSettings")]
         [SerializeField] bool dynamicPitch;
-        [ShowIf("advancedSettings")]
-        [SerializeField] DuoFloat pitchRange = new DuoFloat(0.8f, 1.2f);
+    [ShowIf("advancedSettings")]
+    [SerializeField] Vector2 pitchRange = new Vector2(0.8f, 1.2f);
         [ShowIf("advancedSettings")]
         [SerializeField] int pitchSteps = 10;
         [ShowIf("advancedSettings")]
@@ -77,7 +77,7 @@ namespace BumiMobile
 
                     lastPitchStepTime = Time.time + pitchResetTime;
 
-                    pitch = pitchRange.Lerp((float)currentPitchStep / pitchSteps);
+                    pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, (float)currentPitchStep / pitchSteps);
                 }
 
                 if(customAudioSource != null)
@@ -114,7 +114,7 @@ namespace BumiMobile
 
                     lastPitchStepTime = Time.time + pitchResetTime;
 
-                    pitch = pitchRange.Lerp((float)currentPitchStep / pitchSteps);
+                    pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, (float)currentPitchStep / pitchSteps);
                 }
 
                 if (customAudioSource != null)

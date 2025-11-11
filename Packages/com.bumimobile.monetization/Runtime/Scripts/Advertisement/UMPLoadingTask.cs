@@ -17,7 +17,7 @@ namespace BumiMobile
 
         public override string TaskName => "Ads";
 
-        public override void OnTaskActivated()
+    protected override void OnTaskActivated()
         {
             if(!settings.AdsSettings.IsUMPEnabled)
             {

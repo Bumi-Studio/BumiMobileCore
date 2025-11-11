@@ -1,5 +1,6 @@
 #pragma warning disable 0649
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -30,6 +31,7 @@ namespace BumiMobile
 
             GameObject = gameObject;
             Transform = transform;
+            InitializerContext.Set(GameObject, Transform);
 
 #if MODULE_INPUT_SYSTEM
             eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
@@ -61,5 +63,31 @@ namespace BumiMobile
         {
             manualActivation = true;
         }
+
+        public static Coroutine RunCoroutine(IEnumerator routine)
+        {
+            if (instance == null)
+            {
+                Debug.LogError("[Initializer]: Unable to run coroutine before Initializer is ready.");
+                return null;
+            }
+
+            if (routine == null)
+            {
+                Debug.LogError("[Initializer]: Coroutine routine is null.");
+                return null;
+            }
+
+            return instance.StartCoroutine(routine);
+        }
+
+        public static void StopCoroutineSafe(Coroutine routine)
+        {
+            if (instance == null || routine == null)
+                return;
+
+            instance.StopCoroutine(routine);
+        }
+
     }
 }

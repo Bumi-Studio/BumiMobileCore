@@ -2,7 +2,7 @@
   "name": "BumiMobile.Currency",
   "references": [
     "BumiMobile.Core",
-    "BumiMobile.Tween"
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

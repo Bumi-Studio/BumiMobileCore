@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-
 namespace BumiMobile
 {
     public abstract class AbstractSkinData : ISkinData
@@ -9,14 +8,10 @@ namespace BumiMobile
         public int Hash { get; private set; }
 
         public AbstractSkinDatabase SkinsProvider { get; private set; }
-
-        public bool IsUnlocked => save.IsUnlocked;
-
-        private SkinSave save;
+        public bool IsUnlocked { get; private set; }
 
         public virtual void Init(AbstractSkinDatabase provider)
         {
-            save = SaveController.GetSaveObject<SkinSave>(id);
             Hash = id.GetHashCode();
 
             SkinsProvider = provider;
@@ -24,7 +19,7 @@ namespace BumiMobile
 
         public void Unlock()
         {
-            save.IsUnlocked = true;
+            IsUnlocked = true;
         }
     }
 }

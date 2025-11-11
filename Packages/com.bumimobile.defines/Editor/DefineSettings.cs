@@ -49,7 +49,7 @@ namespace BumiMobile
 
                         tempTypes = tempTypes.Where(m => m.IsDefined(typeof(DefineAttribute), true)).ToArray();
 
-                        if (!tempTypes.IsNullOrEmpty())
+                        if (tempTypes != null && tempTypes.Length > 0)
                             gameTypes.AddRange(tempTypes);
                     }
                     catch (ReflectionTypeLoadException e)

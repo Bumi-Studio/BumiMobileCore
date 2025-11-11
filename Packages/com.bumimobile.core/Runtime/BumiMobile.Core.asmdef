@@ -1,8 +1,8 @@
 {
   "name": "BumiMobile.Core",
   "references": [
-    "BumiMobile.Tween",
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

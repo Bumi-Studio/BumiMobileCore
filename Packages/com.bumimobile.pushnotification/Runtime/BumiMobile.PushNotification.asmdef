@@ -1,8 +1,7 @@
 {
   "name": "BumiMobile.PushNotification",
   "references": [
-    "BumiMobile.Core",
-    "BumiMobile.Tween"
+    "BumiMobile.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

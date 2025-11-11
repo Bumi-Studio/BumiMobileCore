@@ -16,15 +16,13 @@ namespace BumiMobile
         [Group("Settings"), Space]
         [SerializeField] bool disableAfterPurchase;
 
-        private SimpleBoolSave save;
+    private bool isPurchased;
 
         private void Awake()
         {
             InitializeComponents();
 
-            save = SaveController.GetSaveObject<SimpleBoolSave>($"CurrencyProduct_{rewardID}");
-
-            if(disableAfterPurchase && save.Value)
+            if(disableAfterPurchase && isPurchased)
             {
                 // Disable offer game object
                 gameObject.SetActive(false);
@@ -52,15 +50,13 @@ namespace BumiMobile
         {
             ApplyRewards();
 
-            save.Value = true;
+            isPurchased = true;
 
             if(disableAfterPurchase)
             {
                 // Disable holder game object
                 gameObject.SetActive(false);
             }
-
-            SaveController.MarkAsSaveIsRequired();
         }
     }
 }

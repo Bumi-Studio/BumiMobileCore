@@ -11,8 +11,6 @@ namespace BumiMobile
         [SerializeField] SkinsHandler handler;
         public SkinsHandler Handler => handler;
 
-        private SkinControllerSave save;
-
         private Dictionary<AbstractSkinDatabase, ISkinData> selectedSkins;
 
         public static event SkinCallback SkinUnlocked;
@@ -24,8 +22,6 @@ namespace BumiMobile
         {
             Instance = this;
 
-            save = SaveController.GetSaveObject<SkinControllerSave>("Skin Controller Save");
-
             selectedSkins = new Dictionary<AbstractSkinDatabase, ISkinData>();
 
             for (int i = 0; i < handler.ProvidersCount; i++)
@@ -34,31 +30,11 @@ namespace BumiMobile
 
                 InitProvider(provider);
             }
-
-            UpdateSave();
         }
 
         private void InitProvider(AbstractSkinDatabase provider)
         {
             provider.Init();
-
-            for (int i = 0; i < provider.SkinsCount; i++)
-            {
-                ISkinData skinData = provider.GetSkinData(i);
-
-                for (int j = 0; j < save.SelectedSkinsCount; j++)
-                {
-                    int selectedSkinHash = save.GetSelectedSkin(j);
-
-                    if (skinData.Hash == selectedSkinHash)
-                    {
-                        selectedSkins.Add(provider, skinData);
-
-                        return;
-                    }
-                }
-            }
-
             UnlockAndSelectDefaultSkin(provider);
         }
 
@@ -179,8 +155,6 @@ namespace BumiMobile
                 selectedSkins.Add(provider, data);
             }
 
-            UpdateSave();
-
             SkinSelected?.Invoke(data);
         }
 
@@ -268,39 +242,9 @@ namespace BumiMobile
 
         private void UpdateSave()
         {
-            int[] selectedHashes = new int[selectedSkins.Count];
-
-            int i = 0;
-
-            foreach (ISkinData data in selectedSkins.Values)
-            {
-                selectedHashes[i++] = data.Hash;
-            }
-
-            save.Update(selectedHashes);
+            // Save system dinonaktifkan sementara
         }
     }
 
-    [System.Serializable]
-    public class SkinControllerSave : ISaveObject
-    {
-        [SerializeField] int[] selectedSkins;
-
-        public int SelectedSkinsCount => selectedSkins != null ? selectedSkins.Length : 0;
-
-        public int GetSelectedSkin(int index)
-        {
-            return selectedSkins[index];
-        }
-
-        public void Update(int[] newSelectedSkins)
-        {
-            selectedSkins = newSelectedSkins;
-        }
-
-        public void Flush()
-        {
-
-        }
-    }
+    // class SkinControllerSave dipertahankan untuk integrasi Save di masa depan
 }

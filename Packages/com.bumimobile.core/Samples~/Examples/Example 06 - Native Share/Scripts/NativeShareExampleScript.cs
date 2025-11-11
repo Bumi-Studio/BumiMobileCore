@@ -8,7 +8,7 @@ namespace BumiMobile
     {
         public static void TakeScreenshotAndShare()
         {
-            Tween.InvokeCoroutine(TakeScreenshotAndShareCoroutine());
+            Initializer.RunCoroutine(TakeScreenshotAndShareCoroutine());
         }
         
         private static IEnumerator TakeScreenshotAndShareCoroutine()

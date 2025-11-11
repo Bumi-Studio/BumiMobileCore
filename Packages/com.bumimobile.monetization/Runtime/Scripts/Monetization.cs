@@ -16,6 +16,8 @@ namespace BumiMobile
             Settings = settings;
 
             UpdateData(settings);
+
+            Core.RegisterMonetizationStatus(() => IsActive);
         }
 
         public static void UpdateData(MonetizationSettings settings)

@@ -1,7 +1,7 @@
 ﻿namespace BumiMobile
 {
     [System.Serializable]
-    public class AudioSave : ISaveObject
+    public class AudioSave //: ISaveObject
     {
         public VolumeData[] VolumeDatas;
 
