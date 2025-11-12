@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.nativeshare",
+  "displayName": "Bumi Mobile Native Share",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "NativeShare integration wrapper for Android and iOS sharing features.",
+  "keywords": [
+    "bumi",
+    "share",
+    "native"
+  ],
+  "category": "Integration",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}

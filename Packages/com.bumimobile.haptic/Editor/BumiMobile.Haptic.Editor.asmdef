@@ -1,0 +1,17 @@
+{
+  "name": "BumiMobile.Haptic.Editor",
+  "references": [
+    "BumiMobile.Haptic",
+    "BumiMobile.Core.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

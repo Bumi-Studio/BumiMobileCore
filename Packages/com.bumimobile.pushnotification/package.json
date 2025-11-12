@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.pushnotification",
+  "displayName": "Bumi Mobile Push Notification",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Push notification manager and initializer for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "push",
+    "notification"
+  ],
+  "category": "Integration",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}

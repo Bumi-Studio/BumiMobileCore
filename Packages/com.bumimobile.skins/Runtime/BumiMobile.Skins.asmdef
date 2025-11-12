@@ -1,0 +1,21 @@
+{
+  "name": "BumiMobile.Skins",
+  "references": [
+  "BumiMobile.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false,
+  "versionDefines": [
+    {
+      "name": "com.bumimobile.save",
+      "expression": "0.0.0",
+      "define": "MODULE_SAVE"
+    }
+  ]
+}

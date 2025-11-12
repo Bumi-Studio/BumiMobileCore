@@ -1,0 +1,17 @@
+{
+  "name": "BumiMobile.Skins.Editor",
+  "references": [
+  "BumiMobile.Skins",
+  "BumiMobile.Core.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

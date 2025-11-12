@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.currency",
+  "displayName": "Bumi Mobile Currency",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Currency definitions, balances, and helpers for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "currency",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.0"
+  }
+}
