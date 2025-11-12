@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.monetization",
   "displayName": "Bumi Mobile Monetization",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2021.3",
   "description": "Ads, purchasing, and monetization orchestration for Bumi Mobile projects.",
   "keywords": [
@@ -12,7 +12,7 @@
   ],
   "category": "Framework",
   "dependencies": {
-    "com.bumimobile.core": "0.1.0",
+    "com.bumimobile.core": "0.1.1",
     "com.unity.textmeshpro": "3.0.9"
   }
 }

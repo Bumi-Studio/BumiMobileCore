@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.save",
   "displayName": "Bumi Mobile Save",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2021.3",
   "description": "Save system, serializers, and storage helpers for Bumi Mobile projects.",
   "keywords": [
@@ -11,6 +11,6 @@
   ],
   "category": "Framework",
   "dependencies": {
-    "com.bumimobile.core": "0.1.0"
+    "com.bumimobile.core": "0.1.1"
   }
 }

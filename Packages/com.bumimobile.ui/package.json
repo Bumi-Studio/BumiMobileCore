@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.ui",
   "displayName": "Bumi Mobile UI",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2021.3",
   "description": "UI framework components, overlays, and helpers for Bumi Mobile projects.",
   "keywords": [
@@ -11,7 +11,7 @@
   ],
   "category": "UI",
   "dependencies": {
-  "com.bumimobile.core": "0.1.0",
+  "com.bumimobile.core": "0.1.1",
   "com.unity.textmeshpro": "3.0.9"
   }
 }
