@@ -13,6 +13,7 @@
   "dependencies": {
     "com.bumimobile.core": "0.1.0",
     "com.unity.textmeshpro": "3.0.9",
-    "com.unity.editorcoroutines": "1.0.0"
+    "com.unity.editorcoroutines": "1.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }
