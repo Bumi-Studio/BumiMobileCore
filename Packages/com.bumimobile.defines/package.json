@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.defines",
+  "displayName": "Bumi Mobile Defines",
+  "version": "0.1.1",
+  "unity": "2021.3",
+  "description": "Define attribute helpers for conditional compilation in Bumi Mobile modules.",
+  "keywords": [
+    "bumi",
+    "defines",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}

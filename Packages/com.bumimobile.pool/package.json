@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.pool",
+  "displayName": "Bumi Mobile Pool",
+  "version": "0.1.1",
+  "unity": "2021.3",
+  "description": "Object pooling utilities for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "pool",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}

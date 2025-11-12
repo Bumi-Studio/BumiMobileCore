@@ -1,0 +1,17 @@
+{
+  "name": "BumiMobile.PushNotification",
+  "references": [
+    "BumiMobile.Core",
+    "Unity.Notifications.Android",
+    "Unity.Notifications.iOS",
+    "Unity.Notifications.Unified"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.haptic",
+  "displayName": "Bumi Mobile Haptic",
+  "version": "0.1.1",
+  "unity": "2021.3",
+  "description": "Haptic feedback wrappers and initialization module for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "haptic",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}
