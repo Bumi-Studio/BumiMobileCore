@@ -82,7 +82,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.0"
+        "com.bumimobile.core": "0.1.0",
+        "com.unity.mobile.notifications": "2.4.1"
       }
     },
     "com.bumimobile.save": {
@@ -197,12 +198,13 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.mobile.notifications": {
-      "version": "file:com.unity.mobile.notifications",
-      "depth": 0,
-      "source": "embedded",
+      "version": "2.4.1",
+      "depth": 1,
+      "source": "registry",
       "dependencies": {
         "com.unity.modules.androidjni": "1.0.0"
-      }
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.center": {
       "version": "1.0.0",
