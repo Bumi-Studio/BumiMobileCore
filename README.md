@@ -1,67 +1,83 @@
-﻿# 🎮 Unity Modular Toolkit by BumiMobileCore
+﻿# 🎮 BumiMobileCore – Unity Modular Toolkit
 
-A collection of ready-to-use Unity modules to accelerate game development.  
-Perfect for mobile, hyper-casual, and rapid prototyping projects.
+Modular Unity packages for mobile & hyper-casual games. Install the core once, then mix and match feature packages directly inside the editor.
 
-> Distributed via `.unitypackage`, easy to import into any Unity project.
+> Distributed as Unity packages (Git-based). No more manual `.unitypackage` imports.
 
 ---
 
-## 📦 Available Modules
+## ✨ Highlights
 
-| Module         | Description                                                           |
-|----------------|-----------------------------------------------------------------------|
-| `Audio`        | Simple and flexible audio manager for SFX and BGM                     |
-| `Currency`     | Virtual currency system (coins, gems, etc.)                           |
-| `Defines`      | Manage compile-time `#define` conditions                              |
-| `Haptic`       | Haptic feedback support for mobile devices                            |
-| `Initializer`  | Auto-execute setup at game start (no special scene required)          |
-| `Inspector`    | Custom inspector attributes to improve editor UX                      |
-| `Monetization` | Prebuilt ad wrapper for AdMob, Unity Ads, and more                    |
-| `NativeShare`  | Share screenshots or text to other apps (WA, IG, etc.)                |
-| `Pool`         | Lightweight and efficient object pooling system                       |
-| `Reward`       | Daily reward and event-based reward system                            |
-| `Save`         | Data persistence system using PlayerPrefs (with wrapper)              |
-| `Skins`        | Unlockable skin manager and switch system                             |
-| `Tween`        | Basic tweening animations without external libraries                  |
-| `UI`           | Ready-to-use UI components (popup, loading, toast, etc.)              |
+- **Core-first architecture** – `com.bumimobile.core` ships editor tooling, inspectors, tween helpers, and shared utilities.
+- **One-click package manager** – download/update modules without leaving Unity (`Window ▸ Bumi Mobile Core ▸ Package Manager`).
+- **Plug-and-play modules** – install only what your game needs; every package is versioned and independently upgradable.
+- **Project bootstrapper** – create folder structures, init scenes, and settings via `Prepare Project` in seconds.
+
+---
+
+## 📦 Module Overview
+
+| Package | What it covers |
+| --- | --- |
+| **Core** (`com.bumimobile.core`) | Base inspectors, tween utilities, initializer helpers, custom editor styles. Installed by default. |
+| **Audio** | Lightweight BGM/SFX routing, init module, and editor config. |
+| **Currency** | Currency definitions, balances, and formatters. |
+| **Defines** | Shared scripting define presets and toggles. |
+| **Haptic** | Haptic feedback abstraction for iOS & Android. |
+| **Localization** | String tables, runtime localization helpers, editor importers. |
+| **Monetization** | Ads + IAP settings (with tabbed inspector) and runtime glue. |
+| **NativeShare** | Mobile share sheets for screenshots/text. |
+| **Pool** | Object pooling service and helpers. |
+| **Push Notification** | Mobile push initialization hooks. |
+| **Reward** | Daily/event reward data structures. |
+| **Save** | Save-system wrapper (PlayerPrefs + serializers). |
+| **Skins** | Unlockable skin manager and sample UI. |
+| **UI** | Common popups, loading views, toasts, etc. |
+| **Utilities** | Extra helpers shared by multiple modules. |
+
+> Tween, inspector extensions, and initializer logic now live inside Core, so they no longer appear as standalone packages.
 
 ---
 
 ## 🚀 Installation
 
-1. Download the `.unitypackage` from the [Releases](https://github.com/Bumi-Studio/BumiMobileCore/releases/latest)
-2. In Unity, go to: `Assets > Import Package > Custom Package`
-3. Select the `UnityModularToolkit.unitypackage` file
-4. Click `Import` to include all files into your project
+### Option A – Built-in Package Manager (Recommended)
 
----
+1. Import `com.bumimobile.core` (embed or add via manifest as described below).
+1. In Unity open `Window ▸ Bumi Mobile Core ▸ Package Manager`.
+1. For each module:
 
-## ⚙️ Usage Guide
-You can visit the documentation site:  
-[📘 GitHub Wiki](https://github.com/Bumi-Studio/BumiMobileCore/wiki)
+    - Pick the desired tag/branch (e.g., `audio-v0.2.0`, `dev`, `main`).
+    - Click `Install` or `Update`. The window uses Unity’s Package Manager API and pins entries inside `Packages/manifest.json`.
 
----
+1. Already installed modules show their current version and can’t be re-downloaded until you change the target version.
 
-## 🧰 Project Setup Tool
+### Option B – Manual manifest entry
 
-**Quick-start your Unity project** with the built-in setup tool:
+Add Git dependencies directly in `Packages/manifest.json`:
 
-**Menu Path:**  
-`Window > Bumi Mobile Core > Prepare Project`
-
-This will automatically:
-
-- Create a base directory: `Assets/ProjectFiles/`
-- Populate standard subfolders under `Game/` to organize all assets (models, audio, shaders, etc.)
-- Prepare core configurations for BumiMobileCore modules
-
-> ✅ Recommended to run this on a fresh Unity project before adding custom content.
-
----
-
-### 📁 Default Folder Structure After Setup
+```jsonc
+{
+  "dependencies": {
+    "com.bumimobile.core": "https://github.com/Bumi-Studio/BumiMobileCore.git?path=Packages/com.bumimobile.core#core-v0.2.0",
+    "com.bumimobile.audio": "https://github.com/Bumi-Studio/BumiMobileCore.git?path=Packages/com.bumimobile.audio#audio-v0.3.0",
+    "com.bumimobile.ui": "https://github.com/Bumi-Studio/BumiMobileCore.git?path=Packages/com.bumimobile.ui#ui-v0.5.0"
+  }
+}
 ```
+
+Save the file and Unity will resolve each package. Keep `Packages/packages-lock.json` under version control so teammates get identical revisions.
+
+---
+
+## 🧰 Core Tools
+
+### Project Setup
+
+- Menu: `Window ▸ Bumi Mobile Core ▸ Prepare Project`
+- Generates the recommended folder layout, initializer prefab, and scenes.
+
+```text
 Assets/
 ├── BumiMobileCore/
 └── ProjectFiles/
@@ -81,16 +97,28 @@ Assets/
 
 ```
 
+### Core Settings Asset
+
+- Automatically stored at `Assets/Bumi Mobile Core/Core Settings.asset` (copied out of the package on first load).
+- Use it to configure folders, initializer behavior, ads placeholders, etc.
+
+---
+
+## 📚 Documentation
+
+- [GitHub Wiki](https://github.com/Bumi-Studio/BumiMobileCore/wiki)
+- Each package ships with its own `Documentation~/` folder and changelog (`CHANGELOG.md`).
+
 ---
 
 ## 📝 License
 
-MIT License – Free to use and modify in personal or commercial projects. Credit is appreciated but not required.
+MIT License – free for personal or commercial projects. Attribution appreciated but not required.
 
 ---
 
 ## 💬 Contact & Support
 
 - Instagram: [@bumistudio.idn](https://www.instagram.com/bumistudio.idn/)
-- Email: mobile@bumistudio.co.id
-- Bug reports & suggestions: [GitHub Issues](https://github.com/Bumi-Studio/BumiMobileCore/issues)
+- Email: [mobile@bumistudio.co.id](mailto:mobile@bumistudio.co.id)
+- Issues & feature requests: [GitHub Issues](https://github.com/Bumi-Studio/BumiMobileCore/issues)
