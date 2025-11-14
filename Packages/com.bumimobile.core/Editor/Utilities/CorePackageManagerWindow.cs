@@ -249,10 +249,6 @@ namespace BumiMobile
                     new PackageDefinition("com.bumimobile.save", "Save", "Save system entry points and persistence helpers.", "Packages/com.bumimobile.save", defaultVersion),
                     new PackageDefinition("com.bumimobile.skins", "Skins", "Skin/theme data structures and runtime.", "Packages/com.bumimobile.skins", defaultVersion),
                     new PackageDefinition("com.bumimobile.ui", "UI", "Common UI widgets and theming.", "Packages/com.bumimobile.ui", defaultVersion),
-                    new PackageDefinition("com.bumimobile.utilities", "Utilities", "Extra utility classes shared across modules.", "Packages/com.bumimobile.utilities", defaultVersion),
-                    new PackageDefinition("com.bumimobile.reward", "Reward", "Reward handling and spin-wheel helpers.", "Packages/com.bumimobile.reward", defaultVersion),
-                    new PackageDefinition("com.bumimobile.initializer", "Initializer", "Bootstrapper helpers and default scenes.", "Packages/com.bumimobile.initializer", defaultVersion),
-                    new PackageDefinition("com.bumimobile.tween", "Tween", "Tween utilities for UI/FX.", "Packages/com.bumimobile.tween", defaultVersion)
                 };
             }
 
