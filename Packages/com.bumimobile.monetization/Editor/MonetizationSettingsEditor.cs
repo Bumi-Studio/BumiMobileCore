@@ -44,7 +44,7 @@ namespace BumiMobile
 
         public override void OnInspectorGUI()
         {
-            Rect panelRect = EditorGUILayout.BeginVertical();
+            EditorGUILayout.BeginVertical();
 
             serializedObject.Update();
             activeProperty.boolValue = EditorGUILayoutCustom.BeginToggleBoxGroup("Mobile Monetization", activeProperty.boolValue);
@@ -73,7 +73,8 @@ namespace BumiMobile
             if (activeProperty.boolValue)
             {
                 GUI.contentColor = new Color(0.8f, 0.8f, 0.8f);
-                int tempTab = GUI.Toolbar(new Rect(0, panelRect.y + panelRect.height + 5, Screen.width, 30), currentTab, tabs, EditorCustomStyles.tab);
+                Rect toolbarRect = EditorGUILayout.GetControlRect(false, 30f);
+                int tempTab = GUI.Toolbar(toolbarRect, currentTab, tabs, EditorCustomStyles.tab);
                 if (tempTab != currentTab)
                 {
                     if (tabEditor != null)
@@ -87,7 +88,7 @@ namespace BumiMobile
                 }
                 GUI.contentColor = Color.white;
 
-                GUILayout.Space(35);
+                GUILayout.Space(5);
 
                 if (currentTab == 0)
                 {
