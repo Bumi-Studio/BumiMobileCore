@@ -1,6 +1,4 @@
-using System;
 using UnityEngine;
-using System.Threading.Tasks;
 using BumiMobile;
 
 
@@ -15,8 +13,14 @@ using Unity.Notifications.iOS;
 public class NotificationInitModule : InitModule
 {
     public override string ModuleName => "Notifications";
+
+    [SerializeField]
+    private NotificationSettings settings;
+
     public override void CreateComponent()
     {
+        ApplyCatalogSettings();
+
 #if UNITY_ANDROID
         Tween.InvokeCoroutine(RequestNotificationPermission());
 #elif UNITY_IOS
@@ -24,9 +28,12 @@ public class NotificationInitModule : InitModule
             AuthorizationOption.Alert |
             AuthorizationOption.Badge |
             AuthorizationOption.Sound, true);
+        ApplyPostPermissionSettings();
+#else
+        ApplyPostPermissionSettings();
 #endif
     }
-    
+
 #if UNITY_ANDROID
     private IEnumerator RequestNotificationPermission()
     {
@@ -35,7 +42,7 @@ public class NotificationInitModule : InitModule
         // Wait until the permission is granted or denied
         while (permissionRequest.Status == PermissionStatus.RequestPending)
         {
-           yield return null;
+            yield return null;
         }
 
         if (permissionRequest.Status == PermissionStatus.Allowed)
@@ -59,6 +66,30 @@ public class NotificationInitModule : InitModule
 
         // Optional: Clear previous notifications on app start
         AndroidNotificationCenter.CancelAllScheduledNotifications();
+
+        ApplyPostPermissionSettings();
     }
 #endif
+
+    private void ApplyCatalogSettings()
+    {
+        if (settings != null)
+        {
+            settings.ApplyCatalog();
+        }
+        else
+        {
+            NotificationManager.RegisterCatalog(null);
+        }
+    }
+
+    private void ApplyPostPermissionSettings()
+    {
+        if (settings == null)
+        {
+            return;
+        }
+
+        settings.ScheduleIfNeeded();
+    }
 }
