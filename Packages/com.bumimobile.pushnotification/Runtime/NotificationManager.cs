@@ -27,6 +27,8 @@ public static class NotificationManager
     {
         context ??= new NotificationScheduleContext();
 
+        ClearScheduledNotifications();
+
         var catalog = Catalog;
         if (catalog == null || catalog.Notifications == null || catalog.Notifications.Count == 0)
         {
@@ -51,6 +53,17 @@ public static class NotificationManager
 
         return scheduled;
     }
+
+        public static void ClearScheduledNotifications()
+        {
+    #if UNITY_ANDROID
+        AndroidNotificationCenter.CancelAllScheduledNotifications();
+    #elif UNITY_IOS
+        iOSNotificationCenter.RemoveAllScheduledNotifications();
+    #else
+        // No-op outside of supported platforms.
+    #endif
+        }
 
     public static ScheduledNotification ScheduleNotification(NotificationType type, DateTime fireTime, bool repeatDaily = false)
     {

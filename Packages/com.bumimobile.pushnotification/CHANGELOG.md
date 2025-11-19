@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Notification manager now loads templates from the catalog and schedules notifications using rule-driven contexts instead of hard-coded examples.
 - Catalogs now reference external notification template assets, with runtime fallbacks generating defaults when no catalog (or entries) are present.
 - Removed the `templateLabel` field; asset names now drive display labels for templates.
+- Scheduler now clears existing platform notifications before queuing new ones to prevent duplicate deliveries.
 
 ## [0.1.0] - 2025-11-14
 

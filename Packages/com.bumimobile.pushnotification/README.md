@@ -59,7 +59,7 @@ This package provides a simple, data-driven push notification solution for Bumi 
 ## Troubleshooting
 
 - **No catalog assigned:** If `NotificationSettings` has an empty catalog reference, the package falls back to an in-memory default catalog and logs a warning when `Log Missing Catalog Warning` is enabled.
-- **Notifications not scheduling:** Ensure `Schedule On Init` is enabled or call `NotificationManager.ScheduleAllNotifications` manually. Double-check that the `NotificationScheduleContext` used has the necessary properties populated (e.g., `LastLogin`, `LevelStuckSince`).
+- **Notifications not scheduling:** Ensure `Schedule On Init` is enabled or call `NotificationManager.ScheduleAllNotifications` manually. Double-check that the `NotificationScheduleContext` used has the necessary properties populated (e.g., `LastLogin`, `LevelStuckSince`). The scheduler automatically clears previously scheduled notifications before enqueuing fresh ones, so you always have a single instance per template.
 - **Android channel conflicts:** Update the channel ID in `NotificationInitModule.RequestNotificationPermission` to avoid collisions with other packages.
 
 ## License
