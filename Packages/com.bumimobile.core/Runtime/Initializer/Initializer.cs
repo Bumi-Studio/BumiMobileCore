@@ -36,6 +36,16 @@ namespace BumiMobile
 
             if (useEventSystem && eventSystem != null)
             {
+                if (!eventSystem.gameObject.activeSelf)
+                {
+                    eventSystem.gameObject.SetActive(true);
+                }
+
+                if (!eventSystem.enabled)
+                {
+                    eventSystem.enabled = true;
+                }
+
 #if MODULE_INPUT_SYSTEM
                 eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 #else
@@ -45,6 +55,24 @@ namespace BumiMobile
             else if (useEventSystem)
             {
                 Debug.LogWarning("[Initializer] EventSystem is enabled but no reference was assigned.");
+            }
+            else if (!useEventSystem && eventSystem != null)
+            {
+#if MODULE_INPUT_SYSTEM
+                var inputModule = eventSystem.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                if (inputModule != null)
+                {
+                    Destroy(inputModule);
+                }
+#endif
+                var standaloneModule = eventSystem.GetComponent<StandaloneInputModule>();
+                if (standaloneModule != null)
+                {
+                    Destroy(standaloneModule);
+                }
+
+                eventSystem.enabled = false;
+                eventSystem.gameObject.SetActive(false);
             }
 
             DontDestroyOnLoad(gameObject);

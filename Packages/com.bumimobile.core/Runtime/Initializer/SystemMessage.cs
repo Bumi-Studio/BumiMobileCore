@@ -177,6 +177,12 @@ namespace BumiMobile
             if (component == null)
                 return;
 
+            if (EventSystem.current == null)
+            {
+                // No active event system: skip wiring pointer callbacks to avoid spawning one automatically
+                return;
+            }
+
             EventTrigger eventTrigger = component.GetComponent<EventTrigger>();
             if (eventTrigger == null)
             {

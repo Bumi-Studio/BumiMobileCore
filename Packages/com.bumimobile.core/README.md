@@ -41,7 +41,7 @@ The `Initializer` now exposes a `Use Event System` checkbox. When enabled and an
 - `InputSystemUIInputModule` if the Input System package define `MODULE_INPUT_SYSTEM` is present.
 - Otherwise `StandaloneInputModule` (legacy Input Manager).
 
-Disable the toggle if you manage input modules manually or are using UI frameworks that spin up their own event systems.
+Disable the toggle if you manage input modules manually or are using UI frameworks that spin up their own event systems—the assigned `EventSystem` GameObject will be deactivated and any auto-wired modules will be removed at startup. UI helpers such as `SystemMessage` also check for `EventSystem.current` before registering click handlers, so they won’t spawn a new event system when the toggle is off.
 
 ## License
 
