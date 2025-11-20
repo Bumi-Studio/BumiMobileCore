@@ -13,6 +13,7 @@ namespace BumiMobile
 
         [SerializeField] ProjectInitSettings initSettings;
         [SerializeField] EventSystem eventSystem;
+        [SerializeField] bool useEventSystem = true;
 
         public static GameObject GameObject { get; private set; }
         public static Transform Transform { get; private set; }
@@ -33,11 +34,18 @@ namespace BumiMobile
             Transform = transform;
             InitializerContext.Set(GameObject, Transform);
 
+            if (useEventSystem && eventSystem != null)
+            {
 #if MODULE_INPUT_SYSTEM
-            eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 #else
-            eventSystem.gameObject.GetOrSetComponent<StandaloneInputModule>();
+                eventSystem.gameObject.GetOrSetComponent<StandaloneInputModule>();
 #endif
+            }
+            else if (useEventSystem)
+            {
+                Debug.LogWarning("[Initializer] EventSystem is enabled but no reference was assigned.");
+            }
 
             DontDestroyOnLoad(gameObject);
             initSettings.Init(this);

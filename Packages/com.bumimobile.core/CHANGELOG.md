@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.2] - 2025-11-20
+
+### Added
+
+- Optional EventSystem support toggle in `Initializer`, allowing projects to disable automatic input module wiring when using custom setups.
+
+### Changed
+
+- Documentation now consolidated into the package README for quicker onboarding.
+
 ## [0.1.0] - 2025-11-14
 
 ### Added
