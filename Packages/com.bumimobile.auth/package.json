@@ -1,0 +1,20 @@
+{
+  "name": "com.bumimobile.auth",
+  "displayName": "Bumi Mobile Auth",
+  "version": "0.1.1",
+  "unity": "2021.3",
+  "description": "Authentication scaffolding for the Bumi Mobile framework.",
+  "keywords": [
+    "bumi",
+    "auth",
+    "login",
+    "session"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.cysharp.unitask": "2.5.10",
+    "com.google.firebase.auth": "11.8.1",
+    "com.google.firebase.app": "11.8.1",
+    "com.google.play.games": "0.11.01"
+  }
+}
