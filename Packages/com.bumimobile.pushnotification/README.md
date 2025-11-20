@@ -22,7 +22,7 @@ This package provides a simple, data-driven push notification solution for Bumi 
 
    - Choose `Create ▸ BumiMobile ▸ Push Notifications ▸ Notification Template` for each push you want to configure.
    - Save the assets anywhere in your project (for example, under `Assets/Notifications/Templates`).
-   - Customize every template's message, media, rules, and trigger settings.
+   - Each template auto-populates with our built-in defaults for its selected `NotificationType`. Use the inspector's context menu (`⋮ ▸ Apply Built-in Defaults`) anytime you want to reset to those values, then customize the message, media, rules, and trigger settings as needed.
 
 2. **Create a notification catalog**
 

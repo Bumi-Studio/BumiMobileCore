@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.2.2] - 2025-11-20
+
+### Added
+
+- Templates created in the editor now auto-fill with the built-in defaults for their selected notification type and include an inspector action to reapply those defaults on demand.
+
 ## [0.2.1] - 2025-11-19
 
 ### Changed

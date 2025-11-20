@@ -54,16 +54,16 @@ public static class NotificationManager
         return scheduled;
     }
 
-        public static void ClearScheduledNotifications()
-        {
-    #if UNITY_ANDROID
+    public static void ClearScheduledNotifications()
+    {
+#if UNITY_ANDROID
         AndroidNotificationCenter.CancelAllScheduledNotifications();
-    #elif UNITY_IOS
+#elif UNITY_IOS
         iOSNotificationCenter.RemoveAllScheduledNotifications();
-    #else
+#else
         // No-op outside of supported platforms.
-    #endif
-        }
+#endif
+    }
 
     public static ScheduledNotification ScheduleNotification(NotificationType type, DateTime fireTime, bool repeatDaily = false)
     {
