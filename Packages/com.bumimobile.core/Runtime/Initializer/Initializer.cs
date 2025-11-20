@@ -13,6 +13,7 @@ namespace BumiMobile
 
         [SerializeField] ProjectInitSettings initSettings;
         [SerializeField] EventSystem eventSystem;
+        [SerializeField] bool useEventSystem = true;
 
         public static GameObject GameObject { get; private set; }
         public static Transform Transform { get; private set; }
@@ -33,11 +34,46 @@ namespace BumiMobile
             Transform = transform;
             InitializerContext.Set(GameObject, Transform);
 
+            if (useEventSystem && eventSystem != null)
+            {
+                if (!eventSystem.gameObject.activeSelf)
+                {
+                    eventSystem.gameObject.SetActive(true);
+                }
+
+                if (!eventSystem.enabled)
+                {
+                    eventSystem.enabled = true;
+                }
+
 #if MODULE_INPUT_SYSTEM
-            eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                eventSystem.gameObject.GetOrSetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 #else
-            eventSystem.gameObject.GetOrSetComponent<StandaloneInputModule>();
+                eventSystem.gameObject.GetOrSetComponent<StandaloneInputModule>();
 #endif
+            }
+            else if (useEventSystem)
+            {
+                Debug.LogWarning("[Initializer] EventSystem is enabled but no reference was assigned.");
+            }
+            else if (!useEventSystem && eventSystem != null)
+            {
+#if MODULE_INPUT_SYSTEM
+                var inputModule = eventSystem.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                if (inputModule != null)
+                {
+                    Destroy(inputModule);
+                }
+#endif
+                var standaloneModule = eventSystem.GetComponent<StandaloneInputModule>();
+                if (standaloneModule != null)
+                {
+                    Destroy(standaloneModule);
+                }
+
+                eventSystem.enabled = false;
+                eventSystem.gameObject.SetActive(false);
+            }
 
             DontDestroyOnLoad(gameObject);
             initSettings.Init(this);
