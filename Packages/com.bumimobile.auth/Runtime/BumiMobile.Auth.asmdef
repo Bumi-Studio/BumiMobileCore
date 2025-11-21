@@ -12,10 +12,18 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "BUMI_AUTH_HAS_GPGS",
-        "BUMI_AUTH_HAS_FIREBASE"
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.google.firebase.app",
+            "expression": "0.0.0",
+            "define": "BUMI_AUTH_HAS_FIREBASE"
+        },
+        {
+            "name": "com.google.play.games",
+            "expression": "0.0.0",
+            "define": "BUMI_AUTH_HAS_GPGS"
+        }
     ],
-    "versionDefines": [],
     "noEngineReferences": false
 }

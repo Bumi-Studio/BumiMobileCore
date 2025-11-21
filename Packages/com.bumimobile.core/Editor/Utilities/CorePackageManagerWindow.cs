@@ -23,6 +23,10 @@ namespace BumiMobile
         private string requestPackageName;
         private string statusMessage;
         private double statusMessageUntil;
+        private PackageDefinition activeInstallDefinition;
+        private readonly Queue<PackageDefinition.PostInstallDependency> dependencyQueue = new Queue<PackageDefinition.PostInstallDependency>();
+        private PackageDefinition.PostInstallDependency activeDependency;
+        private bool dependencyProcessingActive;
 
         [MenuItem("Window/Bumi Mobile Core/Package Manager", priority = 902)]
         private static void Open()
@@ -59,11 +63,32 @@ namespace BumiMobile
                 statusMessage = $"{requestPackageName} installed ({pendingRequest.Result.version}).";
                 statusMessageUntil = EditorApplication.timeSinceStartup + 5f;
                 RefreshInstalledPackages();
+                if (activeDependency != null)
+                {
+                    activeDependency = null;
+                    TryProcessNextDependency();
+                }
+                else if (activeInstallDefinition != null)
+                {
+                    bool queued = EnqueueMissingDependencies(activeInstallDefinition);
+                    activeInstallDefinition = null;
+                    if (queued)
+                    {
+                        TryProcessNextDependency();
+                    }
+                }
             }
             else if (pendingRequest.Status >= StatusCode.Failure)
             {
                 statusMessage = pendingRequest.Error != null ? pendingRequest.Error.message : "Unknown installation error.";
                 statusMessageUntil = EditorApplication.timeSinceStartup + 8f;
+                if (activeDependency != null)
+                {
+                    activeDependency = null;
+                    dependencyQueue.Clear();
+                }
+                activeInstallDefinition = null;
+                dependencyProcessingActive = false;
             }
 
             pendingRequest = null;
@@ -182,6 +207,16 @@ namespace BumiMobile
 
         private void InstallPackage(PackageDefinition definition, string versionTag)
         {
+            if (pendingRequest != null)
+            {
+                return;
+            }
+
+            dependencyQueue.Clear();
+            activeDependency = null;
+            activeInstallDefinition = definition;
+            dependencyProcessingActive = false;
+
             string gitUrl = definition.BuildGitUrl(RepositoryUrl, versionTag);
             pendingRequest = Client.Add(gitUrl);
             requestPackageName = definition.DisplayName;
@@ -211,6 +246,107 @@ namespace BumiMobile
             Repaint();
         }
 
+        private bool EnqueueMissingDependencies(PackageDefinition definition)
+        {
+            if (definition.PostInstallDependencies == null || definition.PostInstallDependencies.Count == 0)
+            {
+                return false;
+            }
+
+            bool added = false;
+            foreach (var dependency in definition.PostInstallDependencies)
+            {
+                if (!installedPackages.ContainsKey(dependency.PackageId))
+                {
+                    dependencyQueue.Enqueue(dependency);
+                    added = true;
+                }
+            }
+            dependencyProcessingActive |= added;
+            return added;
+        }
+
+        private void TryProcessNextDependency()
+        {
+            if (pendingRequest != null)
+            {
+                return;
+            }
+
+            while (dependencyQueue.Count > 0)
+            {
+                var dependency = dependencyQueue.Dequeue();
+
+                if (installedPackages.ContainsKey(dependency.PackageId))
+                {
+                    continue;
+                }
+
+                switch (dependency.InstallMode)
+                {
+                    case PackageDefinition.DependencyInstallMode.Registry:
+                        StartDependencyInstall(dependency, dependency.GetIdentifier());
+                        return;
+                    case PackageDefinition.DependencyInstallMode.LocalEmbedded:
+                        string embeddedPath = dependency.GetEmbeddedPath();
+                        if (!string.IsNullOrEmpty(embeddedPath) && System.IO.Directory.Exists(embeddedPath))
+                        {
+                            StartDependencyInstall(dependency, $"file:{embeddedPath}");
+                            return;
+                        }
+                        goto case PackageDefinition.DependencyInstallMode.LocalTarball;
+                    case PackageDefinition.DependencyInstallMode.LocalTarball:
+                        int choice = EditorUtility.DisplayDialogComplex(
+                            dependency.DisplayName ?? dependency.PackageId,
+                            $"{dependency.DisplayName ?? dependency.PackageId} is required by {WindowTitle}. Select the downloaded .tgz to install it.",
+                            "Select .tgz…",
+                            "Skip",
+                            "Cancel");
+
+                        if (choice == 1)
+                        {
+                            // Skip
+                            continue;
+                        }
+
+                        if (choice == 2)
+                        {
+                            // Cancel dependency processing entirely.
+                            statusMessage = "Dependency installation cancelled.";
+                            statusMessageUntil = EditorApplication.timeSinceStartup + 5f;
+                            dependencyQueue.Clear();
+                            dependencyProcessingActive = false;
+                            return;
+                        }
+
+                        string path = EditorUtility.OpenFilePanel("Select package tarball", string.Empty, "tgz");
+                        if (string.IsNullOrEmpty(path))
+                        {
+                            continue;
+                        }
+
+                        StartDependencyInstall(dependency, $"file:{path}");
+                        return;
+                }
+            }
+
+            if (dependencyProcessingActive)
+            {
+                statusMessage = "All dependencies installed or skipped.";
+                statusMessageUntil = EditorApplication.timeSinceStartup + 4f;
+                dependencyProcessingActive = false;
+            }
+        }
+
+        private void StartDependencyInstall(PackageDefinition.PostInstallDependency dependency, string identifier)
+        {
+            pendingRequest = Client.Add(identifier);
+            activeDependency = dependency;
+            requestPackageName = dependency.DisplayName ?? dependency.PackageId;
+            statusMessage = $"Installing {requestPackageName}...";
+            statusMessageUntil = double.MaxValue;
+        }
+
         [Serializable]
         private class PackageDefinition
         {
@@ -220,8 +356,9 @@ namespace BumiMobile
             public string PackagePath;
             public string DefaultVersion;
             public bool IsEmbedded;
+            public List<PostInstallDependency> PostInstallDependencies { get; }
 
-            public PackageDefinition(string name, string displayName, string description, string path, string defaultVersion, bool embedded = false)
+            public PackageDefinition(string name, string displayName, string description, string path, string defaultVersion, bool embedded = false, List<PostInstallDependency> dependencies = null)
             {
                 Name = name;
                 DisplayName = displayName;
@@ -229,6 +366,7 @@ namespace BumiMobile
                 PackagePath = path;
                 DefaultVersion = defaultVersion;
                 IsEmbedded = embedded;
+                PostInstallDependencies = dependencies ?? new List<PostInstallDependency>();
             }
 
             public static List<PackageDefinition> CreateDefaults()
@@ -237,7 +375,10 @@ namespace BumiMobile
                 return new List<PackageDefinition>
                 {
                     new PackageDefinition("com.bumimobile.core", "Core", "Base tooling, settings, and utilities. Already embedded in this project.", "Packages/com.bumimobile.core", defaultVersion, true),
-                    new PackageDefinition("com.bumimobile.auth", "Auth", "Firebase Auth bootstrap with optional Google Play Games sign-in.", "Packages/com.bumimobile.auth", defaultVersion),
+                    new PackageDefinition("com.bumimobile.auth", "Auth", "Firebase Auth bootstrap with optional Google Play Games sign-in.", "Packages/com.bumimobile.auth", defaultVersion, false, new List<PostInstallDependency>
+                    {
+                        PostInstallDependency.LocalEmbedded("com.google.play.games", "Google Play Games", "Packages/com.google.play.games")
+                    }),
                     new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion),
                     new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion),
                     new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion),
@@ -269,6 +410,64 @@ namespace BumiMobile
                 path = System.IO.Path.GetFullPath(path).Replace("\\", "/");
                 string projectRelativePath = path.Replace(Application.dataPath.Replace("\\", "/") + "/../", "");
                 return projectRelativePath;
+            }
+
+            [Serializable]
+            public class PostInstallDependency
+            {
+                public string PackageId;
+                public string Version;
+                public DependencyInstallMode InstallMode;
+                public string DisplayName;
+                public string EmbeddedRelativePath;
+
+                public PostInstallDependency(string packageId, string version, DependencyInstallMode installMode, string displayName = null, string embeddedRelativePath = null)
+                {
+                    PackageId = packageId;
+                    Version = version;
+                    InstallMode = installMode;
+                    DisplayName = displayName;
+                    EmbeddedRelativePath = embeddedRelativePath;
+                }
+
+                public static PostInstallDependency LocalTarball(string packageId, string displayName)
+                {
+                    return new PostInstallDependency(packageId, null, DependencyInstallMode.LocalTarball, displayName);
+                }
+
+                public static PostInstallDependency LocalEmbedded(string packageId, string displayName, string embeddedRelativePath)
+                {
+                    return new PostInstallDependency(packageId, null, DependencyInstallMode.LocalEmbedded, displayName, embeddedRelativePath);
+                }
+
+                public string GetIdentifier()
+                {
+                    if (string.IsNullOrEmpty(Version))
+                    {
+                        return PackageId;
+                    }
+
+                    return $"{PackageId}@{Version}";
+                }
+
+                public string GetEmbeddedPath()
+                {
+                    if (string.IsNullOrEmpty(EmbeddedRelativePath))
+                    {
+                        return null;
+                    }
+
+                    string projectRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, ".."));
+                    string fullPath = System.IO.Path.Combine(projectRoot, EmbeddedRelativePath);
+                    return System.IO.Path.GetFullPath(fullPath);
+                }
+            }
+
+            public enum DependencyInstallMode
+            {
+                Registry,
+                LocalTarball,
+                LocalEmbedded
             }
         }
     }

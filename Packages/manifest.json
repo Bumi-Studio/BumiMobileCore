@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.bumimobile.core": "0.1.1",
     "com.unity.ai.navigation": "2.0.5",
     "com.unity.collab-proxy": "2.8.2",
     "com.unity.editorcoroutines": "1.0.0",
@@ -9,11 +10,10 @@
     "com.unity.multiplayer.center": "1.0.0",
     "com.unity.render-pipelines.universal": "17.0.3",
     "com.unity.test-framework": "1.4.5",
+    "com.unity.textmeshpro": "3.0.9",
     "com.unity.timeline": "1.8.7",
     "com.unity.ugui": "2.0.0",
-    "com.unity.textmeshpro": "3.0.9",
     "com.unity.visualscripting": "1.9.5",
-    "com.bumimobile.core": "0.1.1",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
@@ -45,6 +45,16 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
-  }
+    "com.unity.modules.xr": "1.0.0",
+    "com.google.play.games": "file:com.google.play.games"
+  },
+  "scopedRegistries": [
+    {
+      "name": "Game Package Registry by Google",
+      "url": "https://unityregistry-pa.googleapis.com",
+      "scopes": [
+        "com.google"
+      ]
+    }
+  ]
 }

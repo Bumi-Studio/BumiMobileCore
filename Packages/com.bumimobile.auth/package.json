@@ -12,6 +12,7 @@
   ],
   "category": "Framework",
   "dependencies": {
-    "com.bumimobile.core": "0.1.1"
+    "com.bumimobile.core": "0.1.1",
+    "com.google.play.games": "file:com.google.play.games"
   }
 }

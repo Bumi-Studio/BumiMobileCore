@@ -18,8 +18,7 @@ Authentication foundation for Bumi Mobile projects. This package wraps platform 
 
 2. **Enable scripting define symbols**
 
-   - Add `BUMI_AUTH_HAS_FIREBASE` (Player Settings ▸ Scripting Define Symbols) after importing the Firebase SDK. Without this flag the runtime falls back to a stub implementation.
-   - Add `BUMI_AUTH_HAS_GPGS` after importing the Google Play Games SDK to enable platform sign-in. Leave it undefined to skip Play Games integration.
+   - The assembly automatically adds `BUMI_AUTH_HAS_FIREBASE` when `com.google.firebase.app` is present and `BUMI_AUTH_HAS_GPGS` when `com.google.play.games` is present. If you are using custom package layouts, you can also add the symbols manually via _Project Settings ▸ Player ▸ Scripting Define Symbols_.
 
 3. **Create the Authenticated Init Module**
 

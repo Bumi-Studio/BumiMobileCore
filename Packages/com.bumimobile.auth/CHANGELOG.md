@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ### Added
 
 - Optional `BUMI_AUTH_HAS_FIREBASE` compile flag so the package can compile in stub mode when Firebase SDK is not yet installed.
+- Automatic version-defined scripting symbols for Firebase (`BUMI_AUTH_HAS_FIREBASE`) and Google Play Games (`BUMI_AUTH_HAS_GPGS`) when their Unity packages are present.
 - Documented the `BUMI_AUTH_HAS_GPGS` guard for Google Play Games integration.
 
 ## [0.1.1] - 2025-11-20

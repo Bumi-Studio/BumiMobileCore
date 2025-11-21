@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ## [Unreleased]
 
 - Added `com.bumimobile.auth` to the Core package manager window so the auth module can be installed like the other packages.
+- Package manager now prompts to install Google Play Games via local tarball after adding the Auth module.
 
 ## [0.1.2] - 2025-11-20
 
