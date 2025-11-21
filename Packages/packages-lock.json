@@ -13,10 +13,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.cysharp.unitask": "2.5.10",
-        "com.google.firebase.auth": "11.8.1",
-        "com.google.firebase.app": "11.8.1",
-        "com.google.play.games": "0.11.01"
+        "com.bumimobile.core": "0.1.1"
       }
     },
     "com.bumimobile.core": {

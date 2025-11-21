@@ -10,6 +10,8 @@
   "overrideReferences": false,
   "precompiledReferences": [],
   "autoReferenced": true,
-  "defineConstraints": [],
+  "defineConstraints": [
+    "BUMI_AUTH_HAS_GPGS"
+  ],
   "noEngineReferences": false
 }

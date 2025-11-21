@@ -13,7 +13,7 @@ Authentication foundation for Bumi Mobile projects. This package wraps platform 
 
 1. **Install dependencies**
 
-   - Add Firebase Core/Auth (`com.google.firebase.app`, `com.google.firebase.auth` both `11.8.1`), Google Play Games v2 (`com.google.play.games` `0.11.01`), and [UniTask](https://github.com/Cysharp/UniTask) (`com.cysharp.unitask` `2.5.10`) via the Unity Package Manager or by extending your project `manifest.json`.
+   - Add Firebase Core/Auth (`com.google.firebase.app`, `com.google.firebase.auth` both `13.4.0`), Google Play Games v2 (`com.google.play.games` `2.1.0`), and [UniTask](https://github.com/Cysharp/UniTask) (`com.cysharp.unitask` `2.5.10`) via the Unity Package Manager or by extending your project `manifest.json`.
    - Android builds require Google Play Games; iOS builds only consume the Firebase Auth dependency at runtime.
 
 2. **Create the Authenticated Init Module**

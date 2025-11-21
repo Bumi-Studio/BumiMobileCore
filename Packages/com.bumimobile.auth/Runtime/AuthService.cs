@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
 
-#if UNITY_ANDROID
+#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 #endif
@@ -96,7 +96,7 @@ namespace BumiMobile
 
         static async UniTask<bool> InternalSignInAsync(bool forceRefreshToken, bool interactive, bool manual)
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
             EnsurePgsActivated();
             bool platformOk = await PgsAuthenticateAsync(interactive, manual);
             if (!platformOk)
@@ -120,8 +120,11 @@ namespace BumiMobile
             return true;
 
 #else
-            // On iOS and other platforms, use Firebase Anonymous only
-            Debug.Log("[Auth] Using Firebase Anonymous (no platform sign-in on iOS).");
+#if UNITY_ANDROID
+            Debug.Log("[Auth] Google Play Games SDK not available; using Firebase Anonymous fallback.");
+#else
+            Debug.Log("[Auth] Using Firebase Anonymous (no platform sign-in on this platform).");
+#endif
             await EnsureFirebaseAnonIfPossibleAsync();
             return false;
 #endif
@@ -139,7 +142,7 @@ namespace BumiMobile
             if (!string.IsNullOrEmpty(name)) return name;
             if (!string.IsNullOrEmpty(mail)) return mail;
 
-#if UNITY_ANDROID
+#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
             var pgsName = PlayGamesPlatform.Instance?.localUser?.userName;
             if (!string.IsNullOrEmpty(pgsName)) return pgsName;
 #endif
@@ -152,7 +155,7 @@ namespace BumiMobile
         // ANDROID (PGS)
         // ====================================================================
 
-#if UNITY_ANDROID
+#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
         static void EnsurePgsActivated()
         {
             if (_pgsActivated) return;
@@ -286,7 +289,7 @@ namespace BumiMobile
                 return false;
             }
         }
-#endif // UNITY_ANDROID
+#endif // UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
 
         // ====================================================================
         // Firebase Anonymous Fallback (Common)

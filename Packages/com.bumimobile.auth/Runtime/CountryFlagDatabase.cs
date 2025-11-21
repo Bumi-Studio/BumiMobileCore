@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Watermelon
+namespace BumiMobile
 {
     [CreateAssetMenu(menuName = "Data/Country Flag Database", fileName = "CountryFlagDatabase")]
     public class CountryFlagDatabase : ScriptableObject
@@ -34,7 +34,7 @@ namespace Watermelon
             {
                 if (string.IsNullOrWhiteSpace(e.iso2)) continue;
                 string key = e.iso2.Trim().ToUpperInvariant();
-                 if (!map.ContainsKey(key)) map.Add(key, e);
+                if (!map.ContainsKey(key)) map.Add(key, e);
             }
         }
 
