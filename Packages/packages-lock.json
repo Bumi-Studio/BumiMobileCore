@@ -8,6 +8,14 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.auth": {
+      "version": "file:com.bumimobile.auth",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1"
+      }
+    },
     "com.bumimobile.core": {
       "version": "file:com.bumimobile.core",
       "depth": 0,
