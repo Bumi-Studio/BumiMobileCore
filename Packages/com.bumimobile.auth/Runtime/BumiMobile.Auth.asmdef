@@ -1,18 +1,21 @@
 {
-  "name": "BumiMobile.Auth",
-  "references": [
-    "BumiMobile.Core",
-    "UniTask"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [
-    "BUMI_AUTH_HAS_GPGS",
-    "BUMI_AUTH_HAS_FIREBASE"
-  ],
-  "noEngineReferences": false
+    "name": "BumiMobile.Auth",
+    "rootNamespace": "",
+    "references": [
+        "BumiMobile.Core",
+        "UniTask",
+        "Google.Play.Games"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "BUMI_AUTH_HAS_GPGS",
+        "BUMI_AUTH_HAS_FIREBASE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
