@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- (Add unreleased changes here)
+- Added `com.bumimobile.auth` to the Core package manager window so the auth module can be installed like the other packages.
 
 ## [0.1.2] - 2025-11-20
 

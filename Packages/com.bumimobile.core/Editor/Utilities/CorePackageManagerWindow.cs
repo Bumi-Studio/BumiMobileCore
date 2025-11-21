@@ -237,6 +237,7 @@ namespace BumiMobile
                 return new List<PackageDefinition>
                 {
                     new PackageDefinition("com.bumimobile.core", "Core", "Base tooling, settings, and utilities. Already embedded in this project.", "Packages/com.bumimobile.core", defaultVersion, true),
+                    new PackageDefinition("com.bumimobile.auth", "Auth", "Firebase Auth bootstrap with optional Google Play Games sign-in.", "Packages/com.bumimobile.auth", defaultVersion),
                     new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion),
                     new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion),
                     new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion),
