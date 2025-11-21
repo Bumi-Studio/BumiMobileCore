@@ -2,14 +2,19 @@ using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 
+#if BUMI_AUTH_HAS_FIREBASE
 using Firebase;
 using Firebase.Auth;
+#else
+using FirebaseUser = System.Object;
+#endif
 
-#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
+#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS && BUMI_AUTH_HAS_FIREBASE
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 #endif
 
+#if BUMI_AUTH_HAS_FIREBASE
 namespace BumiMobile
 {
     public static class AuthService
@@ -327,3 +332,46 @@ namespace BumiMobile
         }
     }
 }
+#else
+namespace BumiMobile
+{
+    public static class AuthService
+    {
+        public static string PlayerId { get; private set; } = string.Empty;
+        public static FirebaseUser User => null;
+        public static bool IsFirebaseAnonymous => true;
+        public static bool IsAuthenticated => false;
+        public static bool IsSignedIn => false;
+        public static string LastAuthFailureReason { get; private set; } = "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
+
+        public static event Action<bool> OnPgsAuthFinished;
+        public static event Action<FirebaseUser> OnFirebaseAuthChanged;
+
+        public static UniTask<bool> SignInAsync(bool forceRefreshToken = true)
+        {
+            LogStubWarning();
+            return UniTask.FromResult(false);
+        }
+
+        public static UniTask<bool> ManualSignInAsync()
+        {
+            LogStubWarning();
+            return UniTask.FromResult(false);
+        }
+
+        public static UniTask<bool> SignOutAsync()
+        {
+            LogStubWarning();
+            return UniTask.FromResult(false);
+        }
+
+        public static string GetUserLabel() => string.Empty;
+
+        static void LogStubWarning()
+        {
+            LastAuthFailureReason = "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
+            Debug.LogWarning("[Auth] Firebase SDK not detected. AuthService is running in stub mode.");
+        }
+    }
+}
+#endif

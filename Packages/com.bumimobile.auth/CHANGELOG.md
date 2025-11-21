@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.2] - 2025-11-21
+
+### Added
+
+- Optional `BUMI_AUTH_HAS_FIREBASE` compile flag so the package can compile in stub mode when Firebase SDK is not yet installed.
+- Documented the `BUMI_AUTH_HAS_GPGS` guard for Google Play Games integration.
+
 ## [0.1.1] - 2025-11-20
 
 ### Fixed

@@ -11,7 +11,8 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [
-    "BUMI_AUTH_HAS_GPGS"
+    "BUMI_AUTH_HAS_GPGS",
+    "BUMI_AUTH_HAS_FIREBASE"
   ],
   "noEngineReferences": false
 }
