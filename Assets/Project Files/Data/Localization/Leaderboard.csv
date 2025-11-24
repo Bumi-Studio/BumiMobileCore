@@ -1,0 +1,10 @@
+Key,English,Indonesian,MandarinSimplified,MandarinTraditional,Japanese,Korean,Italian,Spanish,French,German,Vietnamese,Portuguese,Filipino,Arab,Tamil,Russian,Thai,Dutch,Hindi,Turkish
+LB.Title,Leaderboard,Papan Peringkat,排行榜,排行榜,リーダーボード,순위표,Classifica,Clasificación,Tableau des leaders,Bestenliste,Bảng xếp hạng,Classificação,Leaderboard,لوحة المتصدرين,முன்னணி பட்டியல்,Таблица лидеров,กระดานผู้นำ,Klassement,लीडरबोर्ड,Lider Tablosu
+LB.Body1,Player,Pemain,玩家,玩家,プレイヤー,플레이어,Giocatore,Jugador,Joueur,Spieler,Người chơi,Jogador,Manlalaro,اللاعب,வீரர்,Игрок,ผู้เล่น,Speler,खिलाड़ी,Oyuncu
+LB.Body2,Country,Negara,国家,國家,国,국가,Paese,País,Pays,Land,Quốc gia,País,Bansa,الدولة,நாடு,Страна,ประเทศ,Land,देश,Ülke
+LB.Region,Regional,Regional,地区,地區,地域,지역,Regionale,Regional,Régional,Regional,Khu vực,Regional,Rehiyonal,إقليمي,பிராந்திய,Региональный,ภูมิภาค,Regionaal,क्षेत्रीय,Bölgesel
+LB.Global,Global,Global,全球,全球,グローバル,글로벌,Globale,Global,Mondial,Global,Toàn cầu,Global,Global,عالمي,உலகளாவிய,Глобальный,ทั่วโลก,Wereldwijd,क्षेत्रीय,Küresel
+LB.Rank,Rank,Peringkat,排名,排名,ランク,순위,Rango,Rango,Rang,Rang,Hạng,Posição,Ranggo,الترتيب,தரவரிசை,Ранг,อันดับ,Rang,रैंक,Sıra
+LB.Name1,Player Name,Nama Pemain,玩家姓名,玩家姓名,プレイヤー名,플레이어 이름,Nome Giocatore,Nombre del Jugador,Nom du joueur,Spielername,Tên người chơi,Nome do Jogador,Pangalan ng Manlalaro,اسم اللاعب,வீரரின் பெயர்,Имя игрока,ชื่อผู้เล่น,Spelersnaam,खिलाड़ी का नाम,Oyuncu Adı
+LB.Name2,Country Name,Nama Negara,国家名称,國家名稱,国名,국가 이름,Nome Paese,Nombre del País,Nom du pays,Landesname,Tên quốc gia,Nome do País,Pangalan ng Bansa,اسم الدولة,நாட்டின் பெயர்,Название страны,ชื่อประเทศ,Landnaam,खिलाड़ी का नाम,Ülke Adı
+LB.Score,Score,Skor,分数,分數,スコア,점수,Punteggio,Puntuación,Score,Punktzahl,Điểm số,Pontuação,Iskor,النقاط,மதிப்பெண்,Очки,คะแนน,Score,स्कोर,Puan

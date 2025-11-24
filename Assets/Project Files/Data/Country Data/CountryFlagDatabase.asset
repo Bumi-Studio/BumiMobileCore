@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55bb717dea4e4c3299b15785d22bfea7, type: 3}
+  m_Name: CountryFlagDatabase
+  m_EditorClassIdentifier: 
+  entries:
+  - iso2: SA
+    displayName: Saudi Arabia
+    flag: {fileID: 21300000, guid: abe8fb5f4260441b98b52d6433bab8bb, type: 3}
+  - iso2: NL
+    displayName: Netherlands
+    flag: {fileID: 21300000, guid: dea5ff714b3214d2bb0a7ac31531d864, type: 3}
+  - iso2: GB
+    displayName: United Kingdom
+    flag: {fileID: 21300000, guid: de3c726a7ca4a4b599e4d2adc1aca370, type: 3}
+  - iso2: PH
+    displayName: Philippines
+    flag: {fileID: 21300000, guid: 3d932f62e1ab946e69d506823dae3b11, type: 3}
+  - iso2: FR
+    displayName: France
+    flag: {fileID: 21300000, guid: 8f59de8ea32864c00a249cd2eef8d192, type: 3}
+  - iso2: DE
+    displayName: Germany
+    flag: {fileID: 21300000, guid: 8ff4c31f3b5294610b48c534d328aaaf, type: 3}
+  - iso2: IN
+    displayName: India
+    flag: {fileID: 21300000, guid: 3dab48dc35ac94fe49a06887d5402388, type: 3}
+  - iso2: IT
+    displayName: Italy
+    flag: {fileID: 21300000, guid: 29641d0bae6204af3b5a712e6db0a6ca, type: 3}
+  - iso2: JP
+    displayName: Japan
+    flag: {fileID: 21300000, guid: d8ed90f52035d49e79c1cc64ca226522, type: 3}
+  - iso2: PT
+    displayName: Portugal
+    flag: {fileID: 21300000, guid: c2fb109deef074ce0a1b513e499a3a1f, type: 3}
+  - iso2: RU
+    displayName: Russia
+    flag: {fileID: 21300000, guid: fa412b57224a14c3c9a932678a18ea36, type: 3}
+  - iso2: ES
+    displayName: Spain
+    flag: {fileID: 21300000, guid: bc314fd2b4c3d4908b9db330127db4e4, type: 3}
+  - iso2: TH
+    displayName: Thailand
+    flag: {fileID: 21300000, guid: b07947cef4c654b93ac6215ea5329a3d, type: 3}
+  - iso2: TR
+    displayName: Turkey
+    flag: {fileID: 21300000, guid: e6213162d151749e0989d4535d260d05, type: 3}
+  - iso2: VN
+    displayName: Vietnam
+    flag: {fileID: 21300000, guid: 1560ec426c6d44526ae6b1879d7f1b0a, type: 3}
+  - iso2: CN
+    displayName: China
+    flag: {fileID: 21300000, guid: 92208e2a3e334440a9568975ebc819eb, type: 3}
+  - iso2: KR
+    displayName: South Korea
+    flag: {fileID: 21300000, guid: 2bf1f4e0c5485487ea36e7fccdfabb7b, type: 3}
+  - iso2: LK
+    displayName: Sri Lanka
+    flag: {fileID: 21300000, guid: 10e50c64963ce47938067174a0df96c8, type: 3}
+  - iso2: US
+    displayName: United States
+    flag: {fileID: 21300000, guid: 7e08a0d58b515754ea89dc01a39a3bf0, type: 3}
+  - iso2: ID
+    displayName: Indonesia
+    flag: {fileID: 21300000, guid: 3bb1067300149460789b313f43a3a124, type: 3}
