@@ -49,6 +49,16 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.leaderboard": {
+      "version": "file:com.bumimobile.leaderboard",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1",
+        "com.bumimobile.save": "0.1.1",
+        "com.bumimobile.auth": "0.1.2"
+      }
+    },
     "com.bumimobile.localization": {
       "version": "file:com.bumimobile.localization",
       "depth": 0,

@@ -817,7 +817,7 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
-    Android: MODULE_INPUT_SYSTEM;MODULE_TMP
+    Android: MODULE_INPUT_SYSTEM;MODULE_TMP;BUMI_AUTH_HAS_GPGS;BUMI_AUTH_HAS_FIREBASE
     Standalone: MODULE_INPUT_SYSTEM;MODULE_TMP
   additionalCompilerArguments: {}
   platformArchitecture: {}
