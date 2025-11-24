@@ -118,6 +118,7 @@ MonoBehaviour:
   - {fileID: 3369934492297283536}
   - {fileID: -7995184475690896147}
   - {fileID: -1910410897867687098}
+  - {fileID: 7887532176394947039}
 --- !u!114 &3369934492297283536
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -130,6 +131,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba3b736ee722b41829293968937d7ed8, type: 3}
   m_Name: NotificationInitModule
   m_EditorClassIdentifier: 
+  settings: {fileID: 0}
+--- !u!114 &7887532176394947039
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0af31c8827dbcfd4390fe66ded267539, type: 3}
+  m_Name: BumiMobile.AuthenticatedInitModule
+  m_EditorClassIdentifier: 
+  timeoutSeconds: 25
+  countryFlags: {fileID: 0}
 --- !u!114 &7935977482372536523
 MonoBehaviour:
   m_ObjectHideFlags: 1
