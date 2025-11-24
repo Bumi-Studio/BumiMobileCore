@@ -33,6 +33,7 @@ Modular Unity packages for mobile & hyper-casual games. Install the core once, t
 | **Reward**                       | Daily/event reward data structures.                                                                                                                                    |
 | **Save**                         | Save-system wrapper (PlayerPrefs + serializers).                                                                                                                       |
 | **Skins**                        | Unlockable skin manager and sample UI.                                                                                                                                 |
+| **Leaderboard** (`com.bumimobile.leaderboard`) | Firebase-backed leaderboards (global, regional, country aggregates) with caching, save integration, and warmup helpers.                                             |
 | **UI**                           | Common popups, loading views, toasts, etc.                                                                                                                             |
 | **Utilities**                    | Extra helpers shared by multiple modules.                                                                                                                              |
 
@@ -74,6 +75,7 @@ Save the file and Unity will resolve each package. Keep `Packages/packages-lock.
 Some packages require external SDKs that Unity will not install automatically:
 
 - **Auth** — Install Firebase Core/Auth (`com.google.firebase.app`, `com.google.firebase.auth`) and, for Android Google sign-in, Google Play Games v2 (`com.google.play.games`). After importing these SDKs add scripting defines `BUMI_AUTH_HAS_FIREBASE` (required) and `BUMI_AUTH_HAS_GPGS` (optional) under _Project Settings ▸ Player ▸ Scripting Define Symbols_.
+- **Leaderboard** — Requires Firebase Core/Auth plus Firebase Firestore (`com.google.firebase.firestore`). When Firestore is present the package auto-enables `BUMI_LEADERBOARD_HAS_FIRESTORE`; otherwise it runs in offline stub mode.
 
 ---
 
