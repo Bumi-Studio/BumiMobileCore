@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "com.bumimobile.core": "0.1.1",
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.unity.ai.navigation": "2.0.5",
+    "com.unity.asset-manager-for-unity": "1.9.0",
     "com.unity.collab-proxy": "2.8.2",
     "com.unity.editorcoroutines": "1.0.0",
     "com.unity.ide.rider": "3.0.31",
@@ -45,8 +47,7 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.google.play.games": "file:com.google.play.games"
+    "com.unity.modules.xr": "1.0.0"
   },
   "scopedRegistries": [
     {

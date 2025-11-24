@@ -1,0 +1,24 @@
+{
+  "name": "BumiMobile.Leaderboard",
+  "references": [
+    "BumiMobile.Core",
+    "BumiMobile.Save",
+    "BumiMobile.Auth",
+    "UniTask"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.google.firebase.firestore",
+      "expression": "0.0.0",
+      "define": "BUMI_LEADERBOARD_HAS_FIRESTORE"
+    }
+  ],
+  "noEngineReferences": false
+}

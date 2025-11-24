@@ -1,0 +1,21 @@
+Key,English,Indonesian,MandarinSimplified,MandarinTraditional,Japanese,Korean,Italian,Spanish,French,German,Vietnamese,Portuguese,Filipino,Arab,Tamil,Russian,Thai,Dutch,Hindi,Turkish
+Profile.Title,Profile,Profil,个人资料,個人資料,プロフィール,프로필,Profilo,Perfil,Profil,Profil,Hồ sơ,Perfil,Profile,الملف الشخصي,சுயவிவரம்,Профиль,โปรไฟล์,Profiel,प्रोफाइल,Profil
+,Level,Level,"第,关","第,關",レベル,레벨,Livello,Nivel,Niveau,Level,Màn chơi,Nível,Antas,المستوى,"நிலைகள்",Уровень,เลเวล,Niveau,स्तर,Seviye
+Profile.Avatar,Avatar,Avatar,头像,頭像,アバター,아바타,Avatar,Avatar,Avatar,Avatar,Ảnh đại diện,Avatar,Avatar,الصورة الرمزية,அவதார்,Аватар,เลเวล,Avatar,अवतार,Avatar
+Profile.Frame,Frame,Bingkai,框,框,フレーム,프레임,Cornice,Marco,Cadre,Rahmen,Khung,Moldura,Frame,الإطار,பிரேம்,Рамка,กรอบ,Frame,फ्रेम,Çerçeve
+Profile.Save,Save,Simpan,保存,儲存,保存,저장,Salva,Guardar,Sauvegarder,Speichern,Lưu,Guardar,I-save,حفظ,சேமிக்கவும்,Сохранить,บันทึก,Opslaan,सहेजें,Kaydet
+Profile.Name,Change Name,Ubah Nama,修改名字,修改名字,名前を変更,이름 변경,Cambia Nome,Cambiar nombre,Modifier le nom,Name ändern,Đổi Tên,Alterar nome,Palitan ang pangalan,تغيير الاسم,பெயர் மாற்று,Изменить имя,เปลี่ยนชื่อ,Naam Wijzigen,नाम बदलें,İsmi değiştir
+Profile.Birthday,Choose Birthday,Pilih Tanggal Lahir,选择生日,選擇生日,誕生日を選択,생일 선택,Scegli il compleanno,Elegir fecha de nacimiento,Choisir la date de naissance,Geburtstag auswählen,Chọn Ngày Sinh,Escolher data de nascimento,Piliin ang kaarawan,اختيار تاريخ الميلاد,பிறந்தநாளை தேர்வு செய்,Выбрать дату рождения,เลือกวันเกิด,Kies Verjaardag,जन्मतिथि चुनें,Doğum günü seç
+"Profile.NameDescription,",Enter your name (5-16 Characters),Masukkan nama Anda (5–16 karakter),输入你的名字（5–16 个字）,輸入你的名字（5–16 個字）,名前を入れてね（5～16文字）,이름을 입력하세요 (5–16자),Inserisci il tuo nome (5-16 caratteri),Ingresa tu nombre (5–16 Caracteres),Entrez votre nom (5–16 caractères),Gib deinen Namen ein (5–16 Zeichen),Nhập tên của bạn (5-16 ký tự),Digite seu nome (5–16 Caracteres),Ilagay ang iyong pangalan (5–16 Characters),أدخل اسمك (من ٥ إلى ١٦ حرفًا),உங்கள் பெயரை உள்ளிடுங்கள் (5–16 எழுத்துகள்),Введите ваше имя (5–16 символов),กรอกชื่อของคุณ (5–16 ตัวอักษร),Voer uw naam in (5-16 tekens),अपना नाम दर्ज करें (5–16 अक्षर),Adınızı girin (5–16 karakter)
+Profile.Month1,January,Januari,一月,一月,1月,1월,Gennaio,Enero,Janvier,Januar,Tháng 1,Janeiro,Enero,يناير,ஜனவரி,Январь,มกราคม,Januari,जनवरी,Ocak
+Profile.Month2,February,Februari,二月,二月,２月,2월,Febbraio,Febrero,Février,Februar,Tháng 2,Fevereiro,Pebrero,فبراير,பிப்ரவரி,Февраль,กุมภาพันธ์,Februari,फ़रवरी,Şubat
+Profile.Month3,March,Maret,三月,三月,３月,3월,Marzo,Marzo,Mars,März,Tháng 3,Março,Marso,مارس,மார்ச்,Март,มีนาคม,Maart,मार्च,Mart
+Profile.Month4,April,April,四月,四月,４月,4월,Aprile,Abril,Avril,April,Tháng 4,Abril,Abril,إبريل,ஏப்ரல்,Апрель,เมษายน,April,अप्रैल,Nisan
+Profile.Month5,May,Mei,五月,五月,５月,5월,Maggio,Mayo,Mai,Mai,Tháng 5,Maio,Mayo,مايو,மே,Май,พฤษภาคม,Mei,मई,Mayıs
+Profile.Month6,June,Juni,六月,六月,６月,6월,Giugno,Junio,Juin,Juni,Tháng 6,Junho,Hunyo,يونيو,ஜூன்,Июнь,มิถุนายน,Juni,जून,Haziran
+Profile.Month7,July,Juli,七月,七月,７月,7월,Luglio,Julio,Juillet,Juli,Tháng 7,Julho,Hulyo,يوليو,ஜூலை,Июль,กรกฎาคม,Juli,जुलाई,Temmuz
+Profile.Month8,August,Agustus,八月,八月,８月,8월,Agosto,Agosto,Août,August,Tháng 8,Agosto,Agosto,أغسطس,ஆகஸ்ட்,Август,สิงหาคม,Augustus,अगस्त,Ağustos
+Profile.Month9,September,September,九月,九月,９月,9월,Settembre,Septiembre,Septembre,September,Tháng 9,Setembro,Setyembre,سبتمبر,செப்டம்பர்,Сентябрь,กันยายน,September,सितंबर,Eylül
+Profile.Month10,October,Oktober,十月,十月,10月,10월,Ottobre,Octubre,Octobre,Oktober,Tháng 10,Outubro,Oktubre,أكتوبر,அக்டோபர்,Октябрь,ตุลาคม,Oktober,अक्टूबर,Ekim
+Profile.Month11,November,November,十一月,十一月,11月,11월,Novembre,Noviembre,Novembre,November,Tháng 11,Novembro,Nobyembre,نوفمبر,நவம்பர்,Ноябрь,พฤศจิกายน,November,नवंबर,Kasım
+Profile.Month12,December,Desember,十二月,十二月,12月,12월,Dicembre,Diciembre,Décembre,Dezember,Tháng 12,Dezembro,Disyembre,ديسمبر,டிசம்பர்,Декабрь,ธันวาคม,December,दिसंबर,Aralık

@@ -389,6 +389,7 @@ namespace BumiMobile
                     new PackageDefinition("com.bumimobile.pool", "Pool", "Object pooling utilities.", "Packages/com.bumimobile.pool", defaultVersion),
                     new PackageDefinition("com.bumimobile.pushnotification", "Push Notification", "Push notification bridges and helpers.", "Packages/com.bumimobile.pushnotification", defaultVersion),
                     new PackageDefinition("com.bumimobile.save", "Save", "Save system entry points and persistence helpers.", "Packages/com.bumimobile.save", defaultVersion),
+                    new PackageDefinition("com.bumimobile.leaderboard", "Leaderboard", "Firestore-backed leaderboard service with caching and warmup helpers.", "Packages/com.bumimobile.leaderboard", defaultVersion),
                     new PackageDefinition("com.bumimobile.skins", "Skins", "Skin/theme data structures and runtime.", "Packages/com.bumimobile.skins", defaultVersion),
                     new PackageDefinition("com.bumimobile.ui", "UI", "Common UI widgets and theming.", "Packages/com.bumimobile.ui", defaultVersion),
                 };

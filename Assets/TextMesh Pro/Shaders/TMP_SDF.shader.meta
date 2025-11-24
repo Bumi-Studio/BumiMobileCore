@@ -7,3 +7,10 @@ ShaderImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297298
+  packageName: Screw Puzzle | Template + Editor
+  packageVersion: 1.1.3
+  assetPath: Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+  uploadId: 734325

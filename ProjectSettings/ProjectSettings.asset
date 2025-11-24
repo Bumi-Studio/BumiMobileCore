@@ -817,7 +817,7 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
-    Android: MODULE_INPUT_SYSTEM;MODULE_TMP
+    Android: MODULE_INPUT_SYSTEM;MODULE_TMP;BUMI_AUTH_HAS_GPGS;BUMI_AUTH_HAS_FIREBASE
     Standalone: MODULE_INPUT_SYSTEM;MODULE_TMP
   additionalCompilerArguments: {}
   platformArchitecture: {}
@@ -917,11 +917,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: 
+  cloudProjectId: 10618721-229d-4515-a0ad-7a155171f106
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: Bumi Mobile Core
+  organizationId: bumi_mobile
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
