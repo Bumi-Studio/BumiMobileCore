@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.leaderboard",
   "displayName": "Bumi Mobile Leaderboard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2021.3",
   "description": "Firebase-backed leaderboard service with caching, warmup tasks, and save-system integration for Bumi Mobile Core projects.",
   "keywords": [
