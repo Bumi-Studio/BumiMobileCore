@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
-## [0.1.1] - 2025-12-01
+## [0.1.2] - 2025-12-01
 
 ### Added
 
