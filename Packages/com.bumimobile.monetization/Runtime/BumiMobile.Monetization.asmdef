@@ -11,5 +11,22 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.google.ads.mobile",
+      "expression": "0.0.0",
+      "define": "MODULE_ADMOB"
+    },
+    {
+      "name": "com.ironsource.unity",
+      "expression": "0.0.0",
+      "define": "MODULE_LEVELPLAY"
+    },
+    {
+      "name": "com.unity.ads",
+      "expression": "0.0.0",
+      "define": "MODULE_UNITYADS"
+    }
+  ],
   "noEngineReferences": false
 }

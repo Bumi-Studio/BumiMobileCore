@@ -20,10 +20,12 @@ Audio playback, pooling, and configuration helpers used across Bumi Mobile proje
 ## Getting Started
 
 1. **Create an `AudioClips` catalog**
-   - Project window ▸ Create ▸ *Audio Clips* (searchable via the asset menu). Populate groups (UI, Gameplay, etc.) and add slots with unique identifiers such as `ui/button` or `fx/explosion_big`.
+
+   - Project window ▸ Create ▸ _Audio Clips_ (searchable via the asset menu). Populate groups (UI, Gameplay, etc.) and add slots with unique identifiers such as `ui/button` or `fx/explosion_big`.
    - The legacy `buttonSound` field resolves to the `ui/button` slot so existing references keep working.
 
 2. **Add the Audio Init Module (recommended)**
+
    - Open your `ProjectInitSettings` asset (from `com.bumimobile.core`).
    - Click **Add Module** and select **Audio Controller**.
    - Assign the `AudioClips` catalog and configure the pool size plus optional 3D defaults (max distance, spread, rolloff curve).
