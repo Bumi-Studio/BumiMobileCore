@@ -120,9 +120,9 @@ namespace BumiMobile
         /// </summary>
         public static void ReleaseSources()
         {
-            foreach(AudioSourceCase sourceCase in audioSourcesPool)
+            foreach (AudioSourceCase sourceCase in audioSourcesPool)
             {
-                if(sourceCase.IsPlaying)
+                if (sourceCase.IsPlaying)
                 {
                     sourceCase.AudioSource.Stop();
                 }
@@ -158,9 +158,40 @@ namespace BumiMobile
             sourceCase.Play(clip, volumePercentage, AudioType.Sound);
         }
 
+        public static AudioClip GetClip(string clipId)
+        {
+            return audioClips != null ? audioClips.GetClipOrNull(clipId) : null;
+        }
+
+        public static bool TryPlaySound(string clipId, float volumePercentage = 1.0f, float pitch = 1.0f)
+        {
+            var clip = GetClip(clipId);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the catalog.");
+                return false;
+            }
+
+            PlaySound(clip, volumePercentage, pitch);
+            return true;
+        }
+
+        public static bool TryPlaySound(string clipId, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f)
+        {
+            var clip = GetClip(clipId);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the catalog.");
+                return false;
+            }
+
+            PlaySound(clip, position, volumePercentage, pitch);
+            return true;
+        }
+
         private static AudioSourceCase GetAudioSource()
         {
-            foreach(AudioSourceCase audioSource in audioSourcesPool)
+            foreach (AudioSourceCase audioSource in audioSourcesPool)
             {
                 if (!audioSource.IsPlaying)
                 {
