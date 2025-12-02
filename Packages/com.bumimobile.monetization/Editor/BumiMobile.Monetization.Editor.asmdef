@@ -3,7 +3,11 @@
   "references": [
     "BumiMobile.Monetization",
     "BumiMobile.Core.Editor",
-    "BumiMobile.Defines"
+    "BumiMobile.Defines",
+    "GoogleMobileAds",
+    "GoogleMobileAds.Core",
+    "GoogleMobileAds.Ump",
+    "GoogleMobileAds.Editor"
   ],
   "includePlatforms": [
     "Editor"

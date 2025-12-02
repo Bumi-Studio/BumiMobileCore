@@ -8,6 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.3] - 2025-12-02
+
+### Changed
+
+- Allow the runtime asmdef to reference `GoogleMobileAds`, `GoogleMobileAds.Core`, and `GoogleMobileAds.Ump` so AdMob code resolves the moment the plugin is installed.
+- Added matching references (including `GoogleMobileAds.Editor`) to the editor asmdef so AdMob inspectors/build hooks compile as soon as the SDK is present.
+- Replaced direct `GoogleMobileAds.Editor` invocations with a reflection-based helper, avoiding hard assembly dependencies when the SDK omits those types.
+
 ## [0.1.2] - 2025-12-01
 
 ### Added
