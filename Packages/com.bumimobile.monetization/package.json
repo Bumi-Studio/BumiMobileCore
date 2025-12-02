@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.monetization",
   "displayName": "Bumi Mobile Monetization",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "unity": "2021.3",
   "description": "Ads, purchasing, and monetization orchestration for Bumi Mobile projects.",
   "keywords": [
