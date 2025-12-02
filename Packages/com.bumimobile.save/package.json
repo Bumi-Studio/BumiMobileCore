@@ -11,6 +11,8 @@
   ],
   "category": "Framework",
   "dependencies": {
-    "com.bumimobile.core": "0.1.1"
+    "com.bumimobile.core": "0.1.1",
+    "com.bumimobile.fullserializer": "0.1.0",
+    "com.bumimobile.security": "0.1.0"
   }
 }
