@@ -2,7 +2,10 @@
   "name": "BumiMobile.Monetization",
   "references": [
     "BumiMobile.Core",
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "GoogleMobileAds",
+    "GoogleMobileAds.Core",
+    "GoogleMobileAds.Ump"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -14,17 +17,17 @@
   "versionDefines": [
     {
       "name": "com.google.ads.mobile",
-      "expression": "0.0.0",
+      "expression": ">=0.0.0",
       "define": "MODULE_ADMOB"
     },
     {
       "name": "com.ironsource.unity",
-      "expression": "0.0.0",
+      "expression": ">=0.0.0",
       "define": "MODULE_LEVELPLAY"
     },
     {
       "name": "com.unity.ads",
-      "expression": "0.0.0",
+      "expression": ">=0.0.0",
       "define": "MODULE_UNITYADS"
     }
   ],
