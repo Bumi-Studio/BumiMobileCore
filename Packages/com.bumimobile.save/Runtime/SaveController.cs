@@ -8,9 +8,17 @@ namespace BumiMobile
     [StaticUnload]
     public static class SaveController
     {
+        public enum SaveLoadPhase { LocalLoaded, CloudApplied, CloudSkipped }
+        public static event System.Action<SaveLoadPhase> OnSavePhase;
+        private static void InvokePhase(SaveLoadPhase phase)
+        {
+            OnSaveLoaded?.Invoke();         // backward-compat (dipanggil saat Local & Cloud)
+            OnSavePhase?.Invoke(phase);     // fase spesifik
+        }
         private const string SAVE_FILE_NAME = "save";
 
         private static GlobalSave globalSave;
+        public static GlobalSave GlobalSave { get => globalSave; set => globalSave = value; }
 
         private static bool isSaveLoaded;
         public static bool IsSaveLoaded => isSaveLoaded;
@@ -23,8 +31,9 @@ namespace BumiMobile
 
         public static event SimpleCallback OnSaveLoaded;
 
-        public static void Init(float autoSaveDelay, bool clearSave = false, float overrideTime = -1f)
+        public static void Init(float autoSaveDelay, GlobalSave initialGlobalSave, bool clearSave = false, float overrideTime = -1f)
         {
+            GlobalSave = initialGlobalSave ?? new GlobalSave();
             Serializer.Init();
 
             GameObject saveCallbackReciever = new GameObject("[SAVE CALLBACK RECIEVER]");
@@ -106,7 +115,7 @@ namespace BumiMobile
             globalSave.Flush(true);
 
             BaseSaveWrapper saveWrapper = BaseSaveWrapper.ActiveWrapper;
-            if(useThreads && saveWrapper.UseThreads())
+            if (useThreads && saveWrapper.UseThreads())
             {
                 Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.Save(globalSave, SAVE_FILE_NAME));
                 saveThread.Start();
@@ -123,7 +132,7 @@ namespace BumiMobile
 
         public static void SaveCustom(GlobalSave globalSave)
         {
-            if(globalSave != null)
+            if (globalSave != null)
             {
                 globalSave.Flush(false);
 
@@ -182,6 +191,30 @@ namespace BumiMobile
             isSaveRequired = false;
 
             OnSaveLoaded = null;
+        }
+        public static void BeginCloudLoadAndReplace()
+        {
+            if (!BaseSaveWrapper.Active.SupportsCloud)
+            {
+                OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
+                return;
+            }
+
+            BaseSaveWrapper.Active.BeginCloudLoad(cloud =>
+            {
+                if (cloud == null)
+                {
+                    OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
+                    return;
+                }
+
+                cloud.Init(Time.time);
+                globalSave = cloud;
+                isSaveLoaded = true;
+
+                Debug.Log("[Save Controller] Cloud applied.");
+                InvokePhase(SaveLoadPhase.CloudApplied);
+            });
         }
 
         private class UnityCallbackReciever : MonoBehaviour

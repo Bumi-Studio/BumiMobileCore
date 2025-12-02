@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace BumiMobile
@@ -6,5 +7,12 @@ namespace BumiMobile
     {
         public abstract string ModuleName { get; }
         public abstract void CreateComponent();
+        public virtual bool IsAsync => false;
+        public virtual IEnumerator InitializeCoroutine(Initializer initializer)
+        {
+            // default: jalanin sync path
+            CreateComponent();
+            yield break;
+        }
     }
 }

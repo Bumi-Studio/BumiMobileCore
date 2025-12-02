@@ -4,6 +4,8 @@ namespace BumiMobile
 {
     public abstract class BaseSaveWrapper
     {
+        private static BaseSaveWrapper _active;
+        public static BaseSaveWrapper Active => _active ??= ActiveWrapper;
         public static BaseSaveWrapper ActiveWrapper =
 #if UNITY_EDITOR
             new DefaultSaveWrapper();
