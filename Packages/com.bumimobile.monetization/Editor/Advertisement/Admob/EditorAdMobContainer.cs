@@ -97,7 +97,7 @@ namespace BumiMobile
             else
             {
 #if MODULE_ADMOB
-                GoogleMobileAds.Editor.GoogleMobileAdsSettingsEditor.OpenInspector(); // Creates admob settings file
+                AdmobEditorUtilities.EnsureSettingsAsset(); // Creates AdMob settings file when possible
 
                 LoadFile();
 

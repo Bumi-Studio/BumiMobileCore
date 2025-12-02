@@ -22,7 +22,7 @@ namespace BumiMobile
 #if MODULE_ADMOB
             AdsSettings adsData = EditorUtils.GetAsset<AdsSettings>();
 
-            if(adsData == null)
+            if (adsData == null)
             {
                 Debug.LogError("AdsData don`t exist.");
                 return;
@@ -30,12 +30,12 @@ namespace BumiMobile
 
             Object settingsFile = AssetDatabase.LoadMainAssetAtPath(SETTINGS_FILE_PATH);
 
-            if(settingsFile == null)
+            if (settingsFile == null)
             {
-                GoogleMobileAds.Editor.GoogleMobileAdsSettingsEditor.OpenInspector(); // Creates addmob settings file
+                AdmobEditorUtilities.EnsureSettingsAsset(); // Creates AdMob settings file when the editor API is available
                 settingsFile = AssetDatabase.LoadMainAssetAtPath(SETTINGS_FILE_PATH);
 
-                if(settingsFile == null)
+                if (settingsFile == null)
                 {
                     Debug.LogError("Failed to create instance of GoogleMobileAdsSettings.");
                 }
