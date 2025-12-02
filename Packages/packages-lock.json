@@ -41,6 +41,14 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.fullserializer": {
+      "version": "file:com.bumimobile.fullserializer",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1"
+      }
+    },
     "com.bumimobile.haptic": {
       "version": "file:com.bumimobile.haptic",
       "depth": 0,
@@ -106,6 +114,16 @@
     },
     "com.bumimobile.save": {
       "version": "file:com.bumimobile.save",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1",
+        "com.bumimobile.fullserializer": "0.1.0",
+        "com.bumimobile.security": "0.1.0"
+      }
+    },
+    "com.bumimobile.security": {
+      "version": "file:com.bumimobile.security",
       "depth": 0,
       "source": "embedded",
       "dependencies": {

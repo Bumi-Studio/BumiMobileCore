@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.security",
+  "displayName": "Bumi Mobile Security",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Security module for Bumi Mobile framework, providing features such as data encryption and secure storage.",
+  "keywords": [
+    "bumi",
+    "security",
+    "module"
+  ],
+  "category": "Security",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}

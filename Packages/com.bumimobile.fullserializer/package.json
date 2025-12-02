@@ -1,0 +1,16 @@
+{
+  "name": "com.bumimobile.fullserializer",
+  "displayName": "Bumi Mobile FullSerializer",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "FullSerializer integration for Bumi Mobile modules.",
+  "keywords": [
+    "bumi",
+    "fullserializer",
+    "module"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}

@@ -1,7 +1,9 @@
 {
   "name": "BumiMobile.Save",
   "references": [
-    "BumiMobile.Core"
+    "BumiMobile.Core",
+    "BumiMobile.Security",
+    "BumiMobile.FullSerializer"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -10,5 +12,17 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.google.play.games",
+      "expression": "0.0.0",
+      "define": "BUMI_SAVE_CLOUD_GPGS"
+    },
+    {
+      "name": "com.google.firebase.firestore",
+      "expression": "0.0.0",
+      "define": "BUMI_SAVE_CLOUD_FIREBASE"
+    }
+  ],
   "noEngineReferences": false
 }
