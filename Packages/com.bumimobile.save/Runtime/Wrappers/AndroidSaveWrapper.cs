@@ -7,7 +7,7 @@ using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.SavedGame;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
-using Watermelon.Security;
+using BumiMobile.Security;
 
 namespace BumiMobile
 {

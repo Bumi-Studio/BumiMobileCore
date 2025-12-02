@@ -20,7 +20,7 @@ namespace BumiMobile.Security.Editor
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
             string code = "// AUTO-GENERATED. DO NOT COMMIT.\n" +
-                         "namespace Watermelon.Security { public static class SaveCryptoConfig { public static readonly string AppSecret = \"" + secret + "\"; } }\n";
+                         "namespace BumiMobile.Security { public static class SaveCryptoConfig { public static readonly string AppSecret = \"" + secret + "\"; } }\n";
 
             File.WriteAllText(ConfigPath, code);
             AssetDatabase.Refresh();

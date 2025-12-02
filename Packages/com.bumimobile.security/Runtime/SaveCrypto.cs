@@ -90,7 +90,7 @@ namespace BumiMobile.Security
                 // Try to locate SaveCryptoConfig.AppSecret via reflection to avoid hard dependency
                 foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    var t = asm.GetType("Watermelon.Security.SaveCryptoConfig");
+                    var t = asm.GetType("BumiMobile.Security.SaveCryptoConfig");
                     if (t == null) continue;
                     var f = t.GetField("AppSecret", BindingFlags.Public | BindingFlags.Static);
                     if (f == null) continue;
