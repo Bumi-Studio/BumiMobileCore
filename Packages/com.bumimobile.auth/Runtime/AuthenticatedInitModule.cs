@@ -70,11 +70,11 @@ namespace BumiMobile
             {
                 var signInTask = AuthService.SignInAsync(true);
                 var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
-                (bool p, bool a) winner = await UniTask.WhenAny(signInTask, timeoutTask);
+                 (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
 
-                if (winner.p)
+                if (winner.fromSignIn)
                 {
-                    signInResult = await signInTask;
+                    signInResult = winner.authResult;
                 }
                 else
                 {
