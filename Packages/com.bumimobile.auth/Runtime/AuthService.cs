@@ -255,6 +255,7 @@ namespace BumiMobile
                     try
                     {
                         authCode = await RequestPgsServerAuthCodeAsync(force);
+                        Debug.Log("[Auth] Obtained PGS auth code: " + authCode);
                     }
                     catch (Exception e) { lastCodeErr = e; }
                 }
