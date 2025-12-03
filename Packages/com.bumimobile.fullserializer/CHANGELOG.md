@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.1] - 2025-12-03
+
+### Added
+
+- `BumiMobile.FullSerializer.Editor` asmdef that references `UnityEditor` so editor-only types such as `fsAotConfigurationEditor` compile only in the editor.
+- Guarded `fsAotConfigurationEditor.cs` with `UNITY_EDITOR` so it is excluded from Android/IL2CPP builds that lack UnityEditor assemblies.
+
 ## [0.1.0] - 2025-12-02
 
 ### Added
