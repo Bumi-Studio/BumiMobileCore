@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.auth",
   "displayName": "Bumi Mobile Auth",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "unity": "2021.3",
   "description": "Authentication scaffolding for the Bumi Mobile framework.",
   "keywords": [
