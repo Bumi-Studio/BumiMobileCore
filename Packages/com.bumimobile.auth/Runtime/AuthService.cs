@@ -262,6 +262,7 @@ namespace BumiMobile
                 if (string.IsNullOrEmpty(authCode))
                 {
                     LastAuthFailureReason = "[Auth] Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
+                    Debug.LogWarning(LastAuthFailureReason);
                     return false;
                 }
 
