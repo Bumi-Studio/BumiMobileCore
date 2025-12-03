@@ -260,12 +260,12 @@ namespace BumiMobile
                 }
                 if (string.IsNullOrEmpty(authCode))
                 {
-                    LastAuthFailureReason = "Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
+                    LastAuthFailureReason = "[Auth] Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
                     return false;
                 }
 
                 var cred = PlayGamesAuthProvider.GetCredential(authCode);
-                if (cred == null) { LastAuthFailureReason = "Null PGS credential"; return false; }
+                if (cred == null) { LastAuthFailureReason = "[Auth] Null PGS credential"; return false; }
 
                 if (auth.CurrentUser == null)
                 {
