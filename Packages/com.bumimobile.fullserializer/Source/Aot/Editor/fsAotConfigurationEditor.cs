@@ -1,4 +1,5 @@
-﻿#if !NO_UNITY
+﻿#if UNITY_EDITOR && !NO_UNITY
+
 using System;
 using System.Collections.Generic;
 using System.IO;
