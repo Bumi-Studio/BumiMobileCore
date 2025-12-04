@@ -29,7 +29,8 @@ namespace BumiMobile
         public static bool IsAuthenticated { get; private set; }
 
         private bool initializationStarted;
-        private UniTask initializationTask;
+        private bool initializationCompleted;
+        private UniTaskCompletionSource initializationCompletionSource;
 
         public override string ModuleName => "Authenticated";
         public override bool IsAsync => Application.isPlaying;
@@ -59,73 +60,87 @@ namespace BumiMobile
             if (!initializationStarted)
             {
                 initializationStarted = true;
-                initializationTask = InitializeAsync();
+                initializationCompletionSource = new UniTaskCompletionSource();
+                InitializeAsync().Forget();
             }
 
-            return initializationTask;
+            if (initializationCompleted)
+            {
+                return UniTask.CompletedTask;
+            }
+
+            return initializationCompletionSource.Task;
         }
 
         private async UniTask InitializeAsync()
         {
-            Debug.Log("[Auth] Init start");
-
-            var countryInitTask = InitializeCountryAsync();
-
-            if (PlayerPrefs.GetInt(AuthDisabledKey, 0) == 1)
-            {
-                Debug.Log("[Auth] Auto sign-in disabled by user (persistent).");
-                IsAuthenticated = false;
-                await countryInitTask;
-                return;
-            }
-
-            if (PlayerPrefs.GetInt(SkipAuthKey, 0) == 1)
-            {
-                PlayerPrefs.DeleteKey(SkipAuthKey);
-                PlayerPrefs.Save();
-                Debug.Log("[Auth] Skipping authentication after sign-out");
-                IsAuthenticated = false;
-                await countryInitTask;
-                return;
-            }
-
-            bool timedOut = false;
-            bool signInResult = false;
-
             try
             {
-                var signInTask = AuthService.SignInAsync(true);
-                var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
-                (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
+                Debug.Log("[Auth] Init start");
 
-                if (winner.fromSignIn)
+                var countryInitTask = InitializeCountryAsync();
+
+                if (PlayerPrefs.GetInt(AuthDisabledKey, 0) == 1)
                 {
-                    signInResult = winner.authResult;
+                    Debug.Log("[Auth] Auto sign-in disabled by user (persistent).");
+                    IsAuthenticated = false;
+                    await countryInitTask;
+                    return;
                 }
-                else
+
+                if (PlayerPrefs.GetInt(SkipAuthKey, 0) == 1)
                 {
-                    timedOut = true;
+                    PlayerPrefs.DeleteKey(SkipAuthKey);
+                    PlayerPrefs.Save();
+                    Debug.Log("[Auth] Skipping authentication after sign-out");
+                    IsAuthenticated = false;
+                    await countryInitTask;
+                    return;
                 }
+
+                bool signInResult = false;
+
+                try
+                {
+                    var signInTask = AuthService.SignInAsync(true);
+                    if (timeoutSeconds > 0f)
+                    {
+                        var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
+                        (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
+
+                        if (winner.fromSignIn)
+                        {
+                            signInResult = winner.authResult;
+                        }
+                        else
+                        {
+                            Debug.LogWarning("[Auth] Sign-in taking longer than expected; waiting for Play Games result...");
+                            signInResult = await signInTask;
+                        }
+                    }
+                    else
+                    {
+                        signInResult = await signInTask;
+                    }
+                }
+                catch (Exception e)
+                {
+                    signInResult = false;
+                    Debug.LogWarning("[Auth] Sign-in encountered an exception: " + e.Message);
+                }
+
+                await countryInitTask;
+
+                IsAuthenticated = signInResult;
+                Debug.Log($"[Auth] Init done | ok={IsAuthenticated} | id={AuthService.PlayerId} | country={CountryService.CountryISO}");
             }
-            catch (Exception e)
+            finally
             {
-                timedOut = false;
-                signInResult = false;
-                Debug.LogWarning("[Auth] Sign-in encountered an exception: " + e.Message);
+                initializationCompleted = true;
+                initializationCompletionSource?.TrySetResult();
             }
-
-            await countryInitTask;
-
-            if (timedOut)
-            {
-                Debug.LogWarning("[Auth] Init timeout — continuing without authenticated session.");
-                IsAuthenticated = false;
-                return;
-            }
-
-            IsAuthenticated = signInResult;
-            Debug.Log($"[Auth] Init done | ok={IsAuthenticated} | id={AuthService.PlayerId} | country={CountryService.CountryISO}");
         }
+
 
         private UniTask InitializeCountryAsync()
         {

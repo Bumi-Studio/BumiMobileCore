@@ -257,7 +257,7 @@ namespace BumiMobile
             InitializationProgress = Mathf.Clamp01(progress);
             InitializationMessage = message;
             OnInitializationProgress?.Invoke(InitializationProgress, InitializationMessage);
-            GameLoading.SetLoadingMessage(message);
+            GameLoading.SetLoadingStatus(InitializationProgress, InitializationMessage);
         }
 
         private static string GetModuleName(InitModule module, int index)
