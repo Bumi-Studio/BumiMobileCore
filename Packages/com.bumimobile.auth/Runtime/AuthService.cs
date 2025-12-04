@@ -255,17 +255,19 @@ namespace BumiMobile
                     try
                     {
                         authCode = await RequestPgsServerAuthCodeAsync(force);
+                        Debug.Log("[Auth] Obtained PGS auth code: " + authCode);
                     }
                     catch (Exception e) { lastCodeErr = e; }
                 }
                 if (string.IsNullOrEmpty(authCode))
                 {
-                    LastAuthFailureReason = "Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
+                    LastAuthFailureReason = "[Auth] Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
+                    Debug.LogWarning(LastAuthFailureReason);
                     return false;
                 }
 
                 var cred = PlayGamesAuthProvider.GetCredential(authCode);
-                if (cred == null) { LastAuthFailureReason = "Null PGS credential"; return false; }
+                if (cred == null) { LastAuthFailureReason = "[Auth] Null PGS credential"; return false; }
 
                 if (auth.CurrentUser == null)
                 {
