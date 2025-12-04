@@ -9,6 +9,7 @@
 // ------------------------------------------------------------
 
 using System;
+using System.Collections;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -27,7 +28,11 @@ namespace BumiMobile
 
         public static bool IsAuthenticated { get; private set; }
 
+        private bool initializationStarted;
+        private UniTask initializationTask;
+
         public override string ModuleName => "Authenticated";
+        public override bool IsAsync => Application.isPlaying;
 
         public override void CreateComponent()
         {
@@ -36,10 +41,31 @@ namespace BumiMobile
                 return;
             }
 
-            InitializeAsync().Forget();
+            EnsureInitializationAsync().Forget();
         }
 
-        private async UniTaskVoid InitializeAsync()
+        public override IEnumerator InitializeCoroutine(Initializer initializer)
+        {
+            if (!Application.isPlaying)
+            {
+                yield break;
+            }
+
+            yield return EnsureInitializationAsync().ToCoroutine();
+        }
+
+        private UniTask EnsureInitializationAsync()
+        {
+            if (!initializationStarted)
+            {
+                initializationStarted = true;
+                initializationTask = InitializeAsync();
+            }
+
+            return initializationTask;
+        }
+
+        private async UniTask InitializeAsync()
         {
             Debug.Log("[Auth] Init start");
 
@@ -70,7 +96,7 @@ namespace BumiMobile
             {
                 var signInTask = AuthService.SignInAsync(true);
                 var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
-                 (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
+                (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
 
                 if (winner.fromSignIn)
                 {
