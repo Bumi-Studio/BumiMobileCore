@@ -11,13 +11,7 @@ namespace BumiMobile
 
         public void Init(Initializer initializer)
         {
-            for (int i = 0; i < modules.Length; i++)
-            {
-                if (modules[i] != null)
-                {
-                    modules[i].CreateComponent();
-                }
-            }
+            initializer?.ConfigureModules(modules);
         }
 
         public T GetModule<T>() where T : InitModule

@@ -9,20 +9,28 @@ using FullSerializer.Internal;
 using UnityEditor;
 using UnityEngine;
 
-namespace FullSerializer {
+namespace FullSerializer
+{
 	[InitializeOnLoad]
-	public static class PlayStateNotifier {
-		static PlayStateNotifier() {
+	public static class PlayStateNotifier
+	{
+		static PlayStateNotifier()
+		{
 			EditorApplication.playModeStateChanged += ModeChanged;
 		}
 
-		private static void ModeChanged (PlayModeStateChange _) {
-			if (!EditorApplication.isPlayingOrWillChangePlaymode && EditorApplication.isPlaying) {
+		private static void ModeChanged(PlayModeStateChange _)
+		{
+			if (!EditorApplication.isPlayingOrWillChangePlaymode && EditorApplication.isPlaying)
+			{
 				//Debug.Log("There are " + fsAotCompilationManager.AotCandidateTypes.Count + " candidate types");
-				foreach (fsAotConfiguration target in Resources.FindObjectsOfTypeAll<fsAotConfiguration>()) {
+				foreach (fsAotConfiguration target in Resources.FindObjectsOfTypeAll<fsAotConfiguration>())
+				{
 					var seen = new HashSet<string>(target.aotTypes.Select(t => t.FullTypeName));
-					foreach (Type type in fsAotCompilationManager.AotCandidateTypes) {
-						if (seen.Contains(type.FullName) == false) {
+					foreach (Type type in fsAotCompilationManager.AotCandidateTypes)
+					{
+						if (seen.Contains(type.FullName) == false)
+						{
 							target.aotTypes.Add(new fsAotConfiguration.Entry(type));
 							EditorUtility.SetDirty(target);
 						}
@@ -33,11 +41,14 @@ namespace FullSerializer {
 	}
 
 	[CustomEditor(typeof(fsAotConfiguration))]
-	public class fsAotConfigurationEditor : Editor {
+	public class fsAotConfigurationEditor : Editor
+	{
 		[NonSerialized]
 		private List<Type> _allAotTypes;
-		private List<Type> allAotTypes {
-			get {
+		private List<Type> allAotTypes
+		{
+			get
+			{
 				if (_allAotTypes == null)
 					_allAotTypes = FindAllAotTypes().ToList();
 				return _allAotTypes;
@@ -45,8 +56,10 @@ namespace FullSerializer {
 		}
 
 		private string[] options = new string[] { "On", "Off", "[?]" };
-		private int GetIndexForState(fsAotConfiguration.AotState state) {
-			switch (state) {
+		private int GetIndexForState(fsAotConfiguration.AotState state)
+		{
+			switch (state)
+			{
 				case fsAotConfiguration.AotState.Enabled:
 					return 0;
 				case fsAotConfiguration.AotState.Disabled:
@@ -57,8 +70,10 @@ namespace FullSerializer {
 
 			throw new ArgumentException("state is invalid " + state);
 		}
-		private fsAotConfiguration.AotState GetStateForIndex(int index) {
-			switch (index) {
+		private fsAotConfiguration.AotState GetStateForIndex(int index)
+		{
+			switch (index)
+			{
 				case 0: return fsAotConfiguration.AotState.Enabled;
 				case 1: return fsAotConfiguration.AotState.Disabled;
 				case 2: return fsAotConfiguration.AotState.Default;
@@ -67,9 +82,12 @@ namespace FullSerializer {
 			throw new ArgumentException("invalid index " + index);
 		}
 
-		private IEnumerable<Type> FindAllAotTypes() {
-			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-				foreach (Type t in assembly.GetTypes()) {
+		private IEnumerable<Type> FindAllAotTypes()
+		{
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (Type t in assembly.GetTypes())
+				{
 					bool performAot = false;
 
 					// check for [fsObject]
@@ -79,10 +97,13 @@ namespace FullSerializer {
 					}
 
 					// check for [fsProperty]
-					if (!performAot) {
-						foreach (PropertyInfo p in t.GetProperties()) {
+					if (!performAot)
+					{
+						foreach (PropertyInfo p in t.GetProperties())
+						{
 							var props = p.GetCustomAttributes(typeof(fsPropertyAttribute), true);
-							if (props.Length > 0) {
+							if (props.Length > 0)
+							{
 								performAot = true;
 								break;
 							}
@@ -95,12 +116,14 @@ namespace FullSerializer {
 			}
 		}
 
-		private enum OutOfDateResult {
+		private enum OutOfDateResult
+		{
 			NoAot,
 			Stale,
 			Current
 		}
-		private OutOfDateResult IsOutOfDate(Type type) {
+		private OutOfDateResult IsOutOfDate(Type type)
+		{
 			string converterName = fsAotCompilationManager.GetQualifiedConverterNameForType(type);
 			Type converterType = fsTypeCache.GetType(converterName);
 			if (converterType == null)
@@ -111,9 +134,11 @@ namespace FullSerializer {
 			//       at runtime.
 
 			object instance_ = null;
-			try {
+			try
+			{
 				instance_ = Activator.CreateInstance(converterType);
-			} catch (Exception) {}
+			}
+			catch (Exception) { }
 			if (instance_ is fsIAotConverter == false)
 				return OutOfDateResult.NoAot;
 			var instance = (fsIAotConverter)instance_;
@@ -125,14 +150,16 @@ namespace FullSerializer {
 			return OutOfDateResult.Current;
 		}
 
-		private void DrawType(fsAotConfiguration.Entry entry, Type resolvedType) {
+		private void DrawType(fsAotConfiguration.Entry entry, Type resolvedType)
+		{
 			var target = (fsAotConfiguration)this.target;
 
 			EditorGUILayout.BeginHorizontal();
 
 			int currentIndex = GetIndexForState(entry.State);
 			int newIndex = GUILayout.Toolbar(currentIndex, options, GUILayout.ExpandWidth(false));
-			if (currentIndex != newIndex) {
+			if (currentIndex != newIndex)
+			{
 				entry.State = GetStateForIndex(newIndex);
 				target.UpdateOrAddEntry(entry);
 				EditorUtility.SetDirty(target);
@@ -140,7 +167,8 @@ namespace FullSerializer {
 
 			string displayName = entry.FullTypeName;
 			string tooltip = "";
-			if (resolvedType != null) {
+			if (resolvedType != null)
+			{
 				displayName = resolvedType.CSharpName();
 				tooltip = resolvedType.CSharpName(true);
 			}
@@ -151,12 +179,17 @@ namespace FullSerializer {
 
 			GUIStyle messageStyle = new GUIStyle(EditorStyles.label);
 			string message;
-			if (resolvedType != null) {
+			if (resolvedType != null)
+			{
 				message = GetAotCompilationMessage(resolvedType);
-				if (string.IsNullOrEmpty(message) == false) {
+				if (string.IsNullOrEmpty(message) == false)
+				{
 					messageStyle.normal.textColor = Color.red;
-				} else {
-					switch (IsOutOfDate(resolvedType)) {
+				}
+				else
+				{
+					switch (IsOutOfDate(resolvedType))
+					{
 						case OutOfDateResult.NoAot:
 							message = "No AOT model found";
 							break;
@@ -168,7 +201,9 @@ namespace FullSerializer {
 							break;
 					}
 				}
-			} else {
+			}
+			else
+			{
 				message = "Cannot load type";
 			}
 
@@ -177,36 +212,48 @@ namespace FullSerializer {
 			EditorGUILayout.EndHorizontal();
 		}
 
-		private string GetAotCompilationMessage(Type type) {
-			try {
+		private string GetAotCompilationMessage(Type type)
+		{
+			try
+			{
 				fsMetaType.Get(new fsConfig(), type).EmitAotData(true);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				return e.Message;
 			}
 			return "";
 		}
 
 		private Vector2 _scrollPos;
-		public override void OnInspectorGUI() {
+		public override void OnInspectorGUI()
+		{
 			var target = (fsAotConfiguration)this.target;
 
-			if (GUILayout.Button("Compile")) {
+			if (GUILayout.Button("Compile"))
+			{
 				if (Directory.Exists(target.outputDirectory) == false)
 					Directory.CreateDirectory(target.outputDirectory);
 
-				foreach (fsAotConfiguration.Entry entry in target.aotTypes) {
-					if (entry.State == fsAotConfiguration.AotState.Enabled) {
+				foreach (fsAotConfiguration.Entry entry in target.aotTypes)
+				{
+					if (entry.State == fsAotConfiguration.AotState.Enabled)
+					{
 						Type resolvedType = fsTypeCache.GetType(entry.FullTypeName);
-						if (resolvedType == null) {
+						if (resolvedType == null)
+						{
 							Debug.LogError("Cannot find type " + entry.FullTypeName);
 							continue;
 						}
 
-						try {
+						try
+						{
 							string compilation = fsAotCompilationManager.RunAotCompilationForType(new fsConfig(), resolvedType);
 							string path = Path.Combine(target.outputDirectory, "AotConverter_" + resolvedType.CSharpName(true, true) + ".cs");
 							File.WriteAllText(path, compilation);
-						} catch (Exception e) {
+						}
+						catch (Exception e)
+						{
 							Debug.LogWarning("AOT compiling " + resolvedType.CSharpName(true) + " failed: " + e.Message);
 						}
 					}
@@ -221,14 +268,16 @@ namespace FullSerializer {
 			int newIndex = GUILayout.Toolbar(-1, options, GUILayout.ExpandWidth(false));
 			GUILayout.FlexibleSpace();
 			EditorGUILayout.EndHorizontal();
-			if (newIndex != -1) {
+			if (newIndex != -1)
+			{
 				var newState = fsAotConfiguration.AotState.Default;
 				if (newIndex == 0)
 					newState = fsAotConfiguration.AotState.Enabled;
 				else if (newIndex == 1)
 					newState = fsAotConfiguration.AotState.Disabled;
 
-				for (int i = 0; i < target.aotTypes.Count; ++i) {
+				for (int i = 0; i < target.aotTypes.Count; ++i)
+				{
 					var entry = target.aotTypes[i];
 					entry.State = newState;
 					target.aotTypes[i] = entry;
@@ -237,7 +286,8 @@ namespace FullSerializer {
 
 
 			_scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
-			foreach (fsAotConfiguration.Entry entry in target.aotTypes) {
+			foreach (fsAotConfiguration.Entry entry in target.aotTypes)
+			{
 				Type resolvedType = fsTypeCache.GetType(entry.FullTypeName);
 				EditorGUI.BeginDisabledGroup(resolvedType == null || string.IsNullOrEmpty(GetAotCompilationMessage(resolvedType)) == false);
 				DrawType(entry, resolvedType);

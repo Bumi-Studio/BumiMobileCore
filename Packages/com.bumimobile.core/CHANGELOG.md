@@ -8,8 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- Added `com.bumimobile.auth` to the Core package manager window so the auth module can be installed like the other packages.
-- Package manager now prompts to install Google Play Games via local tarball after adding the Auth module.
+- _Nothing yet._
+
+## [0.1.3] - 2025-12-04
+
+### Added
+
+- Initialization flow now surfaces progress via `Initializer.OnInitializationProgress`, `SetInitializationStatus`, and `ReportInitializationProgress`, enabling custom loaders to display ongoing module states.
+- `GameLoading` automatically queues a core initialization task so progress text feeds into the existing loading UI without extra wiring.
+
+### Changed
+
+- Game scene activation now waits until every init module (including async ones like Auth/Save) confirms completion, preventing premature transitions when services are still starting.
+- `Initializer` keeps modules alive during loading, de-duplicating coroutine runs and ensuring status text always reflects the latest module in progress.
 
 ## [0.1.2] - 2025-11-20
 
