@@ -171,15 +171,7 @@ namespace BumiMobile
                     continue;
                 }
 
-                try
-                {
-                    module.CreateComponent();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[Initializer] Failed to create module {moduleName}: {e}");
-                    continue;
-                }
+                bool ranModule = false;
 
                 if (module.IsAsync)
                 {
@@ -195,8 +187,38 @@ namespace BumiMobile
 
                     if (routine != null)
                     {
+                        ranModule = true;
                         yield return RunModuleRoutine(routine, moduleName);
                     }
+                    else
+                    {
+                        try
+                        {
+                            module.CreateComponent();
+                            ranModule = true;
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogError($"[Initializer] Failed to create module {moduleName}: {e}");
+                        }
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        module.CreateComponent();
+                        ranModule = true;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"[Initializer] Failed to create module {moduleName}: {e}");
+                    }
+                }
+
+                if (!ranModule)
+                {
+                    continue;
                 }
 
                 float endProgress = (float)(i + 1) / totalModules;
