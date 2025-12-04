@@ -98,15 +98,13 @@ namespace BumiMobile
                 configuredModules = Array.Empty<InitModule>();
             }
 
+            EnsureInitializationRoutine();
             RegisterInitializationTask();
         }
 
         private void Start()
         {
-            if (moduleInitializationRoutine == null)
-            {
-                moduleInitializationRoutine = StartCoroutine(InitializeModulesRoutine());
-            }
+            EnsureInitializationRoutine();
 
             if (!manualActivation)
             {
@@ -274,6 +272,14 @@ namespace BumiMobile
                 return;
 
             instance.StopCoroutine(routine);
+        }
+
+        private void EnsureInitializationRoutine()
+        {
+            if (ModulesReady || moduleInitializationRoutine != null)
+                return;
+
+            moduleInitializationRoutine = StartCoroutine(InitializeModulesRoutine());
         }
 
         private void RegisterInitializationTask()
