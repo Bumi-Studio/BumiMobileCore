@@ -6,7 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- (Add unreleased changes here)
+- _Nothing yet._
+
+## [0.1.4] - 2025-12-08
+
+### Changed
+
+- `AuthenticatedInitModule` now participates in the core async initialization pipeline, preventing duplicate sign-in attempts and guaranteeing the initializer waits for a definitive Play Games success/failure (falling back to anonymous when needed).
+- Sign-in no longer aborts immediately when the optional timeout elapses; instead it logs the delay and keeps waiting for the actual Play Games result to avoid false negatives.
 
 ## [0.1.2] - 2025-11-21
 
