@@ -12,8 +12,12 @@ using Unity.Notifications.iOS;
 public static class NotificationManager
 {
     private const string DefaultChannelId = "default_channel";
+    private const int SameTimeThresholdMinutes = 5;
+    private const int MinimumIntervalHours = 4;
 
     private static NotificationTemplateCatalog _catalog;
+    private static bool _enableDeduplication = true;
+    private static System.Random _random = new System.Random();
 
     public static NotificationTemplateCatalog Catalog => LoadCatalog();
 
@@ -21,6 +25,16 @@ public static class NotificationManager
     {
         _catalog = customCatalog;
         _catalog?.RemoveNullEntries();
+    }
+
+    public static void SetDeduplicationEnabled(bool enabled)
+    {
+        _enableDeduplication = enabled;
+    }
+
+    public static bool IsDeduplicationEnabled()
+    {
+        return _enableDeduplication;
     }
 
     public static IReadOnlyList<ScheduledNotification> ScheduleAllNotifications(NotificationScheduleContext context = null)
@@ -36,7 +50,8 @@ public static class NotificationManager
             return Array.Empty<ScheduledNotification>();
         }
 
-        var scheduled = new List<ScheduledNotification>();
+        // First, collect ALL candidates
+        var allCandidates = new List<ScheduledNotification>();
         foreach (var template in catalog.Notifications)
         {
             if (template == null)
@@ -45,10 +60,23 @@ public static class NotificationManager
             }
             foreach (var candidate in DetermineSchedule(template, context))
             {
-                SchedulePlatformNotification(candidate);
-                scheduled.Add(candidate);
-                context.AppendHistory(candidate.Type, candidate.FireTime);
+                allCandidates.Add(candidate);
             }
+        }
+
+        // Apply deduplication if enabled
+        if (_enableDeduplication)
+        {
+            allCandidates = DeduplicateNotifications(allCandidates, context);
+        }
+
+        // Now schedule the deduplicated list
+        var scheduled = new List<ScheduledNotification>();
+        foreach (var candidate in allCandidates)
+        {
+            SchedulePlatformNotification(candidate);
+            scheduled.Add(candidate);
+            context.AppendHistory(candidate.Type, candidate.FireTime);
         }
 
         return scheduled;
@@ -244,6 +272,90 @@ public static class NotificationManager
 
                 break;
         }
+    }
+
+    private static List<ScheduledNotification> DeduplicateNotifications(
+        List<ScheduledNotification> candidates,
+        NotificationScheduleContext context)
+    {
+        if (candidates == null || candidates.Count == 0)
+        {
+            return candidates;
+        }
+
+        var result = new List<ScheduledNotification>();
+
+        // Group by notification type
+        var typeGroups = candidates.GroupBy(n => n.Type);
+
+        foreach (var typeGroup in typeGroups)
+        {
+            var notifications = typeGroup.OrderBy(n => n.FireTime).ToList();
+
+            // Process each notification
+            for (int i = 0; i < notifications.Count; i++)
+            {
+                var current = notifications[i];
+                var duplicates = new List<ScheduledNotification> { current };
+
+                // Find duplicates within the same time threshold
+                for (int j = i + 1; j < notifications.Count; j++)
+                {
+                    var next = notifications[j];
+                    var timeDiff = (next.FireTime - current.FireTime).TotalMinutes;
+
+                    // Check if notifications are at the same time (within threshold)
+                    if (timeDiff <= SameTimeThresholdMinutes)
+                    {
+                        duplicates.Add(next);
+                    }
+                    else if (timeDiff >= MinimumIntervalHours * 60)
+                    {
+                        // If this notification is 4+ hours away, stop checking
+                        break;
+                    }
+                }
+
+                // Handle duplicates
+                if (duplicates.Count > 1)
+                {
+                    // Randomly select one to keep at original time
+                    var selectedIndex = _random.Next(duplicates.Count);
+                    var selected = duplicates[selectedIndex];
+                    result.Add(selected);
+
+                    Debug.Log($"[NotificationManager] Found {duplicates.Count} duplicate {current.Type} notifications at {current.FireTime:yyyy-MM-dd HH:mm}. Selected notification at index {selectedIndex} to keep.");
+
+                    // Reschedule the rest
+                    var dayOffset = 1;
+                    for (int k = 0; k < duplicates.Count; k++)
+                    {
+                        if (k == selectedIndex)
+                        {
+                            continue; // Skip the selected one
+                        }
+
+                        var notification = duplicates[k];
+                        var newFireTime = notification.FireTime.AddDays(dayOffset);
+                        notification.FireTime = newFireTime;
+                        result.Add(notification);
+
+                        Debug.Log($"[NotificationManager] Rescheduled duplicate {notification.Type} to {newFireTime:yyyy-MM-dd HH:mm} (+{dayOffset} day{(dayOffset > 1 ? "s" : "")}).");
+                        dayOffset++;
+                    }
+
+                    // Skip the processed duplicates
+                    i += duplicates.Count - 1;
+                }
+                else
+                {
+                    // No duplicates, add as is
+                    result.Add(current);
+                }
+            }
+        }
+
+        return result;
     }
 
     private static NotificationTemplateCatalog LoadCatalog()

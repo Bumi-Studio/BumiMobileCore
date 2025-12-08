@@ -19,12 +19,19 @@ public class NotificationSettings : ScriptableObject
     [Tooltip("Log a warning when no catalog is provided and the fallback defaults are used.")]
     private bool logMissingCatalogWarning = true;
 
+    [SerializeField]
+    [Tooltip("When multiple notifications of the same type are scheduled at the same time, randomly select one and reschedule others for future days.")]
+    private bool enableDeduplication = true;
+
     public NotificationTemplateCatalog TemplateCatalog => templateCatalog;
     public bool ScheduleOnInit => scheduleOnInit;
     public bool ScheduleInEditor => scheduleInEditor;
+    public bool EnableDeduplication => enableDeduplication;
 
     public void ApplyCatalog()
     {
+        NotificationManager.SetDeduplicationEnabled(enableDeduplication);
+
         if (templateCatalog != null)
         {
             NotificationManager.RegisterCatalog(templateCatalog);

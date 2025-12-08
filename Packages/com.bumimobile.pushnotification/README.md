@@ -9,6 +9,7 @@ This package provides a simple, data-driven push notification solution for Bumi 
 - `NotificationTemplateCatalog` ScriptableObject that references the templates you create and exposes them to the scheduler.
 - `NotificationSettings` ScriptableObject that binds a catalog to the initialization pipeline and optionally auto-schedules.
 - `NotificationManager` runtime scheduler that enforces cooldowns, trigger constraints, and platform-specific delivery.
+- **Automatic deduplication** that handles multiple notifications of the same type scheduled at the same time by randomly selecting one and rescheduling others.
 
 ## Requirements
 
@@ -55,6 +56,34 @@ This package provides a simple, data-driven push notification solution for Bumi 
 - **Add new notification types:** Extend the `NotificationType` enum and update `NotificationTemplateDefaults.CreateRuntimeTemplates` inside `NotificationTemplate.cs` if you need new fallback defaults.
 - **Custom triggers:** Introduce new values in `NotificationTriggerType` and adjust `NotificationManager.DetermineSchedule` with the scheduling logic.
 - **Per-project customization:** Duplicate the built-in defaults by creating new `NotificationTemplate` assets (rules, messages, media) and adding them to your catalog.
+
+## Deduplication
+
+The package automatically handles duplicate notifications (multiple notifications of the same type scheduled at the same time):
+
+- **Same-time threshold:** Notifications within 5 minutes are considered duplicates.
+- **Minimum interval:** Notifications 4+ hours apart are not deduplicated.
+- **Random selection:** One notification is randomly chosen to stay at the original time.
+- **Sequential rescheduling:** Others are rescheduled to +1, +2, +3 days, etc.
+
+### Configuration
+
+Enable or disable deduplication in `NotificationSettings`:
+- Check/uncheck `Enable Deduplication` in the Inspector (default: enabled).
+
+Or control it via code:
+```csharp
+NotificationManager.SetDeduplicationEnabled(false);
+bool isEnabled = NotificationManager.IsDeduplicationEnabled();
+```
+
+### Example
+
+If 4 notifications of type `DailyRetention` are scheduled for 10:00 AM:
+- One stays at 10:00 AM (randomly selected)
+- Others rescheduled to 10:00 AM +1 day, +2 days, +3 days
+
+The system logs deduplication actions to help with debugging.
 
 ## Troubleshooting
 
