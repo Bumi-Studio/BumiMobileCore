@@ -13,7 +13,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.bumimobile.core": "0.1.1"
+        "com.bumimobile.core": "0.1.3"
       }
     },
     "com.bumimobile.core": {
