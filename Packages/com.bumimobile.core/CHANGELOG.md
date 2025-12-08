@@ -23,7 +23,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Game scene activation now waits until every init module (including async ones like Auth/Save) confirms completion, preventing premature transitions when services are still starting.
 - `Initializer` keeps modules alive during loading, de-duplicating coroutine runs and ensuring status text always reflects the latest module in progress.
 - `Initializer` now forwards module progress to the loading screen, keeping both text and percentage aligned while initialization runs.
-- `AuthenticatedInitModule` is fully awaited during boot, preventing duplicate sign-in attempts and ensuring the scene transition waits for a definitive success/failure from Play Games before falling back to anonymous mode.
 
 ## [0.1.2] - 2025-11-20
 
