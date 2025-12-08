@@ -6,32 +6,32 @@ using UnityEngine;
 
 namespace BumiMobile
 {
-	/// <summary>
-	/// Localization manager.
-	/// </summary>
+    /// <summary>
+    /// Localization manager.
+    /// </summary>
     public static class LocalizationController
     {
-		/// <summary>
-		/// Fired when localization changed.
-		/// </summary>
-        public static event Action OnLocalizationChanged = () => { }; 
+        /// <summary>
+        /// Fired when localization changed.
+        /// </summary>
+        public static event Action OnLocalizationChanged = () => { };
 
         public static Dictionary<LanguageType, Dictionary<string, string>> Dictionary = new();
         private static LanguageType _language = LanguageType.English;
         private static LocalizationSettings _settings;
 
-		/// <summary>
-		/// Get or set language.
-		/// </summary>
+        /// <summary>
+        /// Get or set language.
+        /// </summary>
         public static LanguageType Language
         {
             get => _language;
             set { _language = value; OnLocalizationChanged(); }
         }
 
-		/// <summary>
-		/// Set default language.
-		/// </summary>
+        /// <summary>
+        /// Set default language.
+        /// </summary>
         public static void AutoLanguage()
         {
             Language = LanguageType.English;
@@ -55,7 +55,7 @@ namespace BumiMobile
             {
                 var textAsset = sheet.TextAsset;
                 var lines = GetLines(textAsset.text);
-				var languages = lines[0].Split(',').Select(i => i.Trim()).ToList();
+                var languages = lines[0].Split(',').Select(i => i.Trim()).ToList();
 
                 if (languages.Count != languages.Distinct().Count())
                 {
@@ -112,45 +112,53 @@ namespace BumiMobile
         {
             return Dictionary.ContainsKey(Language) && Dictionary[Language].ContainsKey(localizationKey);
         }
-
-        /// <summary>
-        /// Get localized value by localization key.
-        /// </summary>
         public static string Localize(string localizationKey)
         {
             if (Dictionary.Count == 0)
-            {
                 Read();
-            }
 
-            if (!Dictionary.ContainsKey(Language)) throw new KeyNotFoundException("Language not found: " + Language);
+            string raw = LocalizeRaw(localizationKey);
+            return FixIfArabic(raw);
+        }
 
-            var missed = !Dictionary[Language].ContainsKey(localizationKey) || Dictionary[Language][localizationKey] == "";
+        public static string Localize(string localizationKey, params object[] args)
+        {
+            if (Dictionary.Count == 0)
+                Read();
 
+            string pattern = LocalizeRaw(localizationKey); // unshaped
+            string formatted = string.Format(pattern, args);
+            return FixIfArabic(formatted);
+        }
+
+        private static string LocalizeRaw(string localizationKey)
+        {
+            if (!Dictionary.ContainsKey(Language))
+                throw new KeyNotFoundException("Language not found: " + Language);
+
+            bool missed = !Dictionary[Language].ContainsKey(localizationKey) || Dictionary[Language][localizationKey] == "";
             if (missed)
             {
                 Debug.LogWarning($"Translation not found: {localizationKey} ({Language}).");
+                if (Dictionary.ContainsKey(LanguageType.English) && Dictionary[LanguageType.English].ContainsKey(localizationKey))
+                    return Dictionary[LanguageType.English][localizationKey];
 
-                return Dictionary[LanguageType.English].ContainsKey(localizationKey) ? Dictionary[LanguageType.English][localizationKey] : localizationKey;
+                return localizationKey;
             }
-
             return Dictionary[Language][localizationKey];
         }
 
-	    /// <summary>
-	    /// Get localized value by localization key.
-	    /// </summary>
-		public static string Localize(string localizationKey, params object[] args)
+        public static string FixIfArabic(string s)
         {
-            var pattern = Localize(localizationKey);
-
-            return string.Format(pattern, args);
+            if (Language == LanguageType.Arab && !string.IsNullOrEmpty(s))
+                return ArabicFixer.Fix(s, false, false);
+            return s;
         }
 
         public static List<string> GetLines(string text)
         {
             text = text.Replace("\r\n", "\n").Replace("\"\"", "[_quote_]");
-            
+
             var matches = Regex.Matches(text, "\"[\\s\\S]+?\"");
 
             foreach (Match match in matches)

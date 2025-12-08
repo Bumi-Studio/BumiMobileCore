@@ -24,6 +24,8 @@ namespace BumiMobile
         Dutch = 17,
         Hindi = 18,
         Turkish = 19,
+        Persian = 20,
+        Kurdish = 21,
         Unknown = -1
     }
 }
