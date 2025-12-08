@@ -8,6 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.2.3] - 2025-12-08
+
+### Added
+
+- **Notification Deduplication System**: Automatically handles multiple notifications of the same type scheduled at the same time by randomly selecting one to display and rescheduling others for future days.
+  - Notifications within 5 minutes are considered duplicates
+  - Notifications 4+ hours apart are not deduplicated
+  - Duplicates are rescheduled with count-based day offsets (+1, +2, +3 days, etc.)
+  - Random selection ensures fair distribution across app sessions
+- New `enableDeduplication` configuration option in `NotificationSettings` to toggle the feature
+- Public API methods `SetDeduplicationEnabled()` and `IsDeduplicationEnabled()` for runtime control
+- Detailed logging of deduplication actions for debugging
+
+### Changed
+
+- `ScheduleAllNotifications` now collects all candidates before scheduling to enable deduplication processing
+
+
 ## [0.2.2] - 2025-11-20
 
 ### Added
