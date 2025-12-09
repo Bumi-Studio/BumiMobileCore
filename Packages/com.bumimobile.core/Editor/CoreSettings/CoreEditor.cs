@@ -8,8 +8,8 @@ namespace BumiMobile
     [InitializeOnLoad]
     public static class CoreEditor
     {
-        private const string CoreFolderName = "Bumi Mobile Core";
-        private const string DefaultCoreFolder = "Assets/Bumi Mobile Core";
+        private const string CoreFolderName = "BumiMobile";
+        private const string DefaultCoreFolder = "Assets/Project Files/Data";
         private const string DefaultCoreSettingsPath = DefaultCoreFolder + "/Core Settings.asset";
 
         public static string FolderCore { get; private set; }
