@@ -28,6 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - Fixed language persistence issue where language would reset on game restart
 - Fixed language not being available during early initialization
+- Fixed `Read()` method unconditionally calling `AutoLanguage()`, which was resetting saved language preferences
 
 ## [0.1.2] - 2025-12-08
 

@@ -169,7 +169,12 @@ namespace BumiMobile
                 }
             }
 
-            AutoLanguage();
+            // Only auto-set language if no preference was previously saved
+            // The language was already set in BootstrapLanguage() or Init()
+            if (!PlayerPrefs.HasKey(PREFS_KEY))
+            {
+                AutoLanguage();
+            }
         }
 
         /// <summary>
