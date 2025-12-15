@@ -19,6 +19,13 @@ namespace BumiMobile
         public static Dictionary<LanguageType, Dictionary<string, string>> Dictionary = new();
         private static LanguageType _language = LanguageType.English;
         private static LocalizationSettings _settings;
+        private const string PREFS_KEY = "wm_lang";
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BootstrapLanguage()
+        {
+            LoadLanguageFromPrefsOrAuto();
+        }
 
         /// <summary>
         /// Get or set language.
@@ -26,20 +33,80 @@ namespace BumiMobile
         public static LanguageType Language
         {
             get => _language;
-            set { _language = value; OnLocalizationChanged(); }
+            set
+            {
+                if (_language == value)
+                    return;
+
+                _language = value;
+
+                PlayerPrefs.SetInt(PREFS_KEY, (int)_language);
+                PlayerPrefs.Save();
+
+                Debug.Log($"Localization language: {_language}");
+
+                OnLocalizationChanged();
+            }
         }
 
         /// <summary>
-        /// Set default language.
+        /// Set language based on system language.
         /// </summary>
         public static void AutoLanguage()
         {
-            Language = LanguageType.English;
+            Language = MapSystemLanguage(Application.systemLanguage);
         }
 
         public static void Init(LocalizationSettings settings)
         {
             _settings = settings;
+
+            if (!PlayerPrefs.HasKey(PREFS_KEY))
+            {
+                LoadLanguageFromPrefsOrAuto();
+            }
+        }
+
+        private static void LoadLanguageFromPrefsOrAuto()
+        {
+            if (PlayerPrefs.HasKey(PREFS_KEY))
+            {
+                var raw = PlayerPrefs.GetInt(PREFS_KEY, (int)LanguageType.English);
+
+                _language = Enum.IsDefined(typeof(LanguageType), raw) ? (LanguageType)raw : LanguageType.English;
+
+                Debug.Log($"Localization language: {_language}");
+            }
+            else
+            {
+                _language = MapSystemLanguage(Application.systemLanguage);
+            }
+        }
+
+        private static LanguageType MapSystemLanguage(SystemLanguage systemLanguage)
+        {
+            return systemLanguage switch
+            {
+                SystemLanguage.English => LanguageType.English,
+                SystemLanguage.Indonesian => LanguageType.Indonesian,
+                SystemLanguage.Arabic => LanguageType.Arab,
+                SystemLanguage.ChineseSimplified => LanguageType.MandarinSimplified,
+                SystemLanguage.Chinese or SystemLanguage.ChineseTraditional => LanguageType.MandarinTraditional,
+                SystemLanguage.Japanese => LanguageType.Japanese,
+                SystemLanguage.Korean => LanguageType.Korean,
+                SystemLanguage.Italian => LanguageType.Italian,
+                SystemLanguage.Spanish => LanguageType.Spanish,
+                SystemLanguage.French => LanguageType.French,
+                SystemLanguage.German => LanguageType.German,
+                SystemLanguage.Portuguese => LanguageType.Portuguese,
+                SystemLanguage.Russian => LanguageType.Russian,
+                SystemLanguage.Thai => LanguageType.Thai,
+                SystemLanguage.Vietnamese => LanguageType.Vietnamese,
+                SystemLanguage.Dutch => LanguageType.Dutch,
+                SystemLanguage.Hindi => LanguageType.Hindi,
+                SystemLanguage.Turkish => LanguageType.Turkish,
+                _ => LanguageType.English
+            };
         }
 
         /// <summary>
@@ -102,7 +169,12 @@ namespace BumiMobile
                 }
             }
 
-            AutoLanguage();
+            // Only auto-set language if no preference was previously saved
+            // The language was already set in BootstrapLanguage() or Init()
+            if (!PlayerPrefs.HasKey(PREFS_KEY))
+            {
+                AutoLanguage();
+            }
         }
 
         /// <summary>
