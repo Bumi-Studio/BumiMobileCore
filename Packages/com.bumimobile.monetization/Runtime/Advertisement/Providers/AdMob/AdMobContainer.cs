@@ -56,6 +56,7 @@ namespace BumiMobile
             MediumRectangle = 1,
             IABBanner = 2,
             Leaderboard = 3,
+            Adaptive = 4
         }
     }
 }
