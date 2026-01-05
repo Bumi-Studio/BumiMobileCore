@@ -1,17 +1,21 @@
 # Bumi Mobile Gallery Package
 
-A unified mobile gallery management package for iOS and Android that provides native gallery access and image upload capabilities.
+A comprehensive mobile gallery management package for iOS and Android featuring the powerful NativeGallery plugin by yasirkula.
 
 ## Features
 
 - 📱 Native gallery picker for iOS and Android
-- 🖼️ Image selection and preview
-- 📤 Seamless image upload functionality
-- 🔄 Cross-platform compatibility
-- 🎯 Async/await pattern support
-- ✅ Automatic permission handling
-- ✅ Texture2D conversion for in-game use
-- ✅ Static utility API (no setup required)
+- 🖼️ Image, video, and audio selection (single or multiple)
+- 💾 Save images/videos to device gallery
+- 📐 Image properties (dimensions, orientation, MIME type)
+- 🎬 Video properties (duration, rotation, dimensions)
+- 🖼️ Video thumbnail generation
+- 🔄 Cross-platform compatibility (iOS 12+, Android 5.0+)
+- 🎯 Async callback pattern support
+- ✅ Automatic permission handling (Read/Write)
+- ✅ Texture2D conversion with max size and orientation handling
+- ✅ Static utility API (no MonoBehaviour required)
+- 🔧 Editor mode support for testing
 
 ## Installation
 
@@ -27,42 +31,73 @@ A unified mobile gallery management package for iOS and Android that provides na
 Open `Packages/manifest.json` and add:
 
 ```json
-"com.bumimobile.gallery": "0.1.5"
+"com.bumimobile.gallery": "0.1.2"
 ```
 
 ## Quick Start
 
-### Basic Usage (Static API - No Setup Required)
+### Basic Image Selection
 
 ```csharp
-using BumiMobile.Gallery;
-
-// Open gallery - just call the static method directly!
-string imagePath = await GalleryManager.OpenGalleryAsync();
-
-if (!string.IsNullOrEmpty(imagePath))
+// Pick single image with callback
+NativeGallery.GetImageFromGallery((path) =>
 {
-    // Show preview
-    Texture2D texture = await GalleryManager.GetImageTextureAsync(imagePath);
-    myImage.texture = texture;
+    if (path != null)
+    {
+        // Load texture with max size
+        Texture2D texture = NativeGallery.LoadImageAtPath(path, maxSize: 2048);
+        if (texture != null)
+        {
+            myRawImage.texture = texture;
+        }
+    }
+}, "Select Image", "image/*");
+```
 
-    // Upload to server
-    bool success = await GalleryManager.UploadImageAsync(
-        imagePath,
-        "https://your-api.com/upload"
-    );
-}
+### Multiple Image Selection
+
+```csharp
+// Pick multiple images
+NativeGallery.GetImagesFromGallery((paths) =>
+{
+    if (paths != null)
+    {
+        Debug.Log($"Selected {paths.Length} images");
+        foreach (string path in paths)
+        {
+            // Process each image
+        }
+    }
+}, "Select Images", "image/*");
 ```
 
 ### Permission Handling
 
 ```csharp
 // Check permission
-if (!GalleryManager.HasGalleryPermission())
+NativeGallery.Permission permission = NativeGallery.CheckPermission(
+    NativeGallery.PermissionType.Read,
+    NativeGallery.MediaType.Image
+);
+
+if (permission != NativeGallery.Permission.Granted)
 {
     // Request permission
-    bool granted = await GalleryManager.RequestGalleryPermissionAsync();
+    permission = NativeGallery.RequestPermission(
+        NativeGallery.PermissionType.Read,
+        NativeGallery.MediaType.Image
+    );
 }
+```
+
+### Save Image to Gallery
+
+```csharp
+// Save texture to gallery
+NativeGallery.SaveImageToGallery(texture, "MyApp", "screenshot.png", (success, path) =>
+{
+    Debug.Log(success ? $"Saved to {path}" : "Save failed");
+});
 ```
 
 ## Platform Setup
@@ -80,6 +115,7 @@ Add to your `Info.plist`:
 ```
 
 Ensure these frameworks are linked in Xcode:
+
 - `Photos.framework`
 - `UIKit.framework`
 - `Foundation.framework`
@@ -87,6 +123,7 @@ Ensure these frameworks are linked in Xcode:
 ### Android
 
 Required permissions (auto-merged from package):
+
 - `android.permission.READ_EXTERNAL_STORAGE`
 - `android.permission.READ_MEDIA_IMAGES` (Android 13+)
 - `android.permission.INTERNET`
@@ -96,7 +133,7 @@ Ensure your `build.gradle` includes:
 ```gradle
 android {
     compileSdkVersion 33
-    
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
@@ -113,28 +150,41 @@ android {
 
 ### What's Included
 
-**C# Scripts**:
-- `GalleryManager.cs` - Main static utility class
-- `IGalleryService.cs` - Interface definition
-- `IOSGalleryWrapper.cs` - iOS platform layer
-- `AndroidGalleryWrapper.cs` - Android platform layer
-- `AndroidGalleryCallback.cs` - Android callback receiver
+**Core API**:
 
-**Native Code**:
-- iOS: `BumiGalleryManager.swift` + `BumiGalleryBridge.mm`
-- Android: `GalleryManager.java` + `GalleryActivity.java`
+- `NativeGallery.cs` (988 lines) - Main static utility class with comprehensive gallery operations
+
+**iOS Implementation** (`Plugins/NativeGallery/iOS/`):
+
+- `NativeGallery.mm` - Objective-C++ bridge for Unity-iOS communication
+- `NGMediaReceiveCallbackiOS.cs` - Media selection callback handler
+- `NGMediaSaveCallbackiOS.cs` - Save operation callback handler
+- `NGPermissionCallbackiOS.cs` - Permission request callback handler
+
+**Android Implementation** (`Plugins/NativeGallery/Android/`):
+
+- `NativeGallery.aar` - Android Archive Library with native Java implementation
+- `NGCallbackHelper.cs` - Unity callback routing helper
+- `NGMediaReceiveCallbackAndroid.cs` - Media selection callback handler
+- `NGPermissionCallbackAndroid.cs` - Permission callback handler
+
+**Editor Tools** (`Plugins/NativeGallery/Editor/`):
+
+- `NGPostProcessBuild.cs` - Automatic build configuration for iOS/Android
+- `BumiMobile.Gallery.Editor.asmdef` - Editor assembly definition
 
 ### How It Works
 
-The package uses native platform-specific code to open the gallery and handle callbacks:
+The package uses native platform-specific implementations:
 
-1. **iOS**: Uses Swift's `PHPhotoLibrary` and `UIImagePickerController`
-2. **Android**: Uses Android's MediaStore and Intent system
-3. **Callbacks**: Results are returned via C# async/await pattern
+1. **iOS**: Uses `UIImagePickerController` and `PHPhotoLibrary` for gallery access
+2. **Android**: Uses MediaStore API and Storage Access Framework (Android 10+)
+3. **Callbacks**: Results returned via MonoBehaviour receivers with UnitySendMessage
+4. **Permissions**: Automatic runtime permission handling on both platforms
 
 ## Dependencies
 
-- `com.bumimobile.core` ^0.1.1
+- `com.bumimobile.core` ^0.1.2
 
 ## API Reference
 

@@ -2,21 +2,28 @@
 
 ## Quick Overview
 
-**GalleryManager** is a static utility class providing cross-platform gallery access. No setup required - just call methods directly!
+**NativeGallery** is a static utility class providing comprehensive cross-platform gallery access. No MonoBehaviour required - just call static methods directly!
 
 ```csharp
-// Open gallery
-var imagePath = await GalleryManager.OpenGalleryAsync();
+// Pick single image
+NativeGallery.GetImageFromGallery((path) =>
+{
+    Texture2D texture = NativeGallery.LoadImageAtPath(path, 2048);
+    myImage.texture = texture;
+}, "Select Image");
 
-// Load texture
-var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+// Pick multiple images
+NativeGallery.GetImagesFromGallery((paths) =>
+{
+    Debug.Log($"Selected {paths.Length} images");
+}, "Select Images");
 
-// Upload image
-bool success = await GalleryManager.UploadImageAsync(imagePath, url, "photo");
+// Save image to gallery
+NativeGallery.SaveImageToGallery(texture, "MyApp", "photo.png");
 
 // Check/request permissions
-if (!GalleryManager.HasGalleryPermission())
-    await GalleryManager.RequestGalleryPermissionAsync();
+if (NativeGallery.CheckPermission(NativeGallery.PermissionType.Read) != NativeGallery.Permission.Granted)
+    NativeGallery.RequestPermission(NativeGallery.PermissionType.Read);
 ```
 
 ---
@@ -33,100 +40,244 @@ if (!GalleryManager.HasGalleryPermission())
 
 ## API Reference
 
-### Namespace
-`BumiMobile.Gallery`
-
-### GalleryManager
+### NativeGallery Class
 
 Static utility class for gallery operations across iOS and Android.
 
-#### OpenGalleryAsync()
-Opens the native gallery picker.
+---
 
-**Returns:** `Task<string>` - Path to selected image, or null if cancelled
+### Media Selection
 
-**Example:**
-```csharp
-var imagePath = await GalleryManager.OpenGalleryAsync();
-if (!string.IsNullOrEmpty(imagePath))
-    Debug.Log($"Selected: {imagePath}");
-```
+#### GetImageFromGallery(callback, title, mime)
 
-#### GetImageTextureAsync(string imagePath)
-Loads an image file as Texture2D for in-game display.
+Picks a single image from the gallery.
 
 **Parameters:**
-- `imagePath` (string) - Local path to image file
 
-**Returns:** `Task<Texture2D>` - Loaded texture or null
+- `callback` (Action<string>) - Callback with selected image path (null if cancelled)
+- `title` (string) - Picker dialog title
+- `mime` (string, optional) - MIME type filter (default: "image/\*")
+
+**Returns:** `Permission` - Current permission status
 
 **Example:**
+
 ```csharp
-var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+NativeGallery.GetImageFromGallery((path) =>
+{
+    if (path != null)
+        Debug.Log($"Selected: {path}");
+}, "Select Image", "image/*");
+```
+
+#### GetImagesFromGallery(callback, title, mime)
+
+Picks multiple images from the gallery.
+
+**Parameters:**
+
+- `callback` (Action<string[]>) - Callback with array of image paths
+- `title` (string) - Picker dialog title
+- `mime` (string, optional) - MIME type filter
+
+**Example:**
+
+```csharp
+NativeGallery.GetImagesFromGallery((paths) =>
+{
+    if (paths != null)
+        Debug.Log($"Selected {paths.Length} images");
+}, "Select Images");
+```
+
+#### GetVideoFromGallery(callback, title, mime)
+
+Picks a single video from the gallery.
+
+**Parameters:**
+
+- `callback` (Action<string>) - Callback with selected video path
+- `title` (string) - Picker dialog title
+- `mime` (string, optional) - MIME type filter (default: "video/\*")
+
+#### GetVideosFromGallery(callback, title, mime)
+
+Picks multiple videos from the gallery.
+
+#### GetAudioFromGallery(callback, title, mime)
+
+Picks an audio file from the gallery.
+
+#### GetMixedMediaFromGallery(callback, mediaTypes, title)
+
+Picks media of mixed types (images, videos, audio).
+
+**Parameters:**
+
+- `mediaTypes` (MediaType) - Flag enum: MediaType.Image | MediaType.Video | MediaType.Audio
+
+---
+
+### Image Operations
+
+#### LoadImageAtPath(imagePath, maxSize, markTextureNonReadable, generateMipmaps, linearColorSpace)
+
+Loads an image from path as Texture2D with automatic orientation handling.
+
+**Parameters:**
+
+- `imagePath` (string) - Path to image file
+- `maxSize` (int, optional) - Maximum texture dimension (default: -1 = no limit)
+- `markTextureNonReadable` (bool, optional) - Mark texture as non-readable (default: true)
+- `generateMipmaps` (bool, optional) - Generate mipmaps (default: true)
+- `linearColorSpace` (bool, optional) - Use linear color space (default: false)
+
+**Returns:** `Texture2D` - Loaded texture with correct orientation
+
+**Example:**
+
+```csharp
+Texture2D texture = NativeGallery.LoadImageAtPath(path, maxSize: 2048);
 if (texture != null)
-    myImage.texture = texture;
+    myRawImage.texture = texture;
 ```
 
-#### UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image")
-Uploads an image to server using multipart form data.
+#### GetImageProperties(imagePath)
 
-**Parameters:**
-- `imagePath` (string) - Local path to image
-- `uploadUrl` (string) - Server endpoint URL
-- `fieldName` (string, optional) - Form field name (default: "image")
+Extracts image properties without loading full texture.
 
-**Returns:** `Task<bool>` - True if successful
+**Returns:** `ImageProperties` struct with:
+
+- `width` (int) - Image width
+- `height` (int) - Image height
+- `mimeType` (string) - MIME type
+- `orientation` (ImageOrientation) - EXIF orientation
 
 **Example:**
+
 ```csharp
-bool success = await GalleryManager.UploadImageAsync(
-    imagePath,
-    "https://api.example.com/upload",
-    "profile_photo"
+NativeGallery.ImageProperties props = NativeGallery.GetImageProperties(path);
+Debug.Log($"Image: {props.width}x{props.height}, {props.mimeType}");
+```
+
+#### SaveImageToGallery(bytes/texture, albumName, filenameFormatted, callback)
+
+Saves an image to the device gallery.
+
+**Parameters:**
+
+- `bytes` (byte[]) or `texture` (Texture2D) - Image data to save
+- `albumName` (string) - Album name to save in
+- `filenameFormatted` (string) - File name (supports {0} for timestamp)
+- `callback` (Action<bool, string>) - Callback with success status and path
+
+**Example:**
+
+```csharp
+NativeGallery.SaveImageToGallery(texture, "MyApp", "screenshot_{0}.png", (success, path) =>
+{
+    Debug.Log(success ? $"Saved: {path}" : "Failed");
+});
+```
+
+---
+
+### Video Operations
+
+#### GetVideoProperties(videoPath)
+
+Extracts video properties.
+
+**Returns:** `VideoProperties` struct with:
+
+- `width` (int) - Video width
+- `height` (int) - Video height
+- `duration` (long) - Duration in milliseconds
+- `rotation` (float) - Rotation angle
+
+#### GetVideoThumbnail(videoPath, callback, maxSize, captureTimeInSeconds)
+
+Generates a thumbnail from a video.
+
+**Parameters:**
+
+- `videoPath` (string) - Path to video
+- `callback` (Action<Texture2D>) - Callback with thumbnail texture
+- `maxSize` (int, optional) - Max thumbnail size (default: -1)
+- `captureTimeInSeconds` (double, optional) - Time to capture (default: 1.0)
+
+**Example:**
+
+```csharp
+NativeGallery.GetVideoThumbnail(videoPath, (thumbnail) =>
+{
+    if (thumbnail != null)
+        previewImage.texture = thumbnail;
+}, maxSize: 512, captureTimeInSeconds: 2.0);
+```
+
+#### SaveVideoToGallery(videoPath, albumName, filenameFormatted, callback)
+
+Saves a video to the device gallery.
+
+---
+
+### Permission Management
+
+#### CheckPermission(permissionType, mediaType)
+
+Checks current permission status.
+
+**Parameters:**
+
+- `permissionType` (PermissionType) - Read or Write
+- `mediaType` (MediaType, optional) - Image, Video, or Audio (default: Image)
+
+**Returns:** `Permission` enum:
+
+- `Permission.Denied` - Permission explicitly denied
+- `Permission.Granted` - Permission granted
+- `Permission.ShouldAsk` - Should request permission
+
+**Example:**
+
+```csharp
+NativeGallery.Permission perm = NativeGallery.CheckPermission(
+    NativeGallery.PermissionType.Read,
+    NativeGallery.MediaType.Image
+);
+
+if (perm == NativeGallery.Permission.Denied)
+    NativeGallery.OpenSettings();
+```
+
+#### RequestPermission(permissionType, mediaType)
+
+Requests permission from user.
+
+**Returns:** `Permission` - Result after request
+
+**Example:**
+
+```csharp
+NativeGallery.Permission result = NativeGallery.RequestPermission(
+    NativeGallery.PermissionType.Write,
+    NativeGallery.MediaType.Image
 );
 ```
 
-#### HasGalleryPermission()
-Checks if gallery permission is granted.
+#### OpenSettings()
 
-**Returns:** `bool` - True if permitted
+Opens app settings page for manual permission grant.
 
-**Example:**
-```csharp
-if (GalleryManager.HasGalleryPermission())
-    await OpenGallery();
-```
-
-#### RequestGalleryPermissionAsync()
-Requests gallery access permission from user.
-
-**Returns:** `Task<bool>` - True if granted
-
-**Example:**
-```csharp
-bool granted = await GalleryManager.RequestGalleryPermissionAsync();
-```
-
-### IGalleryService Interface
-
-Interface for dependency injection or custom implementations:
-
-```csharp
-public interface IGalleryService
-{
-    Task<string> OpenGalleryAsync();
-    Task<bool> UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image");
-    Task<Texture2D> GetImageTextureAsync(string imagePath);
-    bool HasGalleryPermission();
-    Task<bool> RequestGalleryPermissionAsync();
-}
-```
+**Returns:** `bool` - True if settings opened successfully
 
 ---
 
 ## Usage Examples
 
 ### Example 1: Simple Image Selection
+
 ```csharp
 using BumiMobile.Gallery;
 
@@ -139,6 +290,7 @@ async void SelectImage()
 ```
 
 ### Example 2: Select and Preview
+
 ```csharp
 async void SelectWithPreview()
 {
@@ -152,6 +304,7 @@ async void SelectWithPreview()
 ```
 
 ### Example 3: Full Workflow
+
 ```csharp
 async void SelectPreviewAndUpload()
 {
@@ -177,12 +330,13 @@ async void SelectPreviewAndUpload()
         "https://api.example.com/upload",
         "image"
     );
-    
+
     Debug.Log(success ? "Upload successful!" : "Upload failed");
 }
 ```
 
 ### Example 4: Error Handling
+
 ```csharp
 async void SafeGalleryOperation()
 {
@@ -222,7 +376,7 @@ async void SafeGalleryOperation()
             imagePath,
             "https://api.example.com/upload"
         );
-        
+
         if (success)
             Debug.Log("Success!");
     }
@@ -238,6 +392,7 @@ async void SafeGalleryOperation()
 ## Integration Patterns
 
 ### Pattern 1: UI Button Integration
+
 ```csharp
 using UnityEngine;
 using UnityEngine.UI;
@@ -275,6 +430,7 @@ public class GalleryUI : MonoBehaviour
 ```
 
 ### Pattern 2: Profile Photo Upload
+
 ```csharp
 using UnityEngine;
 using BumiMobile.Gallery;
@@ -312,6 +468,7 @@ public class ProfileManager : MonoBehaviour
 ```
 
 ### Pattern 3: Reactive Gallery Manager
+
 ```csharp
 using UnityEngine;
 using BumiMobile.Gallery;
@@ -351,6 +508,7 @@ public class ReactiveGallery : MonoBehaviour
 ### iOS Setup
 
 **Info.plist Requirements:**
+
 ```xml
 <key>NSPhotoLibraryUsageDescription</key>
 <string>We need access to your photos</string>
@@ -360,11 +518,13 @@ public class ReactiveGallery : MonoBehaviour
 ```
 
 **Xcode Framework Linking:**
+
 - Photos.framework
 - UIKit.framework
 - Foundation.framework
 
 **Build Settings:**
+
 - Minimum iOS version: 12.0
 - Swift Language Version: 5.0+
 
@@ -372,15 +532,17 @@ public class ReactiveGallery : MonoBehaviour
 
 **AndroidManifest.xml:**
 Already includes required permissions:
+
 - `android.permission.READ_EXTERNAL_STORAGE`
 - `android.permission.READ_MEDIA_IMAGES`
 - `android.permission.INTERNET`
 
 **Gradle Configuration:**
+
 ```gradle
 android {
     compileSdkVersion 33
-    
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
@@ -401,6 +563,7 @@ android {
 **Cause**: Missing permissions or not granted by user
 
 **Solution**:
+
 ```csharp
 if (!GalleryManager.HasGalleryPermission())
 {
@@ -410,6 +573,7 @@ var imagePath = await GalleryManager.OpenGalleryAsync();
 ```
 
 **Also check:**
+
 - iOS: Verify `NSPhotoLibraryUsageDescription` in Info.plist
 - Android: Check device Settings → Apps → Permissions → Photos
 
@@ -418,6 +582,7 @@ var imagePath = await GalleryManager.OpenGalleryAsync();
 **Cause**: Invalid URL or network error
 
 **Solution**:
+
 ```csharp
 // Test with a known endpoint first
 bool success = await GalleryManager.UploadImageAsync(
@@ -435,6 +600,7 @@ if (!success)
 **Cause**: Invalid image path or corrupted file
 
 **Solution**:
+
 ```csharp
 if (!System.IO.File.Exists(imagePath))
 {
@@ -452,6 +618,7 @@ if (texture == null)
 **Cause**: Permission already denied - user must enable in Settings
 
 **Solution**:
+
 - iOS/Android: Go to device Settings → Apps → Gallery App → Permissions
 - For user guidance, check `GalleryManager.HasGalleryPermission()` and show appropriate dialog
 
@@ -460,6 +627,7 @@ if (texture == null)
 **Cause**: minSdkVersion too low or missing Activity
 
 **Solution**:
+
 - Set minSdkVersion to 21 or higher in build.gradle
 - Verify `GalleryActivity` is in final AndroidManifest.xml
 
@@ -468,6 +636,7 @@ if (texture == null)
 **Cause**: Missing frameworks or .mm file not compiled
 
 **Solution**:
+
 - Verify all frameworks are linked in Xcode: Photos, UIKit, Foundation
 - Check that BumiGalleryBridge.mm is in Xcode project compilation target
 
@@ -720,7 +889,7 @@ Add to `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.bumimobile.gallery": "0.1.0",
+    "com.bumimobile.gallery": "0.1.2",
     "com.bumimobile.core": "^0.1.1"
   }
 }

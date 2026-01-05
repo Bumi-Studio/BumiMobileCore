@@ -1,6 +1,125 @@
 # Changelog
 
-## [0.1.1] - 2024-Current
+All notable changes to the Bumi Mobile Gallery package.
+
+## [0.1.2] - 2026-01-05
+
+### Package Structure
+
+**Core Files:**
+
+- `package.json` - Package manifest with dependencies on com.bumimobile.core v0.1.2
+- `README.md` - Quick start guide and feature overview
+- `SUMMARY.md` - Complete API reference and integration patterns
+- `CHANGELOG.md` - Version history
+
+**Plugins/NativeGallery/:**
+
+- `NativeGallery.cs` (988 lines) - Main static API with comprehensive gallery operations
+  - Image/Video selection (single and multiple)
+  - Media properties extraction (dimensions, orientation, duration)
+  - Permission handling (Read/Write)
+  - Save to gallery functionality
+  - LoadImageAtPath with max size and orientation support
+  - Video thumbnail generation
+
+**iOS Implementation (Plugins/NativeGallery/iOS/):**
+
+- `NativeGallery.mm` - Objective-C++ bridge for Swift/iOS integration
+- `NGMediaReceiveCallbackiOS.cs` - Callback handler for media selection
+- `NGMediaSaveCallbackiOS.cs` - Callback handler for save operations
+- `NGPermissionCallbackiOS.cs` - Permission request callback handler
+
+**Android Implementation (Plugins/NativeGallery/Android/):**
+
+- `NativeGallery.aar` - Android Archive Library with Java implementation
+- `NGCallbackHelper.cs` - Unity callback routing helper
+- `NGMediaReceiveCallbackAndroid.cs` - Media selection callback handler
+- `NGPermissionCallbackAndroid.cs` - Permission callback handler
+
+**Editor Tools (Plugins/NativeGallery/Editor/):**
+
+- `NGPostProcessBuild.cs` - Automatic build post-processing for iOS/Android
+- `BumiMobile.Gallery.Editor.asmdef` - Editor assembly definition
+
+**Assembly Definitions:**
+
+- `BumiMobile.Gallery.asmdef` - Main runtime assembly
+
+### API Features
+
+**Media Selection:**
+
+- `GetImageFromGallery()` - Single image picker with async callback
+- `GetImagesFromGallery()` - Multiple image picker
+- `GetVideoFromGallery()` - Single video picker with async callback
+- `GetVideosFromGallery()` - Multiple video picker
+- `GetAudioFromGallery()` - Audio file picker
+- `GetMixedMediaFromGallery()` - Mixed media type picker
+
+**Media Properties:**
+
+- `GetImageProperties()` - Extract image dimensions, MIME type, orientation
+- `GetVideoProperties()` - Extract video dimensions, duration, rotation
+
+**Permission Management:**
+
+- `CheckPermission()` - Check Read/Write permission status
+- `RequestPermission()` - Request gallery access permission
+- `OpenSettings()` - Open app settings for manual permission grant
+
+**Image Operations:**
+
+- `LoadImageAtPath()` - Load image from path with max size constraint
+- `GetImageOrientation()` - Get image orientation (EXIF data)
+- `SaveImageToGallery()` - Save Texture2D/byte[] to gallery with album support
+
+**Video Operations:**
+
+- `SaveVideoToGallery()` - Save video to gallery
+- `GetVideoThumbnail()` - Generate video thumbnail with time and max size
+
+**Platform Support:**
+
+- iOS 12.0+ with UIImagePickerController and PHPhotoLibrary
+- Android API 21+ (5.0 Lollipop) with MediaStore and Storage Access Framework
+- Editor preview mode for development
+
+### Dependencies
+
+- Unity 2021.3 or later
+- com.bumimobile.core v0.1.2
+
+### Technical Architecture
+
+**Cross-Platform Design:**
+
+- Static utility class (no MonoBehaviour required)
+- Conditional compilation (#if UNITY_IOS/UNITY_ANDROID/UNITY_EDITOR)
+- Native callback routing through UnitySendMessage
+- Automatic permission handling
+
+**iOS Implementation:**
+
+- Native UIImagePickerController for media selection
+- PHPhotoLibrary for permission and gallery access
+- Objective-C++ bridge (NativeGallery.mm) for C#-Swift communication
+- Callback system using MonoBehaviour receivers
+
+**Android Implementation:**
+
+- MediaStore API for gallery access
+- Storage Access Framework (SAF) for Android 10+
+- ActivityCompat for runtime permissions
+- Custom Activity result handling via .aar library
+
+**Editor Mode:**
+
+- File dialog fallback for testing in Unity Editor
+- Simulated permission system
+- Image loading support for development workflow
+
+## [0.1.1] - 2026-01-05
 
 ### Added
 
@@ -58,7 +177,7 @@
 - Platform abstraction via #if UNITY_IOS/UNITY_ANDROID
 - IOSGalleryWrapper and AndroidGalleryWrapper for platform-specific logic
 
-## [0.1.0] - 2024-Initial
+## [0.1.0] - 2026-01-05
 
 ### Added
 
