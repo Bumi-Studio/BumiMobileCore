@@ -2,7 +2,7 @@
 
 All notable changes to the Bumi Mobile Gallery package.
 
-## [0.1.2] - 2026-01-05
+## [0.1.3] - 2026-01-05
 
 ### Package Structure
 

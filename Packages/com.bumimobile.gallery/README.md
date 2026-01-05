@@ -31,7 +31,7 @@ A comprehensive mobile gallery management package for iOS and Android featuring 
 Open `Packages/manifest.json` and add:
 
 ```json
-"com.bumimobile.gallery": "0.1.2"
+"com.bumimobile.gallery": "0.1.3"
 ```
 
 ## Quick Start

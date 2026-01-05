@@ -889,7 +889,7 @@ Add to `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.bumimobile.gallery": "0.1.2",
+    "com.bumimobile.gallery": "0.1.3",
     "com.bumimobile.core": "^0.1.1"
   }
 }
