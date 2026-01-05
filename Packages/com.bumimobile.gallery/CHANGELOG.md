@@ -4,6 +4,12 @@ All notable changes to the Bumi Mobile Gallery package.
 
 ## [0.1.3] - 2026-01-05
 
+## Changes
+
+- fix android aar not included on package plugins
+
+## [0.1.2] - 2026-01-05
+
 ### Package Structure
 
 **Core Files:**
