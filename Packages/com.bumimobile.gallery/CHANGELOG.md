@@ -1,11 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [0.1.5] - 2024-Current
+## [0.1.1] - 2024-Current
 
 ### Added
 
@@ -44,54 +39,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 
 **iOS Implementation:**
+
 - Native UIImagePickerController with PHPhotoLibrary permissions
 - Objective-C++ bridge (BumiGalleryBridge.mm) for Swift-C# communication
 - Proper callback routing through UnitySendMessage
 
 **Android Implementation:**
+
 - Custom GalleryActivity extending UnityPlayerActivity
 - MediaStore intents for gallery selection
 - Runtime permission handling via ActivityCompat
 - Callback routing through AndroidGalleryCallback MonoBehaviour
 
 **C# Architecture:**
+
 - Static GalleryManager class with all public methods
 - TaskCompletionSource<T> for proper async/await handling
 - Platform abstraction via #if UNITY_IOS/UNITY_ANDROID
 - IOSGalleryWrapper and AndroidGalleryWrapper for platform-specific logic
-
-## [0.1.4] - 2024-Previous
-
-### Added
-
-- Basic gallery integration structure
-- iOS wrapper with Swift implementation
-- Android wrapper with Java implementation
-- Image upload functionality
-
-### Fixed
-
-- Permission handling improvements
-- Enhanced error messages
-
-## [0.1.3] - 2024-Previous
-
-### Added
-
-- Example scene and UI
-- Permission request system
-
-## [0.1.2] - 2024-Previous
-
-### Added
-
-- Texture loading from local paths
-
-## [0.1.1] - 2024-Previous
-
-### Added
-
-- Basic gallery opening functionality
 
 ## [0.1.0] - 2024-Initial
 
