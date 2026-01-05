@@ -1,11 +1,9 @@
 {
-    "name": "BumiMobile.Gallery.Editor",
-    "rootNamespace": "",
-    "references": [
-        "BumiMobile.Core",
-        "Unity.TextMeshPro"
+    "name": "NativeGallery.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
