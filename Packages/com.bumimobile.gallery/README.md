@@ -184,7 +184,7 @@ The package uses native platform-specific implementations:
 
 ## Dependencies
 
-- `com.bumimobile.core` ^0.1.2
+- `com.bumimobile.core` ^0.1.1
 
 ## API Reference
 

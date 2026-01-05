@@ -94,7 +94,7 @@ All notable changes to the Bumi Mobile Gallery package.
 ### Dependencies
 
 - Unity 2021.3 or later
-- com.bumimobile.core v0.1.2
+- com.bumimobile.core v0.1.1
 
 ### Technical Architecture
 
