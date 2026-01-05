@@ -2,9 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.1] - 2026-01-05
+## [0.1.0] - 2026-01-05
 
 ### Added
+
 - Initial release of Bumi Mobile Gallery package
 - Native gallery picker for iOS and Android
 - Image upload functionality to HTTP endpoints
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Comprehensive error handling and logging
 
 ### Features
+
 - ✅ Cross-platform gallery access (iOS 12+, Android 5.0+)
 - ✅ Native image picker UI
 - ✅ Image upload with multipart form data
@@ -30,9 +32,11 @@ All notable changes to this project will be documented in this file.
 - ✅ Null/empty result handling
 
 ### Platform Support
+
 - iOS 12.0 and later
 - Android 5.0+ (API 21+)
 
 ### Dependencies
+
 - com.bumimobile.core ^0.1.1
 - Unity 2021.3+

@@ -19,6 +19,7 @@ The Bumi Mobile Gallery package provides complete mobile gallery management with
 ## API Reference
 
 ### Namespace
+
 `BumiMobile.Gallery`
 
 ### GalleryManager (Main Class)
@@ -34,11 +35,13 @@ var gallery = GalleryManager.Instance;
 #### Methods
 
 ##### OpenGalleryAsync()
+
 Opens the native gallery picker.
 
 **Returns:** `Task<string>` - Path to selected image file, or null if cancelled
 
 **Example:**
+
 ```csharp
 var imagePath = await GalleryManager.Instance.OpenGalleryAsync();
 if (!string.IsNullOrEmpty(imagePath))
@@ -52,9 +55,11 @@ else
 ```
 
 ##### UploadImageAsync(imagePath, uploadUrl, fieldName = "image")
+
 Uploads an image to a server using multipart form data.
 
 **Parameters:**
+
 - `imagePath` (string) - Local path to the image
 - `uploadUrl` (string) - Server endpoint URL
 - `fieldName` (string, optional) - Form field name for the image (default: "image")
@@ -62,6 +67,7 @@ Uploads an image to a server using multipart form data.
 **Returns:** `Task<bool>` - True if upload succeeded
 
 **Example:**
+
 ```csharp
 bool success = await GalleryManager.Instance.UploadImageAsync(
     imagePath,
@@ -80,14 +86,17 @@ else
 ```
 
 ##### GetImageTextureAsync(imagePath)
+
 Loads an image file as a Texture2D for in-game display.
 
 **Parameters:**
+
 - `imagePath` (string) - Local path to the image
 
 **Returns:** `Task<Texture2D>` - The loaded texture
 
 **Example:**
+
 ```csharp
 Texture2D texture = await GalleryManager.Instance.GetImageTextureAsync(imagePath);
 if (texture != null)
@@ -97,11 +106,13 @@ if (texture != null)
 ```
 
 ##### HasGalleryPermission()
+
 Checks if gallery access permission is granted.
 
 **Returns:** `bool` - True if permitted
 
 **Example:**
+
 ```csharp
 if (GalleryManager.Instance.HasGalleryPermission())
 {
@@ -116,11 +127,13 @@ else
 ```
 
 ##### RequestGalleryPermissionAsync()
+
 Requests gallery access permission from the user.
 
 **Returns:** `Task<bool>` - True if permission was granted
 
 **Example:**
+
 ```csharp
 bool granted = await GalleryManager.Instance.RequestGalleryPermissionAsync();
 if (granted)
@@ -159,37 +172,41 @@ public interface IGalleryService
 ### Core Scripts
 
 #### 1. GalleryManager.cs
+
 The main singleton manager and entry point for all gallery operations.
 
 **Purpose:**
+
 - Provides unified API for gallery access
 - Handles platform detection and routing
 - Manages singleton lifecycle
 
 **Key Features:**
+
 - Singleton pattern (`GalleryManager.Instance`)
 - Implements `IGalleryService` interface
 - Automatic platform detection
 - Error handling and logging
 
 **Example Usage:**
+
 ```csharp
 public class ProfileUploader : MonoBehaviour
 {
     async void UploadProfilePicture()
     {
         var gallery = GalleryManager.Instance;
-        
+
         // Check permission first
         if (!gallery.HasGalleryPermission())
         {
             bool granted = await gallery.RequestGalleryPermissionAsync();
             if (!granted) return;
         }
-        
+
         // Open gallery
         string imagePath = await gallery.OpenGalleryAsync();
-        
+
         // Upload if selected
         if (!string.IsNullOrEmpty(imagePath))
         {
@@ -203,9 +220,11 @@ public class ProfileUploader : MonoBehaviour
 ```
 
 #### 2. IOSGalleryWrapper.cs
+
 Platform-specific implementation for iOS.
 
 **Purpose:**
+
 - Bridges C# with Swift native code
 - Handles iOS-specific callbacks
 - Manages iOS permission flow
@@ -213,9 +232,11 @@ Platform-specific implementation for iOS.
 **Platform:** iOS only (compiled with `#if UNITY_IOS`)
 
 #### 3. AndroidGalleryWrapper.cs
+
 Platform-specific implementation for Android.
 
 **Purpose:**
+
 - Bridges C# with Java native code
 - Handles Android intents and callbacks
 - Manages Android permission flow
@@ -223,22 +244,27 @@ Platform-specific implementation for Android.
 **Platform:** Android only (compiled with `#if UNITY_ANDROID`)
 
 #### 4. IGalleryService.cs
+
 Interface definition for gallery service.
 
 **Purpose:**
+
 - Defines public API contract
 - Enables dependency injection
 - Allows custom implementations
 
 #### 5. GalleryExample.cs (Examples/)
+
 Complete working example with UI integration.
 
 **Purpose:**
+
 - Demonstrates full workflow
 - Shows UI integration patterns
 - Provides copy-paste ready code
 
 **Features:**
+
 - Button handlers for gallery operations
 - Image preview display
 - Permission handling
@@ -267,15 +293,18 @@ Add these keys to your `Info.plist` (required for App Store submission):
 **2. Framework Linkage**
 
 In Xcode, ensure these frameworks are linked (Build Phases → Link Binary With Libraries):
+
 - `Photos.framework`
 - `UIKit.framework`
 - `Foundation.framework`
 
 **3. Build Settings**
+
 - Minimum iOS version: 12.0
 - Swift Language Version: 5.0+
 
 **4. Native Code Files**
+
 - `BumiGalleryManager.swift` - Main Swift implementation
 - `BumiGalleryBridge.h` - C# to Swift bridge header
 
@@ -300,7 +329,7 @@ Ensure your `build.gradle` has:
 ```gradle
 android {
     compileSdkVersion 33
-    
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
@@ -311,10 +340,12 @@ android {
 **3. Dependencies**
 
 Required libraries (included automatically):
+
 - `androidx.core:core:1.6.0+`
 - Standard Android SDK libraries
 
 **4. Native Code Files**
+
 - `GalleryManager.java` - Main Java implementation
 - `AndroidManifest.xml` - Permission declarations
 
@@ -325,10 +356,11 @@ Required libraries (included automatically):
 **1. Unity Package Installation**
 
 Add to `Packages/manifest.json`:
+
 ```json
 {
   "dependencies": {
-    "com.bumimobile.gallery": "0.0.1",
+    "com.bumimobile.gallery": "0.1.0",
     "com.bumimobile.core": "^0.1.1"
   }
 }
@@ -337,6 +369,7 @@ Add to `Packages/manifest.json`:
 **2. Verify Installation**
 
 Check that these files are present:
+
 - `Packages/com.bumimobile.gallery/Runtime/Scripts/GalleryManager.cs`
 - `Packages/com.bumimobile.gallery/Runtime/Plugins/iOS/`
 - `Packages/com.bumimobile.gallery/Runtime/Plugins/Android/`
@@ -356,7 +389,7 @@ public class SimpleGallery : MonoBehaviour
     async void SelectImage()
     {
         var imagePath = await GalleryManager.Instance.OpenGalleryAsync();
-        
+
         if (!string.IsNullOrEmpty(imagePath))
         {
             Debug.Log($"Selected: {imagePath}");
@@ -377,19 +410,19 @@ public class ProfilePhotoUploader : MonoBehaviour
     [SerializeField] private RawImage previewImage;
     [SerializeField] private Button selectButton;
     [SerializeField] private Button uploadButton;
-    
+
     private string selectedImagePath;
-    
+
     void Start()
     {
         selectButton.onClick.AddListener(SelectPhoto);
         uploadButton.onClick.AddListener(UploadPhoto);
     }
-    
+
     async void SelectPhoto()
     {
         var gallery = GalleryManager.Instance;
-        
+
         // Request permission if needed
         if (!gallery.HasGalleryPermission())
         {
@@ -400,10 +433,10 @@ public class ProfilePhotoUploader : MonoBehaviour
                 return;
             }
         }
-        
+
         // Open gallery
         selectedImagePath = await gallery.OpenGalleryAsync();
-        
+
         // Show preview
         if (!string.IsNullOrEmpty(selectedImagePath))
         {
@@ -412,17 +445,17 @@ public class ProfilePhotoUploader : MonoBehaviour
             uploadButton.interactable = true;
         }
     }
-    
+
     async void UploadPhoto()
     {
         if (string.IsNullOrEmpty(selectedImagePath)) return;
-        
+
         bool success = await GalleryManager.Instance.UploadImageAsync(
             selectedImagePath,
             "https://api.myapp.com/upload",
             "profile_photo"
         );
-        
+
         if (success)
         {
             Debug.Log("Upload successful!");
@@ -442,17 +475,17 @@ public class PermissionHandler : MonoBehaviour
     async void RequestGalleryAccess()
     {
         var gallery = GalleryManager.Instance;
-        
+
         // Check current permission status
         if (gallery.HasGalleryPermission())
         {
             Debug.Log("Already have permission");
             return;
         }
-        
+
         // Request permission
         bool granted = await gallery.RequestGalleryPermissionAsync();
-        
+
         if (granted)
         {
             Debug.Log("Permission granted!");
@@ -481,7 +514,7 @@ public class RobustGalleryHandler : MonoBehaviour
         try
         {
             var gallery = GalleryManager.Instance;
-            
+
             // Validate permission
             if (!gallery.HasGalleryPermission())
             {
@@ -492,29 +525,29 @@ public class RobustGalleryHandler : MonoBehaviour
                     return;
                 }
             }
-            
+
             // Open gallery
             string imagePath = await gallery.OpenGalleryAsync();
-            
+
             if (string.IsNullOrEmpty(imagePath))
             {
                 Debug.Log("User cancelled selection");
                 return;
             }
-            
+
             // Validate file exists
             if (!System.IO.File.Exists(imagePath))
             {
                 ShowError("Selected file not found");
                 return;
             }
-            
+
             // Upload with timeout
             bool success = await gallery.UploadImageAsync(
                 imagePath,
                 "https://api.myapp.com/upload"
             );
-            
+
             if (success)
             {
                 ShowSuccess("Upload completed!");
@@ -530,7 +563,7 @@ public class RobustGalleryHandler : MonoBehaviour
             ShowError("An unexpected error occurred");
         }
     }
-    
+
     void ShowError(string message) { /* Show UI error */ }
     void ShowSuccess(string message) { /* Show UI success */ }
 }
@@ -542,25 +575,27 @@ public class RobustGalleryHandler : MonoBehaviour
 
 ### Common Issues and Solutions
 
-| Issue | Possible Cause | Solution |
-|-------|---------------|----------|
-| Gallery won't open | Missing permissions | Check `Info.plist` (iOS) or `AndroidManifest.xml` (Android) |
-| Permission request not showing | Permission already denied | User must enable in device Settings |
-| Upload fails | Invalid URL or network issue | Verify URL, check network connectivity |
-| Texture is blank | File path invalid | Verify file exists at the returned path |
-| iOS build error | Missing frameworks | Link `Photos.framework` in Xcode |
-| Android build error | minSdkVersion too low | Set `minSdkVersion` to 21 or higher |
-| Crash on Android 13+ | Missing new permission | Ensure `READ_MEDIA_IMAGES` permission |
+| Issue                          | Possible Cause               | Solution                                                    |
+| ------------------------------ | ---------------------------- | ----------------------------------------------------------- |
+| Gallery won't open             | Missing permissions          | Check `Info.plist` (iOS) or `AndroidManifest.xml` (Android) |
+| Permission request not showing | Permission already denied    | User must enable in device Settings                         |
+| Upload fails                   | Invalid URL or network issue | Verify URL, check network connectivity                      |
+| Texture is blank               | File path invalid            | Verify file exists at the returned path                     |
+| iOS build error                | Missing frameworks           | Link `Photos.framework` in Xcode                            |
+| Android build error            | minSdkVersion too low        | Set `minSdkVersion` to 21 or higher                         |
+| Crash on Android 13+           | Missing new permission       | Ensure `READ_MEDIA_IMAGES` permission                       |
 
 ### Debug Tips
 
 **Enable Detailed Logging:**
+
 ```csharp
 // GalleryManager logs to Unity Console by default
 // Check for error messages after operations
 ```
 
 **Test Permission Flow:**
+
 ```csharp
 void TestPermissions()
 {
@@ -570,6 +605,7 @@ void TestPermissions()
 ```
 
 **Validate Upload URL:**
+
 ```csharp
 async void TestUpload()
 {
@@ -584,12 +620,14 @@ async void TestUpload()
 ### Platform-Specific Debugging
 
 **iOS:**
+
 - Check Xcode console for Swift errors
 - Verify `Info.plist` entries are present
 - Ensure device has photos in gallery
 - Test on physical device (simulator limited)
 
 **Android:**
+
 - Use `adb logcat` to see Java errors
 - Verify permissions in device Settings → Apps → Your App → Permissions
 - Test on API 21+ device
@@ -630,20 +668,21 @@ Platform Detection (#if UNITY_IOS/ANDROID)
 - See [README.md](README.md) for quick overview
 - See [CHANGELOG.md](CHANGELOG.md) for version history
 - Check `Runtime/Scripts/Examples/GalleryExample.cs` for complete working example
-OpenGalleryAsync()
-    ↓
-TaskCompletionSource created
-    ↓
-Native picker shown (non-blocking)
-    ↓
-User selects image
-    ↓
-Native code calls callback
-    ↓
-TaskCompletionSource resolved
-    ↓
-Result returned to caller
-```
+  OpenGalleryAsync()
+  ↓
+  TaskCompletionSource created
+  ↓
+  Native picker shown (non-blocking)
+  ↓
+  User selects image
+  ↓
+  Native code calls callback
+  ↓
+  TaskCompletionSource resolved
+  ↓
+  Result returned to caller
+
+````
 
 ---
 
@@ -654,7 +693,7 @@ Result returned to caller
 - Automatic PHPhotoLibrary permission request
 - Permission status checking
 
-### Android  
+### Android
 - `android.permission.READ_EXTERNAL_STORAGE` (Android < 13)
 - `android.permission.READ_MEDIA_IMAGES` (Android 13+)
 - `android.permission.INTERNET` (for uploads)
@@ -680,9 +719,10 @@ Result returned to caller
 ### Pattern 1: Simple Selection
 ```csharp
 var path = await GalleryManager.Instance.OpenGalleryAsync();
-```
+````
 
 ### Pattern 2: With Permission Check
+
 ```csharp
 if (!GalleryManager.Instance.HasGalleryPermission())
     await GalleryManager.Instance.RequestGalleryPermissionAsync();
@@ -691,6 +731,7 @@ var path = await GalleryManager.Instance.OpenGalleryAsync();
 ```
 
 ### Pattern 3: Full Workflow
+
 ```csharp
 // Check permission
 if (!GalleryManager.Instance.HasGalleryPermission())
@@ -737,18 +778,21 @@ Task<bool> RequestGalleryPermissionAsync()
 ## ✨ Special Features
 
 ### Error Handling
+
 - Comprehensive try-catch blocks
 - Null/empty validation
 - Detailed console logging
 - Graceful fallbacks
 
 ### Performance
+
 - Async operations (non-blocking UI)
 - Image compression support
 - Efficient file caching
 - Network upload with multipart forms
 
 ### Security
+
 - HTTPS support ready
 - File validation capabilities
 - Size limit checking
@@ -779,6 +823,7 @@ Task<bool> RequestGalleryPermissionAsync()
 ## 🚢 Ready for Production
 
 This package includes everything needed for production:
+
 - ✅ Full source code
 - ✅ Native implementations
 - ✅ Complete documentation
@@ -803,6 +848,7 @@ This package includes everything needed for production:
 ## 📂 File Location
 
 **All files are in:**
+
 ```
 d:\Bumi\BumiMobileCore\Packages\com.bumimobile.gallery\
 ```
@@ -818,6 +864,7 @@ Simply follow the QUICKSTART.md and you'll have gallery functionality in your ga
 ---
 
 **Questions?** Refer to:
+
 - API.md for method documentation
 - SETUP.md for platform setup
 - INTEGRATION.md for integration patterns

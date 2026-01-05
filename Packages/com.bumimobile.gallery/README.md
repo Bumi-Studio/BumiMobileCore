@@ -26,7 +26,7 @@ A unified mobile gallery management package for iOS and Android that provides na
 Open `Packages/manifest.json` and add:
 
 ```json
-"com.bumimobile.gallery": "0.0.1"
+"com.bumimobile.gallery": "0.1.0"
 ```
 
 ## Quick Start
@@ -46,7 +46,7 @@ if (!string.IsNullOrEmpty(imagePath))
 {
     // Show preview
     Texture2D texture = await gallery.GetImageTextureAsync(imagePath);
-    
+
     // Upload to server
     bool success = await gallery.UploadImageAsync(
         imagePath,
@@ -81,6 +81,7 @@ Add to your `Info.plist`:
 ```
 
 Ensure these frameworks are linked in Xcode:
+
 - `Photos.framework`
 - `UIKit.framework`
 - `Foundation.framework`
@@ -88,6 +89,7 @@ Ensure these frameworks are linked in Xcode:
 ### Android
 
 Required permissions (auto-merged from package):
+
 - `android.permission.READ_EXTERNAL_STORAGE`
 - `android.permission.READ_MEDIA_IMAGES` (Android 13+)
 - `android.permission.INTERNET`
@@ -97,7 +99,7 @@ Ensure your `build.gradle` includes:
 ```gradle
 android {
     compileSdkVersion 33
-    
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
