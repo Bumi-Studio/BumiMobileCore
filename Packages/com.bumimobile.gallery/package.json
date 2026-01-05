@@ -1,0 +1,37 @@
+{
+  "name": "com.bumimobile.gallery",
+  "displayName": "Bumi Mobile Gallery",
+  "version": "0.0.1",
+  "unity": "2021.3",
+  "description": "Mobile gallery picker and image upload package for iOS and Android.",
+  "keywords": [
+    "bumi",
+    "gallery",
+    "image",
+    "picker",
+    "upload",
+    "mobile",
+    "ios",
+    "android"
+  ],
+  "category": "Framework",
+  "author": {
+    "name": "Bumi Mobile",
+    "email": "support@bumimobile.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bumimobile/com.bumimobile.gallery.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  },
+  "samples": [
+    {
+      "displayName": "Gallery Example",
+      "description": "Basic example demonstrating gallery picker and image upload.",
+      "path": "Samples~/GalleryExample"
+    }
+  ]
+}
