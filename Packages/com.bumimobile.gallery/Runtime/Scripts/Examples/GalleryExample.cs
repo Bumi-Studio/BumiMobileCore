@@ -38,7 +38,7 @@ namespace BumiMobile
         {
             UpdateStatusText("Opening gallery...");
 
-            var imagePath = await GalleryManager.Instance.OpenGalleryAsync();
+            var imagePath = await GalleryManager.OpenGalleryAsync();
 
             if (string.IsNullOrEmpty(imagePath))
             {
@@ -65,7 +65,7 @@ namespace BumiMobile
             }
 
             UpdateStatusText("Uploading image...");
-            var success = await GalleryManager.Instance.UploadImageAsync(
+            var success = await GalleryManager.UploadImageAsync(
                 selectedImagePath,
                 uploadServerUrl,
                 "image"
@@ -86,7 +86,7 @@ namespace BumiMobile
         /// </summary>
         private async System.Threading.Tasks.Task LoadImagePreview(string imagePath)
         {
-            var texture = await GalleryManager.Instance.GetImageTextureAsync(imagePath);
+            var texture = await GalleryManager.GetImageTextureAsync(imagePath);
 
             if (texture != null && imagePreview != null)
             {

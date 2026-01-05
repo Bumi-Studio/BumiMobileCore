@@ -46,10 +46,11 @@ namespace BumiMobile
 
             try
             {
-                _galleryClass.CallStatic("openGallery", new AndroidJavaRunnable(() =>
-                {
-                    // Callback will be handled by AndroidGalleryCallback
-                }));
+                // Create callback receiver
+                var callbackGameObject = new GameObject("AndroidGalleryCallback");
+                var callback = callbackGameObject.AddComponent<AndroidGalleryCallback>();
+                
+                _galleryClass.CallStatic("openGallery", callbackGameObject.name, nameof(AndroidGalleryCallback.OnImageSelected));
 
                 return await _galleryTaskCompletionSource.Task;
             }
@@ -80,7 +81,12 @@ namespace BumiMobile
 
             try
             {
-                _galleryClass.CallStatic("uploadImage", imagePath, uploadUrl, fieldName);
+                // Create callback receiver
+                var callbackGameObject = new GameObject("AndroidUploadCallback");
+                var callback = callbackGameObject.AddComponent<AndroidGalleryCallback>();
+                
+                _galleryClass.CallStatic("uploadImage", imagePath, uploadUrl, fieldName, callbackGameObject.name, nameof(AndroidGalleryCallback.OnUploadComplete));
+                
                 return await _uploadTaskCompletionSource.Task;
             }
             catch (System.Exception ex)
@@ -134,7 +140,12 @@ namespace BumiMobile
 
             try
             {
-                _galleryClass.CallStatic("requestPermission");
+                // Create callback receiver
+                var callbackGameObject = new GameObject("AndroidPermissionCallback");
+                var callback = callbackGameObject.AddComponent<AndroidGalleryCallback>();
+                
+                _galleryClass.CallStatic("requestPermission", callbackGameObject.name, nameof(AndroidGalleryCallback.OnPermissionResult));
+                
                 return await _permissionTaskCompletionSource.Task;
             }
             catch (System.Exception ex)
@@ -147,19 +158,28 @@ namespace BumiMobile
 #endif
         }
 
-        // Callback methods called from native Android code
+        // Callback methods called from native Android code via UnitySendMessage
         public static void SetGalleryResult(string imagePath)
         {
-            _galleryTaskCompletionSource?.TrySetResult(imagePath);
+            if (string.IsNullOrEmpty(imagePath))
+            {
+                _galleryTaskCompletionSource?.TrySetResult(null);
+            }
+            else
+            {
+                _galleryTaskCompletionSource?.TrySetResult(imagePath);
+            }
         }
 
-        public static void SetPermissionResult(bool granted)
+        public static void SetPermissionResult(string result)
         {
+            bool granted = result == "granted";
             _permissionTaskCompletionSource?.TrySetResult(granted);
         }
 
-        public static void SetUploadResult(bool success)
+        public static void SetUploadResult(string result)
         {
+            bool success = result == "success";
             _uploadTaskCompletionSource?.TrySetResult(success);
         }
     }

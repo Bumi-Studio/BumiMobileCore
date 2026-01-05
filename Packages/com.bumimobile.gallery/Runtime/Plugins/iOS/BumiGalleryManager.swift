@@ -2,6 +2,16 @@ import Foundation
 import Photos
 import UIKit
 
+// Declare the C callbacks from BumiGalleryBridge
+@_silgen_name("_OnGalleryResult")
+func onGalleryResult(_ result: UnsafePointer<CChar>) -> Void
+
+@_silgen_name("_OnPermissionResult")
+func onPermissionResult(_ result: UnsafePointer<CChar>) -> Void
+
+@_silgen_name("_OnUploadResult")
+func onUploadResult(_ result: UnsafePointer<CChar>) -> Void
+
 @objc class BumiGalleryManager: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     static let shared = BumiGalleryManager()
     
@@ -26,8 +36,10 @@ import UIKit
         
         PHPhotoLibrary.requestAuthorization { [weak self] status in
             DispatchQueue.main.async {
-                let granted = status == .authorized
-                self?.sendCallback(granted ? "granted" : "denied")
+                let result = status == .authorized ? "granted" : "denied"
+                result.withCString { cStr in
+                    onPermissionResult(cStr)
+                }
             }
         }
     }
@@ -42,7 +54,9 @@ import UIKit
             let status = PHPhotoLibrary.authorizationStatus()
             
             if status == .denied || status == .restricted {
-                self.sendCallback(nil)
+                "".withCString { cStr in
+                    onGalleryResult(cStr)
+                }
                 return
             }
             
@@ -53,7 +67,9 @@ import UIKit
                             self?.presentImagePicker()
                         }
                     } else {
-                        self?.sendCallback(nil)
+                        "".withCString { cStr in
+                            onGalleryResult(cStr)
+                        }
                     }
                 }
             } else {
@@ -86,17 +102,24 @@ import UIKit
             if let image = info[.originalImage] as? UIImage {
                 saveImageAndCallback(image)
             } else {
-                sendCallback(nil)
+                "".withCString { cStr in
+                    onGalleryResult(cStr)
+                }
             }
             return
         }
         
-        sendCallback(imageURL.path)
+        let imagePath = imageURL.path
+        imagePath.withCString { cStr in
+            onGalleryResult(cStr)
+        }
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
-        sendCallback(nil)
+        "".withCString { cStr in
+            onGalleryResult(cStr)
+        }
     }
     
     private func saveImageAndCallback(_ image: UIImage) {
@@ -107,10 +130,15 @@ import UIKit
         if let data = image.jpegData(compressionQuality: 0.8) {
             do {
                 try data.write(to: fileURL)
-                sendCallback(fileURL.path)
+                let path = fileURL.path
+                path.withCString { cStr in
+                    onGalleryResult(cStr)
+                }
             } catch {
                 print("Failed to save image: \(error)")
-                sendCallback(nil)
+                "".withCString { cStr in
+                    onGalleryResult(cStr)
+                }
             }
         }
     }
@@ -122,12 +150,16 @@ import UIKit
         self.callbackMethod = callbackMethod
         
         guard let imageURL = URL(string: imagePath) ?? URL(fileURLWithPath: imagePath) else {
-            sendCallback("failed")
+            "failed".withCString { cStr in
+                onUploadResult(cStr)
+            }
             return
         }
         
         guard let url = URL(string: uploadUrl) else {
-            sendCallback("failed")
+            "failed".withCString { cStr in
+                onUploadResult(cStr)
+            }
             return
         }
         
@@ -157,30 +189,25 @@ import UIKit
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 DispatchQueue.main.async {
                     if let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) {
-                        self?.sendCallback("success")
+                        "success".withCString { cStr in
+                            onUploadResult(cStr)
+                        }
                     } else {
-                        self?.sendCallback("failed")
+                        "failed".withCString { cStr in
+                            onUploadResult(cStr)
+                        }
                     }
                 }
             }.resume()
             
         } catch {
             print("Error uploading image: \(error)")
-            sendCallback("failed")
+            "failed".withCString { cStr in
+                onUploadResult(cStr)
+            }
         }
     }
     
     // MARK: - Private Helpers
     
-    private func sendCallback(_ result: String?) {
-        guard let gameObject = gameObjectName, let method = callbackMethod else { return }
-        
-        let message = result ?? ""
-        UnitySendMessage(gameObject, method, message)
-    }
-    
-    private func sendCallback(_ result: Bool) {
-        let resultString = result ? "granted" : "denied"
-        sendCallback(resultString)
-    }
-}
+    // Callback functions are now handled directly via the C bridge above

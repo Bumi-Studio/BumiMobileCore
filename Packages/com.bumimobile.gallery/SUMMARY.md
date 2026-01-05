@@ -1,17 +1,32 @@
-# Bumi Mobile Gallery - API Reference & Usage Guide
+# Bumi Mobile Gallery - Complete API Reference
 
-## Overview
+## Quick Overview
 
-The Bumi Mobile Gallery package provides complete mobile gallery management with native integration for iOS and Android. This document covers the complete API reference, script usage, and setup instructions.
+**GalleryManager** is a static utility class providing cross-platform gallery access. No setup required - just call methods directly!
+
+```csharp
+// Open gallery
+var imagePath = await GalleryManager.OpenGalleryAsync();
+
+// Load texture
+var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+
+// Upload image
+bool success = await GalleryManager.UploadImageAsync(imagePath, url, "photo");
+
+// Check/request permissions
+if (!GalleryManager.HasGalleryPermission())
+    await GalleryManager.RequestGalleryPermissionAsync();
+```
 
 ---
 
 ## Table of Contents
 
 1. [API Reference](#api-reference)
-2. [Script Usage](#script-usage)
-3. [Setup Guide](#setup-guide)
-4. [Integration Patterns](#integration-patterns)
+2. [Usage Examples](#usage-examples)
+3. [Integration Patterns](#integration-patterns)
+4. [Setup Details](#setup-details)
 5. [Troubleshooting](#troubleshooting)
 
 ---
@@ -19,134 +34,479 @@ The Bumi Mobile Gallery package provides complete mobile gallery management with
 ## API Reference
 
 ### Namespace
-
 `BumiMobile.Gallery`
 
-### GalleryManager (Main Class)
+### GalleryManager
 
-Singleton manager providing gallery and image upload functionality across iOS and Android.
+Static utility class for gallery operations across iOS and Android.
 
-#### Accessing the Singleton
-
-```csharp
-var gallery = GalleryManager.Instance;
-```
-
-#### Methods
-
-##### OpenGalleryAsync()
-
+#### OpenGalleryAsync()
 Opens the native gallery picker.
 
-**Returns:** `Task<string>` - Path to selected image file, or null if cancelled
+**Returns:** `Task<string>` - Path to selected image, or null if cancelled
 
 **Example:**
-
 ```csharp
-var imagePath = await GalleryManager.Instance.OpenGalleryAsync();
+var imagePath = await GalleryManager.OpenGalleryAsync();
 if (!string.IsNullOrEmpty(imagePath))
-{
-    Debug.Log($"Image selected: {imagePath}");
-}
-else
-{
-    Debug.Log("User cancelled gallery selection");
-}
+    Debug.Log($"Selected: {imagePath}");
 ```
 
-##### UploadImageAsync(imagePath, uploadUrl, fieldName = "image")
-
-Uploads an image to a server using multipart form data.
+#### GetImageTextureAsync(string imagePath)
+Loads an image file as Texture2D for in-game display.
 
 **Parameters:**
+- `imagePath` (string) - Local path to image file
 
-- `imagePath` (string) - Local path to the image
-- `uploadUrl` (string) - Server endpoint URL
-- `fieldName` (string, optional) - Form field name for the image (default: "image")
-
-**Returns:** `Task<bool>` - True if upload succeeded
+**Returns:** `Task<Texture2D>` - Loaded texture or null
 
 **Example:**
-
 ```csharp
-bool success = await GalleryManager.Instance.UploadImageAsync(
+var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+if (texture != null)
+    myImage.texture = texture;
+```
+
+#### UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image")
+Uploads an image to server using multipart form data.
+
+**Parameters:**
+- `imagePath` (string) - Local path to image
+- `uploadUrl` (string) - Server endpoint URL
+- `fieldName` (string, optional) - Form field name (default: "image")
+
+**Returns:** `Task<bool>` - True if successful
+
+**Example:**
+```csharp
+bool success = await GalleryManager.UploadImageAsync(
     imagePath,
     "https://api.example.com/upload",
     "profile_photo"
 );
-
-if (success)
-{
-    Debug.Log("Upload successful!");
-}
-else
-{
-    Debug.LogError("Upload failed");
-}
 ```
 
-##### GetImageTextureAsync(imagePath)
-
-Loads an image file as a Texture2D for in-game display.
-
-**Parameters:**
-
-- `imagePath` (string) - Local path to the image
-
-**Returns:** `Task<Texture2D>` - The loaded texture
-
-**Example:**
-
-```csharp
-Texture2D texture = await GalleryManager.Instance.GetImageTextureAsync(imagePath);
-if (texture != null)
-{
-    imageComponent.texture = texture;
-}
-```
-
-##### HasGalleryPermission()
-
-Checks if gallery access permission is granted.
+#### HasGalleryPermission()
+Checks if gallery permission is granted.
 
 **Returns:** `bool` - True if permitted
 
 **Example:**
-
 ```csharp
-if (GalleryManager.Instance.HasGalleryPermission())
-{
-    // Can access gallery
+if (GalleryManager.HasGalleryPermission())
     await OpenGallery();
-}
-else
-{
-    // Need to request permission
-    await RequestPermission();
-}
 ```
 
-##### RequestGalleryPermissionAsync()
+#### RequestGalleryPermissionAsync()
+Requests gallery access permission from user.
 
-Requests gallery access permission from the user.
-
-**Returns:** `Task<bool>` - True if permission was granted
+**Returns:** `Task<bool>` - True if granted
 
 **Example:**
+```csharp
+bool granted = await GalleryManager.RequestGalleryPermissionAsync();
+```
+
+### IGalleryService Interface
+
+Interface for dependency injection or custom implementations:
 
 ```csharp
-bool granted = await GalleryManager.Instance.RequestGalleryPermissionAsync();
-if (granted)
+public interface IGalleryService
 {
-    // Permission granted, can proceed
-    await OpenGallery();
-}
-else
-{
-    // Permission denied
-    ShowPermissionDeniedDialog();
+    Task<string> OpenGalleryAsync();
+    Task<bool> UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image");
+    Task<Texture2D> GetImageTextureAsync(string imagePath);
+    bool HasGalleryPermission();
+    Task<bool> RequestGalleryPermissionAsync();
 }
 ```
+
+---
+
+## Usage Examples
+
+### Example 1: Simple Image Selection
+```csharp
+using BumiMobile.Gallery;
+
+async void SelectImage()
+{
+    var imagePath = await GalleryManager.OpenGalleryAsync();
+    if (!string.IsNullOrEmpty(imagePath))
+        Debug.Log($"Selected: {imagePath}");
+}
+```
+
+### Example 2: Select and Preview
+```csharp
+async void SelectWithPreview()
+{
+    var imagePath = await GalleryManager.OpenGalleryAsync();
+    if (!string.IsNullOrEmpty(imagePath))
+    {
+        var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+        previewImage.texture = texture;
+    }
+}
+```
+
+### Example 3: Full Workflow
+```csharp
+async void SelectPreviewAndUpload()
+{
+    // Step 1: Check/request permission
+    if (!GalleryManager.HasGalleryPermission())
+    {
+        if (!await GalleryManager.RequestGalleryPermissionAsync())
+            return;
+    }
+
+    // Step 2: Open gallery
+    var imagePath = await GalleryManager.OpenGalleryAsync();
+    if (string.IsNullOrEmpty(imagePath)) return;
+
+    // Step 3: Show preview
+    var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+    if (texture != null)
+        previewImage.texture = texture;
+
+    // Step 4: Upload
+    bool success = await GalleryManager.UploadImageAsync(
+        imagePath,
+        "https://api.example.com/upload",
+        "image"
+    );
+    
+    Debug.Log(success ? "Upload successful!" : "Upload failed");
+}
+```
+
+### Example 4: Error Handling
+```csharp
+async void SafeGalleryOperation()
+{
+    try
+    {
+        if (!GalleryManager.HasGalleryPermission())
+        {
+            bool granted = await GalleryManager.RequestGalleryPermissionAsync();
+            if (!granted)
+            {
+                Debug.LogError("Permission required");
+                return;
+            }
+        }
+
+        var imagePath = await GalleryManager.OpenGalleryAsync();
+        if (string.IsNullOrEmpty(imagePath))
+        {
+            Debug.Log("User cancelled");
+            return;
+        }
+
+        if (!System.IO.File.Exists(imagePath))
+        {
+            Debug.LogError("File not found");
+            return;
+        }
+
+        var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+        if (texture == null)
+        {
+            Debug.LogError("Failed to load texture");
+            return;
+        }
+
+        bool success = await GalleryManager.UploadImageAsync(
+            imagePath,
+            "https://api.example.com/upload"
+        );
+        
+        if (success)
+            Debug.Log("Success!");
+    }
+    catch (System.Exception ex)
+    {
+        Debug.LogError($"Error: {ex.Message}");
+    }
+}
+```
+
+---
+
+## Integration Patterns
+
+### Pattern 1: UI Button Integration
+```csharp
+using UnityEngine;
+using UnityEngine.UI;
+using BumiMobile.Gallery;
+
+public class GalleryUI : MonoBehaviour
+{
+    [SerializeField] private Button selectButton;
+    [SerializeField] private RawImage preview;
+    [SerializeField] private Text statusText;
+
+    void Start()
+    {
+        selectButton.onClick.AddListener(OnSelectClicked);
+    }
+
+    async void OnSelectClicked()
+    {
+        statusText.text = "Opening gallery...";
+        var path = await GalleryManager.OpenGalleryAsync();
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            statusText.text = "Loading texture...";
+            var texture = await GalleryManager.GetImageTextureAsync(path);
+            preview.texture = texture;
+            statusText.text = "Ready to upload";
+        }
+        else
+        {
+            statusText.text = "Cancelled";
+        }
+    }
+}
+```
+
+### Pattern 2: Profile Photo Upload
+```csharp
+using UnityEngine;
+using BumiMobile.Gallery;
+
+public class ProfileManager : MonoBehaviour
+{
+    private string profilePhotoPath;
+
+    public async void UploadProfilePhoto()
+    {
+        // Step 1: Select
+        profilePhotoPath = await GalleryManager.OpenGalleryAsync();
+        if (string.IsNullOrEmpty(profilePhotoPath))
+            return;
+
+        // Step 2: Preview
+        var texture = await GalleryManager.GetImageTextureAsync(profilePhotoPath);
+        if (texture != null)
+            DisplayPreview(texture);
+
+        // Step 3: Upload
+        bool success = await GalleryManager.UploadImageAsync(
+            profilePhotoPath,
+            "https://api.myapp.com/profile/photo",
+            "profile_photo"
+        );
+
+        if (success)
+            SaveProfileLocally();
+    }
+
+    void DisplayPreview(Texture2D texture) { /* ... */ }
+    void SaveProfileLocally() { /* ... */ }
+}
+```
+
+### Pattern 3: Reactive Gallery Manager
+```csharp
+using UnityEngine;
+using BumiMobile.Gallery;
+using System;
+
+public class ReactiveGallery : MonoBehaviour
+{
+    public event Action<string> OnImageSelected;
+    public event Action<Texture2D> OnImageLoaded;
+    public event Action<bool> OnUploadComplete;
+
+    public async void SelectAndNotify()
+    {
+        var imagePath = await GalleryManager.OpenGalleryAsync();
+        if (!string.IsNullOrEmpty(imagePath))
+        {
+            OnImageSelected?.Invoke(imagePath);
+
+            var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+            if (texture != null)
+                OnImageLoaded?.Invoke(texture);
+        }
+    }
+
+    public async void UploadAndNotify(string imagePath, string url)
+    {
+        bool success = await GalleryManager.UploadImageAsync(imagePath, url);
+        OnUploadComplete?.Invoke(success);
+    }
+}
+```
+
+---
+
+## Setup Details
+
+### iOS Setup
+
+**Info.plist Requirements:**
+```xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need access to your photos</string>
+
+<key>NSPhotoLibraryAddOnlyUsageDescription</key>
+<string>We need permission to save images</string>
+```
+
+**Xcode Framework Linking:**
+- Photos.framework
+- UIKit.framework
+- Foundation.framework
+
+**Build Settings:**
+- Minimum iOS version: 12.0
+- Swift Language Version: 5.0+
+
+### Android Setup
+
+**AndroidManifest.xml:**
+Already includes required permissions:
+- `android.permission.READ_EXTERNAL_STORAGE`
+- `android.permission.READ_MEDIA_IMAGES`
+- `android.permission.INTERNET`
+
+**Gradle Configuration:**
+```gradle
+android {
+    compileSdkVersion 33
+    
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 33
+    }
+}
+```
+
+### Runtime Initialization
+
+**No setup required!** GalleryManager is static and ready to use immediately.
+
+---
+
+## Troubleshooting
+
+### Gallery Won't Open
+
+**Cause**: Missing permissions or not granted by user
+
+**Solution**:
+```csharp
+if (!GalleryManager.HasGalleryPermission())
+{
+    await GalleryManager.RequestGalleryPermissionAsync();
+}
+var imagePath = await GalleryManager.OpenGalleryAsync();
+```
+
+**Also check:**
+- iOS: Verify `NSPhotoLibraryUsageDescription` in Info.plist
+- Android: Check device Settings → Apps → Permissions → Photos
+
+### Upload Fails
+
+**Cause**: Invalid URL or network error
+
+**Solution**:
+```csharp
+// Test with a known endpoint first
+bool success = await GalleryManager.UploadImageAsync(
+    imagePath,
+    "https://httpbin.org/post"  // Test endpoint
+);
+
+// Check returned bool and log for details
+if (!success)
+    Debug.LogError("Upload failed - check network and URL");
+```
+
+### Texture Is Blank
+
+**Cause**: Invalid image path or corrupted file
+
+**Solution**:
+```csharp
+if (!System.IO.File.Exists(imagePath))
+{
+    Debug.LogError("Image file not found");
+    return;
+}
+
+var texture = await GalleryManager.GetImageTextureAsync(imagePath);
+if (texture == null)
+    Debug.LogError("Failed to load texture");
+```
+
+### Permission Request Not Showing
+
+**Cause**: Permission already denied - user must enable in Settings
+
+**Solution**:
+- iOS/Android: Go to device Settings → Apps → Gallery App → Permissions
+- For user guidance, check `GalleryManager.HasGalleryPermission()` and show appropriate dialog
+
+### Build Error on Android
+
+**Cause**: minSdkVersion too low or missing Activity
+
+**Solution**:
+- Set minSdkVersion to 21 or higher in build.gradle
+- Verify `GalleryActivity` is in final AndroidManifest.xml
+
+### Build Error on iOS
+
+**Cause**: Missing frameworks or .mm file not compiled
+
+**Solution**:
+- Verify all frameworks are linked in Xcode: Photos, UIKit, Foundation
+- Check that BumiGalleryBridge.mm is in Xcode project compilation target
+
+---
+
+## Architecture Notes
+
+### Design Patterns
+
+- **Static Utility**: Direct method calls, no instance needed
+- **Async/Await**: All operations are non-blocking
+- **Platform Abstraction**: Seamless iOS/Android handling via #if directives
+- **Native Bridges**: C# communicates with native code via bridges
+
+### Data Flow
+
+```
+C# OpenGalleryAsync()
+    ↓
+Platform detection (#if UNITY_IOS/ANDROID)
+    ├→ iOS: IOSGalleryWrapper → C Bridge → Swift → Photo Picker
+    └→ Android: AndroidGalleryWrapper → Java → Gallery Intent
+         ↓
+    User selects image
+         ↓
+    Native → UnitySendMessage()
+         ↓
+    C# Callback → TaskCompletionSource resolved
+         ↓
+    Return image path to caller
+```
+
+---
+
+## See Also
+
+- [README.md](README.md) - Quick overview and setup
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [Example Code](Runtime/Scripts/Examples/GalleryExample.cs) - Working example
 
 ---
 

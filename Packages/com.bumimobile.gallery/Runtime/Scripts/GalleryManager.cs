@@ -15,54 +15,14 @@ namespace BumiMobile
 {
     /// <summary>
     /// Main gallery manager that provides cross-platform gallery and image upload functionality.
+    /// Static utility class - no MonoBehaviour required, call directly.
     /// </summary>
-    public class GalleryManager : MonoBehaviour, IGalleryService
+    public static class GalleryManager
     {
-        private static GalleryManager _instance;
-
-        [SerializeField] private bool _autoCreateInstance = true;
-
-        /// <summary>
-        /// Gets the singleton instance of GalleryManager.
-        /// </summary>
-        public static GalleryManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    var existing = FindObjectOfType<GalleryManager>();
-                    if (existing != null)
-                    {
-                        _instance = existing;
-                    }
-                    else
-                    {
-                        var go = new GameObject("GalleryManager");
-                        _instance = go.AddComponent<GalleryManager>();
-                    }
-                }
-                return _instance;
-            }
-        }
-
-        private void Awake()
-        {
-            if (_instance == null)
-            {
-                _instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else if (_instance != this)
-            {
-                Destroy(gameObject);
-            }
-        }
-
         /// <summary>
         /// Opens the native gallery picker to select an image.
         /// </summary>
-        public async Task<string> OpenGalleryAsync()
+        public static async Task<string> OpenGalleryAsync()
         {
             try
             {
@@ -95,7 +55,7 @@ namespace BumiMobile
         /// <summary>
         /// Uploads an image to the specified URL.
         /// </summary>
-        public async Task<bool> UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image")
+        public static async Task<bool> UploadImageAsync(string imagePath, string uploadUrl, string fieldName = "image")
         {
             try
             {
@@ -130,7 +90,7 @@ namespace BumiMobile
         /// <summary>
         /// Gets the image as a Texture2D from the specified path.
         /// </summary>
-        public async Task<Texture2D> GetImageTextureAsync(string imagePath)
+        public static async Task<Texture2D> GetImageTextureAsync(string imagePath)
         {
             try
             {
@@ -158,7 +118,7 @@ namespace BumiMobile
         /// <summary>
         /// Checks if gallery access permission is granted.
         /// </summary>
-        public bool HasGalleryPermission()
+        public static bool HasGalleryPermission()
         {
 #if UNITY_IOS
             return IOSGalleryWrapper.HasGalleryPermission();
@@ -172,7 +132,7 @@ namespace BumiMobile
         /// <summary>
         /// Requests gallery access permission from the user.
         /// </summary>
-        public async Task<bool> RequestGalleryPermissionAsync()
+        public static async Task<bool> RequestGalleryPermissionAsync()
         {
 #if UNITY_IOS
             return await IOSGalleryWrapper.RequestGalleryPermissionAsync();

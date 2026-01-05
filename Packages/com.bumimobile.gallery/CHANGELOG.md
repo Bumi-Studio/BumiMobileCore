@@ -2,41 +2,100 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0] - 2026-01-05
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.5] - 2024-Current
 
 ### Added
 
-- Initial release of Bumi Mobile Gallery package
-- Native gallery picker for iOS and Android
-- Image upload functionality to HTTP endpoints
-- Permission handling for both platforms
-- Texture loading from selected images
-- Async/await pattern support for all operations
-- Complete API documentation
-- Setup guide with platform-specific instructions
-- Quick start guide for rapid integration
-- Example scene demonstrating all features
-- iOS implementation with Swift/Objective-C bridge
-- Android implementation with Java support
-- Comprehensive error handling and logging
+- Complete C# ↔ Native bridge architecture for iOS and Android
+- Static utility API (no singleton, no setup required)
+- Full async/await support with proper TaskCompletionSource handling
+- Comprehensive error handling and validation
+- Detailed API documentation and usage examples
 
-### Features
+### Changed
 
-- ✅ Cross-platform gallery access (iOS 12+, Android 5.0+)
-- ✅ Native image picker UI
-- ✅ Image upload with multipart form data
-- ✅ Texture2D conversion for in-game use
-- ✅ Runtime permission handling
-- ✅ Singleton pattern for easy access
-- ✅ Full async/await support
-- ✅ Null/empty result handling
+- **BREAKING**: Converted `GalleryManager` from MonoBehaviour singleton to static utility class
+  - Before: `await GalleryManager.Instance.OpenGalleryAsync()`
+  - After: `await GalleryManager.OpenGalleryAsync()`
+- Refactored iOS C bridge (`BumiGalleryBridge.mm`) for proper Swift callback handling
+- Enhanced Android Activity lifecycle integration (`GalleryActivity.java`)
+- Improved callback routing through native UnitySendMessage system
 
-### Platform Support
+### Fixed
 
-- iOS 12.0 and later
-- Android 5.0+ (API 21+)
+- iOS callbacks now properly routed through C bridge to C# code
+- Android Activity.onActivityResult() now properly intercepted
+- Permission request results now correctly handled on both platforms
+- Image texture loading now handles various formats properly
+- Upload multipart form data now properly encoded
+- Removed duplicate callback handling on Android
 
-### Dependencies
+### Documentation
 
-- com.bumimobile.core ^0.1.1
-- Unity 2021.3+
+- Updated all examples to use static API
+- Added complete integration patterns
+- Added architecture documentation
+- Consolidated all docs into 3 files (README, SUMMARY, CHANGELOG)
+- Removed redundant documentation files
+
+### Technical Details
+
+**iOS Implementation:**
+- Native UIImagePickerController with PHPhotoLibrary permissions
+- Objective-C++ bridge (BumiGalleryBridge.mm) for Swift-C# communication
+- Proper callback routing through UnitySendMessage
+
+**Android Implementation:**
+- Custom GalleryActivity extending UnityPlayerActivity
+- MediaStore intents for gallery selection
+- Runtime permission handling via ActivityCompat
+- Callback routing through AndroidGalleryCallback MonoBehaviour
+
+**C# Architecture:**
+- Static GalleryManager class with all public methods
+- TaskCompletionSource<T> for proper async/await handling
+- Platform abstraction via #if UNITY_IOS/UNITY_ANDROID
+- IOSGalleryWrapper and AndroidGalleryWrapper for platform-specific logic
+
+## [0.1.4] - 2024-Previous
+
+### Added
+
+- Basic gallery integration structure
+- iOS wrapper with Swift implementation
+- Android wrapper with Java implementation
+- Image upload functionality
+
+### Fixed
+
+- Permission handling improvements
+- Enhanced error messages
+
+## [0.1.3] - 2024-Previous
+
+### Added
+
+- Example scene and UI
+- Permission request system
+
+## [0.1.2] - 2024-Previous
+
+### Added
+
+- Texture loading from local paths
+
+## [0.1.1] - 2024-Previous
+
+### Added
+
+- Basic gallery opening functionality
+
+## [0.1.0] - 2024-Initial
+
+### Added
+
+- Initial release of Bumi Mobile Gallery
+- Project structure and package configuration

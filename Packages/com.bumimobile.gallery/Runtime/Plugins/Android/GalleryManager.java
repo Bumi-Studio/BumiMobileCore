@@ -48,7 +48,10 @@ public class GalleryManager {
     /**
      * Requests permission to access gallery.
      */
-    public static void requestPermission() {
+    public static void requestPermission(String gameObject, String method) {
+        callbackGameObject = gameObject;
+        callbackMethod = method;
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                     activity,
@@ -72,7 +75,7 @@ public class GalleryManager {
         callbackMethod = method;
 
         if (!hasPermission()) {
-            requestPermission();
+            requestPermission(gameObject, method);
             return;
         }
 
@@ -88,7 +91,10 @@ public class GalleryManager {
     /**
      * Uploads an image to the specified URL.
      */
-    public static void uploadImage(String imagePath, String uploadUrl, String fieldName) {
+    public static void uploadImage(String imagePath, String uploadUrl, String fieldName, String gameObject, String method) {
+        callbackGameObject = gameObject;
+        callbackMethod = method;
+        
         new Thread(() -> {
             try {
                 File imageFile = new File(imagePath);
@@ -157,29 +163,37 @@ public class GalleryManager {
 
     /**
      * Handles activity result callback (for gallery selection).
+     * This is called from GalleryActivity.onActivityResult()
      */
     public static void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == GALLERY_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
             Uri selectedImageUri = data.getData();
             if (selectedImageUri != null) {
                 String imagePath = getRealPathFromUri(selectedImageUri);
-                sendCallback(imagePath);
+                sendCallback(imagePath != null ? imagePath : "");
             } else {
-                sendCallback(null);
+                sendCallback("");
             }
+        } else {
+            // User cancelled
+            sendCallback("");
         }
     }
 
     /**
      * Handles permission result callback.
+     * This is called from GalleryActivity.onRequestPermissionsResult()
      */
     public static void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            
             if (granted) {
+                // Permission granted, open gallery
                 openGallery(callbackGameObject, callbackMethod);
             } else {
-                sendCallback(null);
+                // Permission denied
+                sendCallback("");
             }
         }
     }
