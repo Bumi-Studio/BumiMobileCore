@@ -21,8 +21,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/bumimobile/com.bumimobile.gallery.git"
-  },
-  "dependencies": {
-    "com.bumimobile.core": "0.1.1"
   }
 }
