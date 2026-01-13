@@ -156,7 +156,7 @@ public class SecretKeystoreWindow : EditorWindow
         GUILayout.Space(15);
 
         // Generate or Regenerate KeystorePassword.Local.cs
-        bool keystorePasswordExists = System.IO.File.Exists("Assets/Resources/KeystorePassword.Local.cs");
+        bool keystorePasswordExists = System.IO.File.Exists("Assets/Game/Resources/KeystorePassword.Local.cs");
 
         if (!keystorePasswordExists)
         {
@@ -211,7 +211,7 @@ public class SecretKeystoreWindow : EditorWindow
                 "This will permanently delete your keystore and all stored secrets.  This cannot be undone! ",
                 "Delete", "Cancel"))
             {
-                System.IO.File.Delete("Assets/Resources/secrets.keystore.bytes");
+                System.IO.File.Delete("Assets/Game/Resources/secrets.keystore.bytes");
                 AssetDatabase.Refresh();
                 currentTab = Tab.Create;
             }
@@ -364,7 +364,7 @@ public class SecretKeystoreWindow : EditorWindow
     private void GenerateKeystorePasswordScript()
     {
         string password = GenerateRandomPassword(16);
-        string scriptPath = "Assets/Resources/KeystorePassword.Local.cs";
+        string scriptPath = "Assets/Game/Resources/KeystorePassword.Local.cs";
 
         string scriptContent =
 $@"// This file is gitignored and contains the actual keystore password.
