@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.bumimobile.api": {
+      "version": "file:com.bumimobile.api",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
     "com.bumimobile.audio": {
       "version": "file:com.bumimobile.audio",
       "depth": 0,

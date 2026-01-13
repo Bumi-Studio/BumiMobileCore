@@ -56,9 +56,8 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Bumi Mobile Core.sln",
+    "dotnet.defaultSolution": "BumiMobileCore.sln",
     "chat.tools.terminal.autoApprove": {
-
         "cd": true,
         "echo": true,
         "ls": true,
