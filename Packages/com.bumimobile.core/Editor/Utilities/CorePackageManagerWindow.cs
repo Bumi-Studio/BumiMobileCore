@@ -382,6 +382,7 @@ namespace BumiMobile
                     new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion),
                     new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion),
                     new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion),
+                    new PackageDefinition("com.bumimobile.eventcalendar", "Event Calendar", "Local-only seasonal scheduling, sprite swap runtime, and editor authoring tools.", "Packages/com.bumimobile.eventcalendar", defaultVersion),
                     new PackageDefinition("com.bumimobile.fullserializer", "FullSerializer", "Bumi-packaged FullSerializer JSON pipeline for shared use.", "Packages/com.bumimobile.fullserializer", defaultVersion),
                     new PackageDefinition("com.bumimobile.haptic", "Haptic", "Haptic feedback abstractions and presets.", "Packages/com.bumimobile.haptic", defaultVersion),
                     new PackageDefinition("com.bumimobile.leaderboard", "Leaderboard", "Firestore-backed leaderboard service with caching and warmup helpers.", "Packages/com.bumimobile.leaderboard", defaultVersion),

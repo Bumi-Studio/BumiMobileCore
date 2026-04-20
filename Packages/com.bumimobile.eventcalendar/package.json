@@ -1,0 +1,25 @@
+{
+  "name": "com.bumimobile.eventcalendar",
+  "displayName": "Bumi Mobile Event Calendar",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Local event scheduling, sprite swapping, and editor authoring tools for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "event",
+    "calendar",
+    "seasonal"
+  ],
+  "category": "Framework",
+  "samples": [
+    {
+      "displayName": "Basic Demo",
+      "description": "Sample local event database, event data, and sprite library copied from SuperBoltsPuzzle.",
+      "path": "Samples~/Basic Demo"
+    }
+  ],
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1",
+    "com.unity.ugui": "2.0.0"
+  }
+}

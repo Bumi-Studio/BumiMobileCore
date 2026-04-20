@@ -24,6 +24,7 @@ Modular Unity packages for mobile & hyper-casual games. Install the core once, t
 | **Audio**                        | Lightweight BGM/SFX routing, init module, and editor config.                                                                                                           |
 | **Currency**                     | Currency definitions, balances, and formatters.                                                                                                                        |
 | **Defines**                      | Shared scripting define presets and toggles.                                                                                                                           |
+| **Event Calendar** (`com.bumimobile.eventcalendar`) | Local-only seasonal scheduling, sprite/theme swapping, UTC schedule validation, and editor authoring tools for event assets.                                         |
 | **FullSerializer** (`com.bumimobile.fullserializer`) | Battle-tested JSON serializer with Unity type support, cyclic reference handling, and compact/pretty JSON output for save systems and data persistence. |
 | **Haptic**                       | Haptic feedback abstraction for iOS & Android.                                                                                                                         |
 | **Localization** (`com.bumimobile.localization`) | Multi-language support (22 languages) with CSV-based translation management, runtime language switching, Arabic text shaping, and Unity UI/TextMeshPro integration. |
