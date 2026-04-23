@@ -6,7 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- (Add unreleased changes here)
+### Changed
+
+- Expanded the Event Calendar package documentation and release metadata for Git distribution.
 
 ## [0.1.0] - 2026-04-20
 

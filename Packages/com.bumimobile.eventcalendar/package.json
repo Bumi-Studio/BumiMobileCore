@@ -3,18 +3,21 @@
   "displayName": "Bumi Mobile Event Calendar",
   "version": "0.1.0",
   "unity": "2021.3",
-  "description": "Local event scheduling, sprite swapping, and editor authoring tools for Bumi Mobile projects.",
+  "description": "Local seasonal event scheduling with UTC ranges, runtime event queries, sprite swapping for UI and SpriteRenderer targets, cosmetic gating helpers, and editor authoring tools.",
   "keywords": [
     "bumi",
+    "unity",
     "event",
     "calendar",
-    "seasonal"
+    "seasonal",
+    "sprite-swap",
+    "liveops"
   ],
   "category": "Framework",
   "samples": [
     {
       "displayName": "Basic Demo",
-      "description": "Sample local event database, event data, and sprite library copied from SuperBoltsPuzzle.",
+      "description": "Sample local event database, event data, sprite library, and target ids for quick runtime testing.",
       "path": "Samples~/Basic Demo"
     }
   ],

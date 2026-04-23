@@ -24,7 +24,7 @@ Modular Unity packages for mobile & hyper-casual games. Install the core once, t
 | **Audio**                        | Lightweight BGM/SFX routing, init module, and editor config.                                                                                                           |
 | **Currency**                     | Currency definitions, balances, and formatters.                                                                                                                        |
 | **Defines**                      | Shared scripting define presets and toggles.                                                                                                                           |
-| **Event Calendar** (`com.bumimobile.eventcalendar`) | Local-only seasonal scheduling, sprite/theme swapping, UTC schedule validation, and editor authoring tools for event assets.                                         |
+| **Event Calendar** (`com.bumimobile.eventcalendar`) | Local-only seasonal scheduling with UTC ranges, active/upcoming/ended event queries, sprite swapping for UI and SpriteRenderer targets, cosmetic gating helpers, debug override support, and editor authoring tools. |
 | **FullSerializer** (`com.bumimobile.fullserializer`) | Battle-tested JSON serializer with Unity type support, cyclic reference handling, and compact/pretty JSON output for save systems and data persistence. |
 | **Haptic**                       | Haptic feedback abstraction for iOS & Android.                                                                                                                         |
 | **Localization** (`com.bumimobile.localization`) | Multi-language support (22 languages) with CSV-based translation management, runtime language switching, Arabic text shaping, and Unity UI/TextMeshPro integration. |
@@ -41,6 +41,16 @@ Modular Unity packages for mobile & hyper-casual games. Install the core once, t
 | **Utilities**                    | Extra helpers shared by multiple modules.                                                                                                                              |
 
 > Tween, inspector extensions, and initializer logic now live inside Core, so they no longer appear as standalone packages.
+
+## Spotlight: Event Calendar
+
+`com.bumimobile.eventcalendar` is designed for local seasonal events and lightweight live-ops style content without backend dependencies. It can:
+
+- resolve one active event from UTC schedule data during project initialization,
+- expose event phase queries for gameplay, UI, and cosmetic unlock logic,
+- swap themed sprites on `Image` and `SpriteRenderer` targets with automatic fallback to defaults,
+- support local debug forcing in editor and development builds,
+- and provide a single inspector-driven authoring workflow for event assets, sprite libraries, validation, and overlap checks.
 
 ---
 
