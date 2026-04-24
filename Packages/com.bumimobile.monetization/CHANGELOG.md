@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.4] - 2025-12-15
+
+### Added
+
+- Adjusted ad size to be adaptive with full width device
+
 ## [0.1.3] - 2025-12-02
 
 ### Changed
