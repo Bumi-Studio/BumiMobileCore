@@ -1,0 +1,13 @@
+{
+  "name": "BumiMobile.EventCalendar",
+  "references": [
+    "BumiMobile.Core"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}
