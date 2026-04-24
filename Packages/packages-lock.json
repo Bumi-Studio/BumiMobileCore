@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.bumimobile.api": {
+      "version": "file:com.bumimobile.api",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
     "com.bumimobile.audio": {
       "version": "file:com.bumimobile.audio",
       "depth": 0,
@@ -81,6 +89,12 @@
         "com.bumimobile.save": "0.1.1",
         "com.bumimobile.auth": "0.1.2"
       }
+    },
+    "com.bumimobile.keystore": {
+      "version": "file:com.bumimobile.keystore",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.bumimobile.localization": {
       "version": "file:com.bumimobile.localization",
