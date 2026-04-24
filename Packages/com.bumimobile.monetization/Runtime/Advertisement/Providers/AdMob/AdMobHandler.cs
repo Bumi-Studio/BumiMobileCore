@@ -214,11 +214,14 @@ namespace BumiMobile
         /// </summary>
         private AdSize GetAdSize()
         {
+            int deviceWidth = MobileAds.Utils.GetDeviceSafeWidth();
+
             return adsSettings.AdMobContainer.BannerType switch
             {
                 AdMobContainer.BannerPlacementType.MediumRectangle => AdSize.MediumRectangle,
                 AdMobContainer.BannerPlacementType.IABBanner => AdSize.IABBanner,
                 AdMobContainer.BannerPlacementType.Leaderboard => AdSize.Leaderboard,
+                AdMobContainer.BannerPlacementType.Adaptive => AdSize.GetCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(deviceWidth),
                 _ => AdSize.Banner,
             };
         }
