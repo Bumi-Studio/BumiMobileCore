@@ -49,6 +49,12 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.gallery": {
+      "version": "file:com.bumimobile.gallery",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.bumimobile.haptic": {
       "version": "file:com.bumimobile.haptic",
       "depth": 0,
