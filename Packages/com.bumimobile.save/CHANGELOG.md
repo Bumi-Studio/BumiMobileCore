@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.1.3] - 2026-04-29
+
+### Added
+
+- Added a `SaveInitModule` option to route Firebase cloud saves to `players_saves_dev` or `players_saves_prod`.
+
+### Changed
+
+- Changed Firebase cloud saves to write one encrypted player save document instead of one document per save service, reducing Firestore write quota usage.
+
 ## [0.1.2] - 2025-12-02
 
 ### Added
