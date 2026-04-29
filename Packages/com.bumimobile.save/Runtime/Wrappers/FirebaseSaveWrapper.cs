@@ -4,12 +4,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.Serialization;
 using Firebase;
 using Firebase.Auth;
 using Firebase.Firestore;
-using Firebase.Extensions;
 using FullSerializer;
 using UnityEngine;
 using BumiMobile.Security;
@@ -19,15 +16,14 @@ namespace BumiMobile
     /// <summary>
     /// FirebaseSaveWrapper (cloud enabled): Local + Firestore sync.
     /// Layout Firestore (simplified):
-    ///   players/{uid}
+    ///   players_saves_dev/{uid} or players_saves_prod/{uid}
     /// Fields: json (string), updatedAt (Timestamp), version (int), clientTime (string ISO)
     /// Conflict: newest updatedAt wins (server vs local). Debounced uploads.
     /// </summary>
     public sealed class FirebaseSaveWrapper : BaseSaveWrapper
     {
-        const string COL_PLAYERS = "players"; // root collection
-        const string SUBCOL_SAVES = "saves";   // per-ISaveObject subcollection
-        const string SLOT_NAME = "main";       // local file name
+        const string COL_PLAYERS_SAVES_DEV = "players_saves_dev";
+        const string COL_PLAYERS_SAVES_PROD = "players_saves_prod";
 
         readonly DefaultSaveWrapper _local = new DefaultSaveWrapper();
         static FirebaseAuth _auth;
@@ -38,6 +34,8 @@ namespace BumiMobile
         static double _nextUploadAt;         // Stopwatch seconds when push should occur
         const double UPLOAD_DEBOUNCE = 1.5d; // seconds
         static readonly Stopwatch _watch = Stopwatch.StartNew();
+
+        public static bool UseDevCollection { get; set; }
 
         // Async init control
         static bool _initStarted;
@@ -154,7 +152,8 @@ namespace BumiMobile
 
         DocumentReference GetDoc(FirebaseUser user)
         {
-            return _fs.Collection(COL_PLAYERS).Document(user.UserId);
+            string collection = UseDevCollection ? COL_PLAYERS_SAVES_DEV : COL_PLAYERS_SAVES_PROD;
+            return _fs.Collection(collection).Document(user.UserId);
         }
 
         public override GlobalSave Load(string fileName) => _local.Load(fileName);
@@ -196,68 +195,29 @@ namespace BumiMobile
                 onLoaded?.Invoke(null);
                 return;
             }
-            GlobalSave local = _local.Load(SLOT_NAME);
             try
             {
                 var docRef = GetDoc(user);
                 var snap = await docRef.GetSnapshotAsync();
                 if (!snap.Exists)
                 {
-                    UnityEngine.Debug.Log("[SaveCloud] No remote player doc, keeping local.");
+                    UnityEngine.Debug.Log("[SaveCloud] No remote player save doc, keeping local.");
                     onLoaded?.Invoke(null);
                     return;
                 }
-                // 1) Try read per-ISaveObject split from subcollection
-                var subCol = await docRef.Collection(SUBCOL_SAVES).GetSnapshotAsync();
 
-                // 2) Also try aggregated JSON (backward-compat)
-                GlobalSave aggregated = null;
                 if (snap.TryGetValue("json", out string aggJsonStr) && !string.IsNullOrEmpty(aggJsonStr))
                 {
                     try
                     {
                         string plain = SaveCrypto.DecryptJsonIfNeeded(aggJsonStr, user.UserId);
-                        aggregated = Deserialize(plain);
+                        onLoaded?.Invoke(Deserialize(plain));
+                        return;
                     }
                     catch (Exception decEx)
                     {
-                        UnityEngine.Debug.LogWarning("[SaveCloud] Decrypt(aggregated) failed: " + decEx.Message);
+                        UnityEngine.Debug.LogWarning("[SaveCloud] Decrypt failed: " + decEx.Message);
                     }
-                }
-
-                if (subCol != null && subCol.Count > 0)
-                {
-                    // Build containers from split docs
-                    var items = new List<(int hash, string json)>();
-                    foreach (var doc in subCol.Documents)
-                    {
-                        try
-                        {
-                            if (!int.TryParse(doc.Id, out int hash)) continue;
-                            if (!doc.TryGetValue("json", out string enc)) continue;
-                            string plain = SaveCrypto.DecryptJsonIfNeeded(enc, user.UserId);
-                            items.Add((hash, plain));
-                        }
-                        catch (Exception e)
-                        {
-                            UnityEngine.Debug.LogWarning("[SaveCloud] Sub save parse failed: " + e.Message);
-                        }
-                    }
-
-                    if (items.Count > 0)
-                    {
-                        var baseGlobal = aggregated ?? new GlobalSave();
-                        var rebuilt = BuildGlobalFromContainers(baseGlobal, items);
-                        onLoaded?.Invoke(rebuilt);
-                        return;
-                    }
-                }
-
-                if (aggregated != null)
-                {
-                    // Fallback to old single JSON
-                    onLoaded?.Invoke(aggregated);
-                    return;
                 }
 
                 // No usable remote data
@@ -312,11 +272,9 @@ namespace BumiMobile
                     {
                         var docRef = GetDoc(user);
 
-                        // Root (meta) payload — encrypt when UID available
+                        // One player save document only, to keep Firestore write usage low.
                         string aggregatedJson = Serialize(toSend);
                         aggregatedJson = EncryptForUser(aggregatedJson, uid, logMissingUid: true);
-
-                        var batch = _fs.StartBatch();
 
                         var root = new Dictionary<string, object>
                         {
@@ -325,32 +283,8 @@ namespace BumiMobile
                             {"version", 1},
                             {"clientTime", DateTime.UtcNow.ToString("o")}
                         };
-                        batch.Set(docRef, root, SetOptions.MergeAll);
-
-                        // Split per-ISaveObject (encrypt per container when possible)
-                        foreach (var item in EnumerateContainers(toSend))
-                        {
-                            try
-                            {
-                                string enc = item.json ?? string.Empty;
-                                enc = EncryptForUser(enc, uid, logMissingUid: false);
-                                var savePayload = new Dictionary<string, object>
-                                {
-                                    {"json", enc},
-                                    {"updatedAt", Timestamp.GetCurrentTimestamp()},
-                                    {"version", 1}
-                                };
-                                var subRef = docRef.Collection(SUBCOL_SAVES).Document(item.hash.ToString());
-                                batch.Set(subRef, savePayload, SetOptions.MergeAll);
-                            }
-                            catch (Exception encOne)
-                            {
-                                UnityEngine.Debug.LogWarning($"[SaveCloud] Per-item save failed (hash={item.hash}): " + encOne.Message);
-                            }
-                        }
-
-                        await batch.CommitAsync();
-                        UnityEngine.Debug.Log("[SaveCloud] Upload success (split).");
+                        await docRef.SetAsync(root, SetOptions.MergeAll);
+                        UnityEngine.Debug.Log("[SaveCloud] Upload success.");
                     }
                     catch (Exception e)
                     {
@@ -440,77 +374,6 @@ namespace BumiMobile
                 UnityEngine.Debug.LogWarning("[SaveCloud] Deserialize failed: " + e.Message);
                 return null;
             }
-        }
-
-        // ===== Reflection helpers to split/restore per ISaveObject ==========
-        static IEnumerable<(int hash, string json)> EnumerateContainers(GlobalSave save)
-        {
-            if (save == null) yield break;
-
-            var tGlobal = typeof(GlobalSave);
-            var fArray = tGlobal.GetField("saveObjects", BindingFlags.Instance | BindingFlags.NonPublic);
-            var fList = tGlobal.GetField("saveObjectsList", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            IEnumerable<object> containers = null;
-            if (fArray?.GetValue(save) is Array arr && arr.Length > 0)
-            {
-                var list = new List<object>();
-                foreach (var it in arr) list.Add(it);
-                containers = list;
-            }
-            else if (fList?.GetValue(save) is System.Collections.IEnumerable listEnum)
-            {
-                var list = new List<object>();
-                foreach (var it in listEnum) list.Add(it);
-                containers = list;
-            }
-
-            if (containers == null) yield break;
-
-            var tContainer = typeof(SavedDataContainer);
-            var fHash = tContainer.GetField("hash", BindingFlags.Instance | BindingFlags.NonPublic);
-            var fJson = tContainer.GetField("json", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            foreach (var c in containers)
-            {
-                if (c == null) continue;
-                int hash = 0;
-                string json = null;
-                try
-                {
-                    if (fHash != null) hash = (int)fHash.GetValue(c);
-                    if (fJson != null) json = (string)fJson.GetValue(c);
-                }
-                catch { /* ignore container if reflection fails */ }
-                yield return (hash, json ?? string.Empty);
-            }
-        }
-
-        static GlobalSave BuildGlobalFromContainers(GlobalSave baseGlobal, List<(int hash, string json)> items)
-        {
-            var result = baseGlobal ?? new GlobalSave();
-
-            var tContainer = typeof(SavedDataContainer);
-            var fHash = tContainer.GetField("hash", BindingFlags.Instance | BindingFlags.NonPublic);
-            var fJson = tContainer.GetField("json", BindingFlags.Instance | BindingFlags.NonPublic);
-            var fRestored = tContainer.GetProperty("Restored");
-
-            var containers = new SavedDataContainer[items.Count];
-            for (int i = 0; i < items.Count; i++)
-            {
-                var tuple = items[i];
-                var inst = (SavedDataContainer)FormatterServices.GetUninitializedObject(tContainer);
-                try { fHash?.SetValue(inst, tuple.hash); } catch { }
-                try { fJson?.SetValue(inst, tuple.json ?? string.Empty); } catch { }
-                try { fRestored?.SetValue(inst, false, null); } catch { }
-                containers[i] = inst;
-            }
-
-            var tGlobal = typeof(GlobalSave);
-            var fArray = tGlobal.GetField("saveObjects", BindingFlags.Instance | BindingFlags.NonPublic);
-            fArray?.SetValue(result, containers);
-
-            return result;
         }
     }
 }
