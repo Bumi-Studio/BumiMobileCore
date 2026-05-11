@@ -44,7 +44,7 @@ namespace BumiMobile
 #if MODULE_HAPTIC
             Haptic.Play(Haptic.HAPTIC_LIGHT);
 #endif
-            AudioController.PlaySound(AudioController.AudioClips.buttonSound);
+            AudioController.PlaySound(AudioController.buttonSound);
             
             image.sprite = isOn ? activeSprite : inactiveSprite;
             foreach (var enabledGameObject in enabledGameObjects)

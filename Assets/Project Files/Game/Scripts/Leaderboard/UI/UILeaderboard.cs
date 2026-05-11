@@ -418,7 +418,7 @@ namespace BumiMobile
 #if MODULE_HAPTIC
             Haptic.Play(Haptic.HAPTIC_LIGHT);
 #endif
-            AudioController.PlaySound(AudioController.AudioClips.buttonSound);
+            AudioController.PlaySound(AudioController.buttonSound);
             UIController.HidePage<UILeaderboard>();
         }
 
