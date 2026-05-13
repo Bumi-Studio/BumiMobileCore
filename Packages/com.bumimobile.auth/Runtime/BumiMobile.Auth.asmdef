@@ -1,28 +1,29 @@
 {
-    "name": "BumiMobile.Auth",
-    "rootNamespace": "",
-    "references": [
-        "BumiMobile.Core",
-        "UniTask"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.google.firebase.app",
-            "expression": "0.0.0",
-            "define": "BUMI_AUTH_HAS_FIREBASE"
-        },
-        {
-            "name": "com.google.signin.google-signin-unity",
-            "expression": "0.0.0",
-            "define": "BUMI_AUTH_HAS_GOOGLE_SIGNIN"
-        }
-    ],
-    "noEngineReferences": false
+  "name": "BumiMobile.Auth",
+  "rootNamespace": "",
+  "references": [
+    "BumiMobile.Core",
+    "UniTask",
+    "GoogleSignIn"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.google.firebase.app",
+      "expression": "0.0.0",
+      "define": "BUMI_AUTH_HAS_FIREBASE"
+    },
+    {
+      "name": "com.google.signin",
+      "expression": "0.0.0",
+      "define": "BUMI_AUTH_HAS_GOOGLE_SIGNIN"
+    }
+  ],
+  "noEngineReferences": false
 }
