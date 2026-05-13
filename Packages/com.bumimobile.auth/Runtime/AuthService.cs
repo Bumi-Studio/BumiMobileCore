@@ -9,9 +9,8 @@ using Firebase.Auth;
 using FirebaseUser = System.Object;
 #endif
 
-#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS && BUMI_AUTH_HAS_FIREBASE
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+using Google;
 #endif
 
 #if BUMI_AUTH_HAS_FIREBASE
@@ -20,44 +19,57 @@ namespace BumiMobile
     public static class AuthService
     {
         // ---- Identity / State ----
-        public static string PlayerId { get; private set; } = string.Empty; // PGS id
-        public static FirebaseUser User { get; private set; }
+        /// <summary>Google Sign-In user id (populated when Google Sign-In succeeds).</summary>
+        public static string PlayerId { get; private set; } = string.Empty;
+
+        public static Firebase.Auth.FirebaseUser User { get; private set; }
         public static bool IsFirebaseAnonymous => User != null && User.IsAnonymous;
-        // UI indicator: treat any Firebase user (including anonymous) as "logged in"
+        /// <summary>UI indicator: treat any Firebase user (including anonymous) as "logged in".</summary>
         public static bool IsAuthenticated => User != null;
-        // Strong sign-in (linked account): non-anonymous only
+        /// <summary>Strong sign-in (linked account): non-anonymous only.</summary>
         public static bool IsSignedIn => User != null && !User.IsAnonymous;
 
         static bool _busy;
-        static bool _pgsActivated;
         public static string LastAuthFailureReason { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// OAuth 2.0 Web Client ID from Google Cloud Console.
+        /// Must be set before calling SignInAsync / ManualSignInAsync.
+        /// </summary>
+        public static string WebClientId { get; set; }
+
         // Events
-        public static event Action<bool> OnPgsAuthFinished;            // kept for compatibility (Android)
-        public static event Action<FirebaseUser> OnFirebaseAuthChanged; // user (can be null)
+        public static event Action<bool> OnPlatformAuthFinished;
+        public static event Action<Firebase.Auth.FirebaseUser> OnFirebaseAuthChanged;
 
         // ====================================================================
         // PUBLIC API
         // ====================================================================
 
         /// <summary>
-        /// Try platform sign-in (PGS on Android), then Firebase.
-        /// Fallback to Firebase Anonymous on failure.
-        /// Returns true when non-anonymous Firebase user is signed in.
+        /// Auto sign-in on app start. Does NOT attempt Google Sign-In —
+        /// only initialises Firebase (restoring any persisted session).
+        /// If no previous session exists, creates an anonymous Firebase account.
+        /// Returns true when a non-anonymous Firebase user is signed in.
         /// </summary>
         public static async UniTask<bool> SignInAsync(bool forceRefreshToken = true)
         {
-            if (_busy) { Debug.LogWarning("[Auth] Sign-in already running"); return false; }
+            if (_busy)
+            {
+                Debug.LogWarning("[Auth] Sign-in already running");
+                return false;
+            }
             _busy = true;
             try
             {
-                return await InternalSignInAsync(forceRefreshToken, interactive: true, manual: false);
+                return await InternalSignInAsync(interactive: false, manual: false);
             }
             finally { _busy = false; }
         }
 
         /// <summary>
-        /// Manual variant for a "Sign in" button.
+        /// Manual variant for a "Sign in with Google" button.
+        /// Shows the Google account picker if needed.
         /// </summary>
         public static async UniTask<bool> ManualSignInAsync()
         {
@@ -65,7 +77,7 @@ namespace BumiMobile
             _busy = true;
             try
             {
-                return await InternalSignInAsync(forceRefreshToken: true, interactive: true, manual: true);
+                return await InternalSignInAsync(interactive: true, manual: true);
             }
             finally { _busy = false; }
         }
@@ -74,14 +86,23 @@ namespace BumiMobile
         {
             try
             {
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+                try
+                {
+                    GoogleSignIn.DefaultInstance.SignOut();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[Auth] Google Sign-Out error: " + ex.Message);
+                }
+#endif
+
                 var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
                 if (dep == DependencyStatus.Available)
                 {
                     var auth = FirebaseAuth.DefaultInstance;
                     auth?.SignOut();
                 }
-
-                // PGS v2: no explicit sign-out API (Android)
 
                 PlayerId = string.Empty;
                 User = null;
@@ -99,38 +120,52 @@ namespace BumiMobile
         // CORE FLOW
         // ====================================================================
 
-        static async UniTask<bool> InternalSignInAsync(bool forceRefreshToken, bool interactive, bool manual)
+        /// <param name="interactive">When true, may show Google account picker UI.</param>
+        /// <param name="manual">True when user explicitly tapped "Sign In" button.</param>
+        static async UniTask<bool> InternalSignInAsync(bool interactive, bool manual)
         {
-#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
-            EnsurePgsActivated();
-            bool platformOk = await PgsAuthenticateAsync(interactive, manual);
-            if (!platformOk)
+            // ---- Auto start: no Google Sign-In at all, just Firebase ----
+            if (!manual)
             {
-                Debug.LogWarning("[Auth] PGS auth failed – fallback to anonymous Firebase.");
+                Debug.Log("[Auth] Auto-init: skipping Google Sign-In, using Firebase (restore / anonymous).");
+                await EnsureFirebaseAnonIfPossibleAsync();
+                // Return true if Firebase restored a linked (non-anonymous) account
+                return User != null && !User.IsAnonymous;
+            }
+
+            // ---- Manual "Sign in with Google" button ----
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+            if (string.IsNullOrEmpty(WebClientId))
+            {
+                Debug.LogError("[Auth] Google Sign-In WebClientId not configured. " +
+                               "Set AuthService.WebClientId before calling sign-in.");
+                LastAuthFailureReason = "WebClientId not configured";
                 await EnsureFirebaseAnonIfPossibleAsync();
                 return false;
             }
 
-            PlayerId = PlayGamesPlatform.Instance?.localUser?.id ?? string.Empty;
-            if (string.IsNullOrEmpty(PlayerId))
-                Debug.LogWarning("[Auth] PGS returned empty player id.");
+            bool platformOk = await GoogleSignInAuthenticateAsync(interactive: true);
+            if (!platformOk)
+            {
+                Debug.LogWarning("[Auth] Google Sign-In failed – keeping existing Firebase session.");
+                // Already have an anonymous session from earlier init; keep it
+                return false;
+            }
 
-            bool firebaseOk = await TryLoginOrLinkFirebaseWithPgsAsync(forceRefreshToken);
+            PlayerId = GoogleSignIn.DefaultInstance.CurrentUser?.UserId ?? string.Empty;
+            if (string.IsNullOrEmpty(PlayerId))
+                Debug.LogWarning("[Auth] Google Sign-In returned empty user id.");
+
+            bool firebaseOk = await TryLoginOrLinkFirebaseWithGoogleAsync();
             if (!firebaseOk)
             {
-                Debug.LogWarning("[Auth] Firebase sign-in/link with PGS failed – fallback anonymous.");
-                await EnsureFirebaseAnonIfPossibleAsync();
+                Debug.LogWarning("[Auth] Firebase sign-in/link with Google failed – keeping existing session.");
                 return false;
             }
             return true;
 
 #else
-#if UNITY_ANDROID
-            Debug.Log("[Auth] Google Play Games SDK not available; using Firebase Anonymous fallback.");
-#else
-            Debug.Log("[Auth] Using Firebase Anonymous (no platform sign-in on this platform).");
-#endif
-            await EnsureFirebaseAnonIfPossibleAsync();
+            Debug.Log("[Auth] Google Sign-In SDK not available; keeping existing Firebase session.");
             return false;
 #endif
         }
@@ -141,98 +176,78 @@ namespace BumiMobile
 
         public static string GetUserLabel()
         {
-            // Prefer Firebase displayName/email; fallback to platform identity
-            var name = User?.DisplayName;
-            var mail = User?.Email;
-            if (!string.IsNullOrEmpty(name)) return name;
-            if (!string.IsNullOrEmpty(mail)) return mail;
-
-#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
-            var pgsName = PlayGamesPlatform.Instance?.localUser?.userName;
-            if (!string.IsNullOrEmpty(pgsName)) return pgsName;
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+            var googleUser = GoogleSignIn.DefaultInstance.CurrentUser;
+            if (!string.IsNullOrEmpty(googleUser?.DisplayName)) return googleUser.DisplayName;
+            if (!string.IsNullOrEmpty(googleUser?.Email)) return googleUser.Email;
 #endif
+
+            // Firebase fallback
+            if (!string.IsNullOrEmpty(User?.DisplayName)) return User.DisplayName;
+            if (!string.IsNullOrEmpty(User?.Email)) return User.Email;
 
             if (!string.IsNullOrEmpty(PlayerId)) return $"Player {PlayerId}";
             return string.Empty;
         }
 
         // ====================================================================
-        // ANDROID (PGS)
+        // Google Sign-In
         // ====================================================================
 
-#if UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
-        static void EnsurePgsActivated()
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+        /// <summary>
+        /// Google Sign-In platform authentication.
+        /// When interactive=true, shows the account picker UI if no prior sign-in exists.
+        /// When interactive=false (silent), only succeeds if user previously signed in.
+        /// </summary>
+        static async UniTask<bool> GoogleSignInAuthenticateAsync(bool interactive)
         {
-            if (_pgsActivated) return;
-            PlayGamesPlatform.DebugLogEnabled = true;
-            PlayGamesPlatform.Activate();
-            _pgsActivated = true;
-        }
-
-        static UniTask<bool> PgsAuthenticateAsync(bool interactive, bool manual = false)
-        {
-            var tcs = new UniTaskCompletionSource<bool>();
-
-            void SetResult(SignInStatus s)
+            GoogleSignIn.Configuration = new GoogleSignInConfiguration
             {
-                if (s != SignInStatus.Success)
-                    LastAuthFailureReason = "PGS SignInStatus=" + s;
-                tcs.TrySetResult(s == SignInStatus.Success);
-                OnPgsAuthFinished?.Invoke(s == SignInStatus.Success);
-            }
+                RequestIdToken = true,
+                WebClientId = WebClientId,
+                RequestEmail = true,
+                RequestAuthCode = false,
+                UseGameSignIn = false
+            };
 
             try
             {
-                if (PlayGamesPlatform.Instance == null)
+                GoogleSignInUser googleUser;
+                if (interactive)
                 {
-                    Debug.LogWarning("[Auth] PGS Instance null before authenticate.");
-                    tcs.TrySetResult(false);
+                    // Manual: show account picker if needed
+                    googleUser = await GoogleSignIn.DefaultInstance.SignIn();
                 }
                 else
                 {
-                    if (manual)
-                        PlayGamesPlatform.Instance.ManuallyAuthenticate(SetResult);
-                    else
-                        PlayGamesPlatform.Instance.Authenticate(SetResult);
+                    // Auto: try silent sign-in first, don't show UI
+                    googleUser = await GoogleSignIn.DefaultInstance.SignInSilently();
                 }
+
+                if (googleUser == null)
+                {
+                    LastAuthFailureReason = "[Auth] Google Sign-In returned null user";
+                    Debug.LogWarning(LastAuthFailureReason);
+                    OnPlatformAuthFinished?.Invoke(false);
+                    return false;
+                }
+
+                Debug.Log($"[Auth] Google Sign-In OK: {googleUser.UserId} / {googleUser.DisplayName}");
+                OnPlatformAuthFinished?.Invoke(true);
+                return true;
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[Auth] PGS authenticate threw: " + e.Message);
-                tcs.TrySetResult(false);
+                LastAuthFailureReason = "[Auth] Google Sign-In error: " + e.Message;
+                Debug.LogWarning(LastAuthFailureReason);
+                OnPlatformAuthFinished?.Invoke(false);
+                return false;
             }
-
-            return tcs.Task;
         }
 
-        static UniTask<string> RequestPgsServerAuthCodeAsync(bool forceRefreshToken)
-        {
-            var tcs = new UniTaskCompletionSource<string>();
-            try
-            {
-                if (PlayGamesPlatform.Instance == null)
-                {
-                    tcs.TrySetException(new Exception("PGS Instance null"));
-                }
-                else
-                {
-                    PlayGamesPlatform.Instance.RequestServerSideAccess(
-                        forceRefreshToken,
-                        code =>
-                        {
-                            if (string.IsNullOrEmpty(code))
-                                tcs.TrySetException(new Exception("Empty auth code"));
-                            else
-                                tcs.TrySetResult(code);
-                        });
-                }
-            }
-            catch (Exception e) { tcs.TrySetException(e); }
-            return tcs.Task;
-        }
-
-        /// <summary>Firebase with PGS credential (Android)</summary>
-        static async UniTask<bool> TryLoginOrLinkFirebaseWithPgsAsync(bool forceRefreshToken)
+        /// <summary>Firebase sign-in / link using Google Sign-In ID token.</summary>
+        static async UniTask<bool> TryLoginOrLinkFirebaseWithGoogleAsync()
         {
             try
             {
@@ -244,30 +259,26 @@ namespace BumiMobile
                 }
 
                 var auth = FirebaseAuth.DefaultInstance;
-                if (auth == null) { Debug.LogWarning("[Auth] FirebaseAuth.DefaultInstance null."); return false; }
-
-                // Get server auth code (with one retry forcing refresh)
-                string authCode = null;
-                Exception lastCodeErr = null;
-                for (int attempt = 0; attempt < 2 && string.IsNullOrEmpty(authCode); attempt++)
+                if (auth == null)
                 {
-                    bool force = attempt == 1 ? true : forceRefreshToken;
-                    try
-                    {
-                        authCode = await RequestPgsServerAuthCodeAsync(force);
-                        Debug.Log("[Auth] Obtained PGS auth code: " + authCode);
-                    }
-                    catch (Exception e) { lastCodeErr = e; }
+                    Debug.LogWarning("[Auth] FirebaseAuth.DefaultInstance null.");
+                    return false;
                 }
-                if (string.IsNullOrEmpty(authCode))
+
+                var googleUser = GoogleSignIn.DefaultInstance.CurrentUser;
+                if (googleUser == null || string.IsNullOrEmpty(googleUser.IdToken))
                 {
-                    LastAuthFailureReason = "[Auth] Empty PGS auth code: " + (lastCodeErr?.Message ?? "Unknown");
+                    LastAuthFailureReason = "[Auth] No Google IdToken available";
                     Debug.LogWarning(LastAuthFailureReason);
                     return false;
                 }
 
-                var cred = PlayGamesAuthProvider.GetCredential(authCode);
-                if (cred == null) { LastAuthFailureReason = "[Auth] Null PGS credential"; return false; }
+                var cred = GoogleAuthProvider.GetCredential(googleUser.IdToken, null);
+                if (cred == null)
+                {
+                    LastAuthFailureReason = "[Auth] Null Google credential";
+                    return false;
+                }
 
                 if (auth.CurrentUser == null)
                 {
@@ -278,28 +289,30 @@ namespace BumiMobile
 
                 if (auth.CurrentUser.IsAnonymous)
                 {
-                    await auth.CurrentUser.LinkWithCredentialAsync(cred); // upgrade anon
+                    // Upgrade anonymous account to Google-linked
+                    await auth.CurrentUser.LinkWithCredentialAsync(cred);
                     await auth.CurrentUser.ReloadAsync();
                     User = auth.CurrentUser;
                     OnFirebaseAuthChanged?.Invoke(User);
                     return true;
                 }
 
-                User = await auth.SignInWithCredentialAsync(cred); // re-sign
+                // Re-sign with Google credential
+                User = await auth.SignInWithCredentialAsync(cred);
                 OnFirebaseAuthChanged?.Invoke(User);
                 return User != null;
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[Auth] Firebase PGS step failed: " + e.Message);
+                Debug.LogWarning("[Auth] Firebase Google step failed: " + e.Message);
                 LastAuthFailureReason = e.Message;
                 return false;
             }
         }
-#endif // UNITY_ANDROID && BUMI_AUTH_HAS_GPGS
+#endif // BUMI_AUTH_HAS_GOOGLE_SIGNIN
 
         // ====================================================================
-        // Firebase Anonymous Fallback (Common)
+        // Firebase Anonymous Fallback
         // ====================================================================
 
         static async UniTask<bool> EnsureFirebaseAnonIfPossibleAsync()
@@ -335,6 +348,9 @@ namespace BumiMobile
     }
 }
 #else
+// ====================================================================
+// STUB: Firebase SDK not present
+// ====================================================================
 namespace BumiMobile
 {
     public static class AuthService
@@ -344,9 +360,12 @@ namespace BumiMobile
         public static bool IsFirebaseAnonymous => true;
         public static bool IsAuthenticated => false;
         public static bool IsSignedIn => false;
-        public static string LastAuthFailureReason { get; private set; } = "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
+        public static string LastAuthFailureReason { get; private set; } =
+            "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
 
-        public static event Action<bool> OnPgsAuthFinished;
+        public static string WebClientId { get; set; }
+
+        public static event Action<bool> OnPlatformAuthFinished;
         public static event Action<FirebaseUser> OnFirebaseAuthChanged;
 
         public static UniTask<bool> SignInAsync(bool forceRefreshToken = true)
@@ -371,7 +390,8 @@ namespace BumiMobile
 
         static void LogStubWarning()
         {
-            LastAuthFailureReason = "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
+            LastAuthFailureReason =
+                "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
             Debug.LogWarning("[Auth] Firebase SDK not detected. AuthService is running in stub mode.");
         }
     }

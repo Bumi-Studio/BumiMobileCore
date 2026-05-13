@@ -2,6 +2,8 @@
   "dependencies": {
     "com.bumimobile.core": "0.1.1",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+    "com.google.external-dependency-manager": "https://github.com/googlesamples/unity-jar-resolver.git?path=upm",
+    "com.google.signin": "https://github.com/Thaina/google-signin-unity.git#newmigration",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.asset-manager-for-unity": "1.9.0",
     "com.unity.collab-proxy": "2.9.3",

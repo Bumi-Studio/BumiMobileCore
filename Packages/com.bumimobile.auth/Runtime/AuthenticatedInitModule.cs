@@ -114,7 +114,7 @@ namespace BumiMobile
                         }
                         else
                         {
-                            Debug.LogWarning("[Auth] Sign-in taking longer than expected; waiting for Play Games result...");
+                            Debug.LogWarning("[Auth] Sign-in taking longer than expected; waiting for auth result...");
                             signInResult = await signInTask;
                         }
                     }

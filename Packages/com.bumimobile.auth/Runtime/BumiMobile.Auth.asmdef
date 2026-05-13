@@ -4,7 +4,7 @@
     "references": [
         "BumiMobile.Core",
         "UniTask",
-        "Google.Play.Games"
+        "GoogleSignIn"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -20,9 +20,9 @@
             "define": "BUMI_AUTH_HAS_FIREBASE"
         },
         {
-            "name": "com.google.play.games",
+            "name": "com.google.signin.google-signin-unity",
             "expression": "0.0.0",
-            "define": "BUMI_AUTH_HAS_GPGS"
+            "define": "BUMI_AUTH_HAS_GOOGLE_SIGNIN"
         }
     ],
     "noEngineReferences": false
