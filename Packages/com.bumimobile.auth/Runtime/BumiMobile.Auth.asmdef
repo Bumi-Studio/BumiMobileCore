@@ -3,8 +3,7 @@
     "rootNamespace": "",
     "references": [
         "BumiMobile.Core",
-        "UniTask",
-        "GoogleSignIn"
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
