@@ -1,0 +1,17 @@
+{
+  "name": "com.bumimobile.feedback",
+  "displayName": "Bumi Mobile Feedback",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "User feedback, rating prompts, and survey orchestration for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "feedback",
+    "rating",
+    "survey"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1"
+  }
+}

@@ -58,6 +58,14 @@
         "com.unity.ugui": "2.0.0"
       }
     },
+    "com.bumimobile.feedback": {
+      "version": "file:com.bumimobile.feedback",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1"
+      }
+    },
     "com.bumimobile.fullserializer": {
       "version": "file:com.bumimobile.fullserializer",
       "depth": 0,
@@ -80,6 +88,12 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.keystore": {
+      "version": "file:com.bumimobile.keystore",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.bumimobile.leaderboard": {
       "version": "file:com.bumimobile.leaderboard",
       "depth": 0,
@@ -89,12 +103,6 @@
         "com.bumimobile.save": "0.1.1",
         "com.bumimobile.auth": "0.1.2"
       }
-    },
-    "com.bumimobile.keystore": {
-      "version": "file:com.bumimobile.keystore",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
     },
     "com.bumimobile.localization": {
       "version": "file:com.bumimobile.localization",
