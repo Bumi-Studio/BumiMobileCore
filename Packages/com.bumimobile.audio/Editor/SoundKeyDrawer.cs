@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace BumiMobile
 {
@@ -14,7 +13,7 @@ namespace BumiMobile
     [CustomPropertyDrawer(typeof(SoundKey))]
     public class SoundKeyDrawer : PropertyDrawer
     {
-        private const string LibraryAddress = "AudioLibrary";
+        private const string LibraryResourcePath = "AudioLibrary";
         private const float Spacing = 2f;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -37,12 +36,7 @@ namespace BumiMobile
             SerializedProperty groupProp = property.FindPropertyRelative("Group");
             SerializedProperty idProp    = property.FindPropertyRelative("Id");
 
-            AudioLibrary library = null;
-            
-            // Try to load from Addressables in Editor
-            var handle = Addressables.LoadAssetAsync<AudioLibrary>(LibraryAddress);
-            library = handle.WaitForCompletion();
-            Addressables.Release(handle);
+            AudioLibrary library = Resources.Load<AudioLibrary>(LibraryResourcePath);
 
             Rect groupRect = new Rect(position.x, position.y + lineH + Spacing, position.width, lineH);
             Rect idRect    = new Rect(position.x, position.y + (lineH + Spacing) * 2, position.width, lineH);
@@ -52,7 +46,7 @@ namespace BumiMobile
                 // Fallback: plain text fields if library not found
                 EditorGUI.PropertyField(groupRect, groupProp, new GUIContent("Group"));
                 EditorGUI.PropertyField(idRect,    idProp,    new GUIContent("Id"));
-                EditorGUI.HelpBox(idRect, $"AudioLibrary not found at Addressable '{LibraryAddress}'", MessageType.Warning);
+                EditorGUI.HelpBox(idRect, $"AudioLibrary not found at Resources/{LibraryResourcePath}", MessageType.Warning);
             }
             else
             {

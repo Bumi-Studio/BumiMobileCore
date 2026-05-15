@@ -12,6 +12,27 @@ Unified ads + in-app purchase orchestration for Bumi Mobile projects. This packa
 - **Editor UX**: custom inspectors for Monetization/Ads/IAP settings, provider-specific containers (AdMob IDs, Unity Ads placements, LevelPlay keys), and convenience menu items to generate the nested assets.
 - **Auto module defines**: the runtime asmdef now emits `MODULE_ADMOB`, `MODULE_LEVELPLAY`, and `MODULE_UNITYADS` as soon as their Unity packages are installed, keeping the relevant code paths enabled without manual define management.
 
+## Installation
+
+### Via Unity Package Manager Editor
+
+The package ships a **Monetization** sample that you can import directly from the Unity Editor:
+
+1. Open **Window ▸ Package Manager**.
+2. Select the **Bumi Mobile Monetization** package from the package list.
+3. Click the **Samples** tab on the right panel.
+4. Find **Monetization** and click **Import**. Unity copies the sample assets into `Assets/Samples/Bumi Mobile Monetization/<version>/Monetization/`.
+
+### Via `Samples~` (Manual)
+
+If you prefer to import the sample manually or are working outside the Editor:
+
+1. Navigate to `Packages/com.bumimobile.monetization/Samples~/Monetization/`.
+2. Extract `bumi_mobile_monetization.unitypackage` into your project by double-clicking it or via **Assets ▸ Import Package**.
+3. The assets will be placed under `Assets/` in your project.
+
+> **Note:** The `Samples~` folder is hidden from Unity by design. The `samples` entry in `package.json` makes it discoverable by the Package Manager, while keeping the sample assets out of your project until you explicitly import them.
+
 ## Requirements
 
 - Unity **2021.3** or newer.

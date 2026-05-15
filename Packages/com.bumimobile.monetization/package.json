@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.monetization",
   "displayName": "Bumi Mobile Monetization",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "unity": "2021.3",
   "description": "Ads, purchasing, and monetization orchestration for Bumi Mobile projects.",
   "keywords": [
@@ -11,6 +11,13 @@
     "iap"
   ],
   "category": "Framework",
+  "samples": [
+    {
+      "displayName": "Monetization",
+      "description": "Pre-configured Monetization settings assets (ScriptableObjects for Ads & IAP) to kickstart your project setup.",
+      "path": "Samples~/Monetization"
+    }
+  ],
   "dependencies": {
     "com.bumimobile.core": "0.1.1",
     "com.unity.textmeshpro": "3.0.9"
