@@ -1,11 +1,12 @@
 # Bumi Mobile Auth
 
-Anonymous-first authentication for Bumi Mobile projects. This package auto-initialises a Firebase session at app start (restoring any persisted account or creating an anonymous one), then lets the user upgrade to a permanent Google-linked account via a "Sign in with Google" button.
+Google Sign-In-first authentication for Bumi Mobile projects. This package attempts silent Google Sign-In at app start (restoring returning users seamlessly), falls back to restoring a persisted Firebase session, and creates an anonymous account as a last resort. Users can also explicitly sign in via a "Sign in with Google" button that upgrades their anonymous account.
 
 ## Features
 
-- **Anonymous-first** — `SignInAsync()` skips Google entirely. On first launch the player gets an anonymous Firebase UID immediately (works with Firestore, RTDB, etc.). If a linked account already exists, Firebase restores it transparently — no Google sign-in needed.
+- **Google Sign-In-first** — `SignInAsync()` tries silent Google Sign-In before anything else. Returning Google users restore their session with no UI interaction. If silent sign-in fails, it falls back to a persisted Firebase session or creates an anonymous account.
 - **Upgrade on demand** — `ManualSignInAsync()` shows the Google account picker. When the player signs in with Google, their existing anonymous account is **linked** (upgraded) — all game data associated with that Firebase UID is preserved.
+- **Always authenticated** — `SignOutAsync()` signs out of Google and Firebase, clears state, then immediately creates a fresh anonymous account. The app never goes userless — analytics, cloud save, and leaderboards always have a Firebase user.
 - `AuthenticatedInitModule` — an init module that bootstraps the session during the initializer pipeline, with timeout handling and skip/disable flags.
 - `CountryService` — resolves the player country via IP lookup, caches the result, and optionally provides flag sprites via `CountryFlagDatabase` ScriptableObject.
 - `CountryFlagDatabase` — editable asset mapping ISO country codes to flag sprites and localized names.
@@ -22,15 +23,21 @@ Anonymous-first authentication for Bumi Mobile projects. This package auto-initi
 
 No configuration needed. At app start `AuthenticatedInitModule` calls `AuthService.SignInAsync()` which:
 
-1. Checks Firebase — if a previous session exists (linked or anonymous), restores it.
-2. If no session exists, creates a new **anonymous** Firebase account.
+1. Attempts **silent Google Sign-In** — if the user previously signed in with Google, their session is restored without any UI.
+2. If silent Google fails, checks Firebase for a persisted session (linked or anonymous) and restores it.
+3. If no session exists, creates a new **anonymous** Firebase account.
 
 ```csharp
-// State after SignInAsync():
+// State after SignInAsync() on first launch:
 AuthService.IsAuthenticated      → true  (Firebase session exists)
 AuthService.IsSignedIn           → false (not Google-linked yet)
 AuthService.IsFirebaseAnonymous  → true
 AuthService.User.UserId          → "abc123..."  (Firebase UID)
+
+// State after SignInAsync() for a returning Google user:
+AuthService.IsAuthenticated      → true
+AuthService.IsSignedIn           → true  (Google-linked restored silently)
+AuthService.IsFirebaseAnonymous  → false
 ```
 
 ### 3. Add "Sign in with Google" (manual)
@@ -90,18 +97,28 @@ App Start
   └─ AuthenticatedInitModule
        ├─ Skip/disable flags? → skip auth
        └─ AuthService.SignInAsync()
-            └─ EnsureFirebaseAnonIfPossibleAsync()
-                 ├─ Firebase has existing session? → restore it (linked OR anonymous)
-                 └─ No session? → SignInAnonymouslyAsync() → new anonymous account
-            └─ Returns true ONLY if a linked (non-anonymous) account was restored
+            ├─ Silent Google Sign-In?
+            │    ├─ Success → Firebase link/upgrade → done (Google-linked)
+            │    └─ Fail/not available → continue
+            ├─ Firebase has existing session? → restore it (linked OR anonymous)
+            └─ No session? → SignInAnonymouslyAsync() → new anonymous account
+            └─ Returns true ONLY if a linked (non-anonymous) account exists
 
 Manual "Sign in with Google" button
   └─ AuthService.ManualSignInAsync()
-       ├─ EnsureFirebaseAnonIfPossibleAsync()  // guarantee anonymous session exists
        ├─ GoogleSignIn.DefaultInstance.SignIn()  // show account picker
        ├─ GoogleAuthProvider.GetCredential(idToken)  // Firebase credential
-       └─ auth.CurrentUser.LinkWithCredentialAsync()  // upgrade anonymous → linked
+       └─ auth.CurrentUser.IsAnonymous?
+            ├─ Yes → LinkWithCredentialAsync()  // upgrade anonymous → linked
+            └─ No  → SignInWithCredentialAsync()  // direct sign-in
             └─ All game data tied to the Firebase UID is preserved!
+
+Sign Out
+  └─ AuthService.SignOutAsync()
+       ├─ GoogleSignIn.DefaultInstance.SignOut()
+       ├─ FirebaseAuth.SignOut()
+       ├─ Clear PlayerId cache
+       └─ SignInAnonymouslyAsync() → new anonymous account (app stays "logged in")
 ```
 
 ### State flags after each scenario
@@ -111,7 +128,7 @@ Manual "Sign in with Google" button
 | First launch (after `SignInAsync`) | ✓ | ✗ | ✓ |
 | Restart with linked account | ✓ | ✓ | ✗ |
 | After tapping "Sign in with Google" | ✓ | ✓ | ✗ |
-| After `SignOutAsync()` + restart | ✓ | ✗ | ✓ |
+| After `SignOutAsync()` | ✓ | ✗ | ✓ |
 
 ## Folder Layout
 

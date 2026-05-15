@@ -6,7 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- _Nothing yet._
+### Changed
+
+- **Google Sign-In-first**: `SignInAsync` (auto-start) now attempts silent Google Sign-In before falling back to Firebase restore or anonymous. Previously it skipped Google entirely on auto-start.
+- `SignOutAsync` now recreates an anonymous Firebase account immediately after sign-out, so the app always has a Firebase user (analytics, cloud save, etc. expect one).
+- Removed `AuthType` enum and `CurrentAuthType` property — derive auth type from `User.IsAnonymous` instead.
+- Removed `PREF_AUTH_TYPE` PlayerPrefs key — Firebase SDK persists the auth session natively.
+- Removed `_googleUser` field — Firebase `User.DisplayName`/`Email` mirrors the Google profile after linking.
+- `GetUserLabel()` simplified to use Firebase `User` directly.
+- Reduced PlayerPrefs persistence to only `PREF_PLAYER_ID` (Google Sign-In user ID, not cached by Firebase).
 
 ## [0.2.1] - 2026-05-13
 
