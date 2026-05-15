@@ -18,39 +18,38 @@ namespace BumiMobile
 {
     public static class AuthService
     {
-        // ---- Identity / State ----
-        /// <summary>Google Sign-In user id (populated when Google Sign-In succeeds).</summary>
+        private const string PREF_PLAYER_ID = "__auth_player_id__";
+
         public static string PlayerId { get; private set; } = string.Empty;
 
         public static Firebase.Auth.FirebaseUser User { get; private set; }
         public static bool IsFirebaseAnonymous => User != null && User.IsAnonymous;
-        /// <summary>UI indicator: treat any Firebase user (including anonymous) as "logged in".</summary>
         public static bool IsAuthenticated => User != null;
-        /// <summary>Strong sign-in (linked account): non-anonymous only.</summary>
         public static bool IsSignedIn => User != null && !User.IsAnonymous;
 
-        static bool _busy;
         public static string LastAuthFailureReason { get; private set; } = string.Empty;
-
-        /// <summary>
-        /// OAuth 2.0 Web Client ID from Google Cloud Console.
-        /// Must be set before calling SignInAsync / ManualSignInAsync.
-        /// </summary>
         public static string WebClientId { get; set; }
 
-        // Events
+        static bool _busy;
+
         public static event Action<bool> OnPlatformAuthFinished;
         public static event Action<Firebase.Auth.FirebaseUser> OnFirebaseAuthChanged;
+
+        static AuthService()
+        {
+            PlayerId = PlayerPrefs.GetString(PREF_PLAYER_ID, string.Empty);
+        }
 
         // ====================================================================
         // PUBLIC API
         // ====================================================================
 
         /// <summary>
-        /// Auto sign-in on app start. Does NOT attempt Google Sign-In —
-        /// only initialises Firebase (restoring any persisted session).
-        /// If no previous session exists, creates an anonymous Firebase account.
-        /// Returns true when a non-anonymous Firebase user is signed in.
+        /// Auto sign-in on app start.
+        /// 1. Try silent Google Sign-In → link/upgrade Firebase.
+        /// 2. Fall back to Firebase persisted session.
+        /// 3. If no session, create anonymous account.
+        /// Returns true when a non-anonymous (Google-linked) Firebase user is signed in.
         /// </summary>
         public static async UniTask<bool> SignInAsync(bool forceRefreshToken = true)
         {
@@ -62,52 +61,40 @@ namespace BumiMobile
             _busy = true;
             try
             {
-                return await InternalSignInAsync(interactive: false, manual: false);
+                return await SignInAutoAsync();
             }
             finally { _busy = false; }
         }
 
         /// <summary>
-        /// Manual variant for a "Sign in with Google" button.
-        /// Shows the Google account picker if needed.
+        /// Manual "Sign in with Google" button.
+        /// Shows the Google account picker, then links/upgrades Firebase.
         /// </summary>
         public static async UniTask<bool> ManualSignInAsync()
         {
-            if (_busy) return false;
+            if (_busy)
+            {
+                Debug.LogWarning("[Auth] Manual sign-in already running");
+                return false;
+            }
             _busy = true;
             try
             {
-                return await InternalSignInAsync(interactive: true, manual: true);
+                return await SignInManualAsync();
             }
             finally { _busy = false; }
         }
 
+        /// <summary>
+        /// Sign out of Google + Firebase, clear state, then immediately
+        /// create a fresh anonymous account so the app always has a Firebase user.
+        /// </summary>
         public static async UniTask<bool> SignOutAsync()
         {
             try
             {
-#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-                try
-                {
-                    GoogleSignIn.DefaultInstance.SignOut();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[Auth] Google Sign-Out error: " + ex.Message);
-                }
-#endif
-
-                var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
-                if (dep == DependencyStatus.Available)
-                {
-                    var auth = FirebaseAuth.DefaultInstance;
-                    auth?.SignOut();
-                }
-
-                PlayerId = string.Empty;
-                User = null;
-                OnFirebaseAuthChanged?.Invoke(null);
-                return true;
+                await SignOutAllAsync();
+                return await CreateAnonymousAsync();
             }
             catch (Exception e)
             {
@@ -116,138 +103,179 @@ namespace BumiMobile
             }
         }
 
-        // ====================================================================
-        // CORE FLOW
-        // ====================================================================
-
-        /// <param name="interactive">When true, may show Google account picker UI.</param>
-        /// <param name="manual">True when user explicitly tapped "Sign In" button.</param>
-        static async UniTask<bool> InternalSignInAsync(bool interactive, bool manual)
-        {
-            // ---- Auto start: no Google Sign-In at all, just Firebase ----
-            if (!manual)
-            {
-                Debug.Log("[Auth] Auto-init: skipping Google Sign-In, using Firebase (restore / anonymous).");
-                await EnsureFirebaseAnonIfPossibleAsync();
-                // Return true if Firebase restored a linked (non-anonymous) account
-                return User != null && !User.IsAnonymous;
-            }
-
-            // ---- Manual "Sign in with Google" button ----
-#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-            if (string.IsNullOrEmpty(WebClientId))
-            {
-                Debug.LogError("[Auth] Google Sign-In WebClientId not configured. " +
-                               "Set AuthService.WebClientId before calling sign-in.");
-                LastAuthFailureReason = "WebClientId not configured";
-                await EnsureFirebaseAnonIfPossibleAsync();
-                return false;
-            }
-
-            bool platformOk = await GoogleSignInAuthenticateAsync(interactive: true);
-            if (!platformOk)
-            {
-                Debug.LogWarning("[Auth] Google Sign-In failed – keeping existing Firebase session.");
-                // Already have an anonymous session from earlier init; keep it
-                return false;
-            }
-
-            PlayerId = GoogleSignIn.DefaultInstance.CurrentUser?.UserId ?? string.Empty;
-            if (string.IsNullOrEmpty(PlayerId))
-                Debug.LogWarning("[Auth] Google Sign-In returned empty user id.");
-
-            bool firebaseOk = await TryLoginOrLinkFirebaseWithGoogleAsync();
-            if (!firebaseOk)
-            {
-                Debug.LogWarning("[Auth] Firebase sign-in/link with Google failed – keeping existing session.");
-                return false;
-            }
-            return true;
-
-#else
-            Debug.Log("[Auth] Google Sign-In SDK not available; keeping existing Firebase session.");
-            return false;
-#endif
-        }
-
-        // ====================================================================
-        // LABEL
-        // ====================================================================
-
         public static string GetUserLabel()
         {
-#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-            var googleUser = GoogleSignIn.DefaultInstance.CurrentUser;
-            if (!string.IsNullOrEmpty(googleUser?.DisplayName)) return googleUser.DisplayName;
-            if (!string.IsNullOrEmpty(googleUser?.Email)) return googleUser.Email;
-#endif
-
-            // Firebase fallback
             if (!string.IsNullOrEmpty(User?.DisplayName)) return User.DisplayName;
-            if (!string.IsNullOrEmpty(User?.Email)) return User.Email;
-
-            if (!string.IsNullOrEmpty(PlayerId)) return $"Player {PlayerId}";
+            if (!string.IsNullOrEmpty(User?.Email))       return User.Email;
+            if (!string.IsNullOrEmpty(PlayerId))          return $"Player {PlayerId}";
             return string.Empty;
         }
 
         // ====================================================================
-        // Google Sign-In
+        // AUTO SIGN-IN
+        // ====================================================================
+
+        static async UniTask<bool> SignInAutoAsync()
+        {
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (dep != DependencyStatus.Available)
+            {
+                Debug.LogWarning($"[Auth] Firebase deps: {dep}");
+                return false;
+            }
+
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+            if (!string.IsNullOrEmpty(WebClientId))
+            {
+                var googleUser = await GoogleSignInAuthenticateAsync(interactive: false);
+                if (googleUser != null)
+                {
+                    if (await TryAuthFirebaseWithGoogleAsync(googleUser))
+                    {
+                        PersistPlayerId(googleUser.UserId);
+                        return true;
+                    }
+
+                    Debug.LogWarning("[Auth] Firebase Google auth failed, falling back to Firebase session.");
+                }
+            }
+#endif
+
+            var auth = FirebaseAuth.DefaultInstance;
+            if (auth.CurrentUser != null)
+            {
+                User = auth.CurrentUser;
+                OnFirebaseAuthChanged?.Invoke(User);
+                return !User.IsAnonymous;
+            }
+
+            return await CreateAnonymousAsync();
+        }
+
+        // ====================================================================
+        // MANUAL SIGN-IN
         // ====================================================================
 
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-        /// <summary>
-        /// Google Sign-In platform authentication.
-        /// When interactive=true, shows the account picker UI if no prior sign-in exists.
-        /// When interactive=false (silent), only succeeds if user previously signed in.
-        /// </summary>
-        static async UniTask<bool> GoogleSignInAuthenticateAsync(bool interactive)
+        static async UniTask<bool> SignInManualAsync()
+        {
+            if (string.IsNullOrEmpty(WebClientId))
+            {
+                Debug.LogError("[Auth] WebClientId not configured. Set AuthService.WebClientId before sign-in.");
+                LastAuthFailureReason = "WebClientId not configured";
+                return false;
+            }
+
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (dep != DependencyStatus.Available)
+            {
+                Debug.LogWarning($"[Auth] Firebase deps: {dep}");
+                return false;
+            }
+
+            var googleUser = await GoogleSignInAuthenticateAsync(interactive: true);
+            if (googleUser == null)
+            {
+                Debug.LogWarning("[Auth] Google Sign-In failed – keeping existing session.");
+                return false;
+            }
+
+            if (await TryAuthFirebaseWithGoogleAsync(googleUser))
+            {
+                PersistPlayerId(googleUser.UserId);
+                return true;
+            }
+
+            Debug.LogWarning("[Auth] Firebase Google auth failed – keeping existing session.");
+            return false;
+        }
+#else
+        static async UniTask<bool> SignInManualAsync()
+        {
+            Debug.Log("[Auth] Google Sign-In SDK not available.");
+            return false;
+        }
+#endif
+
+        // ====================================================================
+        // SIGN OUT
+        // ====================================================================
+
+        static async UniTask SignOutAllAsync()
+        {
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+            try
+            {
+                GoogleSignIn.DefaultInstance.SignOut();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[Auth] Google Sign-Out error: " + ex.Message);
+            }
+#endif
+
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (dep == DependencyStatus.Available)
+            {
+                FirebaseAuth.DefaultInstance?.SignOut();
+            }
+
+            PlayerId = string.Empty;
+            User = null;
+            if (PlayerPrefs.HasKey(PREF_PLAYER_ID))
+                PlayerPrefs.DeleteKey(PREF_PLAYER_ID);
+            PlayerPrefs.Save();
+            OnFirebaseAuthChanged?.Invoke(null);
+        }
+
+        // ====================================================================
+        // GOOGLE SIGN-IN (platform)
+        // ====================================================================
+
+#if BUMI_AUTH_HAS_GOOGLE_SIGNIN
+        static async UniTask<GoogleSignInUser> GoogleSignInAuthenticateAsync(bool interactive)
         {
             GoogleSignIn.Configuration = new GoogleSignInConfiguration
             {
-                RequestIdToken = true,
-                WebClientId = WebClientId,
-                RequestEmail = true,
+                RequestIdToken  = true,
+                WebClientId     = WebClientId,
+                RequestEmail    = true,
                 RequestAuthCode = false,
-                UseGameSignIn = false
+                UseGameSignIn   = false
             };
 
             try
             {
-                GoogleSignInUser googleUser;
-                if (interactive)
-                {
-                    // Manual: show account picker if needed
-                    googleUser = await GoogleSignIn.DefaultInstance.SignIn();
-                }
-                else
-                {
-                    // Auto: try silent sign-in first, don't show UI
-                    googleUser = await GoogleSignIn.DefaultInstance.SignInSilently();
-                }
+                var googleUser = interactive
+                    ? await GoogleSignIn.DefaultInstance.SignIn()
+                    : await GoogleSignIn.DefaultInstance.SignInSilently();
 
                 if (googleUser == null)
                 {
                     LastAuthFailureReason = "[Auth] Google Sign-In returned null user";
                     Debug.LogWarning(LastAuthFailureReason);
                     OnPlatformAuthFinished?.Invoke(false);
-                    return false;
+                    return null;
                 }
 
                 Debug.Log($"[Auth] Google Sign-In OK: {googleUser.UserId} / {googleUser.DisplayName}");
                 OnPlatformAuthFinished?.Invoke(true);
-                return true;
+                return googleUser;
             }
             catch (Exception e)
             {
                 LastAuthFailureReason = "[Auth] Google Sign-In error: " + e.Message;
                 Debug.LogWarning(LastAuthFailureReason);
                 OnPlatformAuthFinished?.Invoke(false);
-                return false;
+                return null;
             }
         }
 
-        /// <summary>Firebase sign-in / link using Google Sign-In ID token.</summary>
-        static async UniTask<bool> TryLoginOrLinkFirebaseWithGoogleAsync()
+        // ====================================================================
+        // FIREBASE AUTH WITH GOOGLE CREDENTIAL
+        // ====================================================================
+
+        static async UniTask<bool> TryAuthFirebaseWithGoogleAsync(GoogleSignInUser googleUser)
         {
             try
             {
@@ -265,7 +293,6 @@ namespace BumiMobile
                     return false;
                 }
 
-                var googleUser = GoogleSignIn.DefaultInstance.CurrentUser;
                 if (googleUser == null || string.IsNullOrEmpty(googleUser.IdToken))
                 {
                     LastAuthFailureReason = "[Auth] No Google IdToken available";
@@ -283,13 +310,13 @@ namespace BumiMobile
                 if (auth.CurrentUser == null)
                 {
                     User = await auth.SignInWithCredentialAsync(cred);
-                    OnFirebaseAuthChanged?.Invoke(User);
+                    if (User != null)
+                        OnFirebaseAuthChanged?.Invoke(User);
                     return User != null;
                 }
 
                 if (auth.CurrentUser.IsAnonymous)
                 {
-                    // Upgrade anonymous account to Google-linked
                     await auth.CurrentUser.LinkWithCredentialAsync(cred);
                     await auth.CurrentUser.ReloadAsync();
                     User = auth.CurrentUser;
@@ -297,9 +324,9 @@ namespace BumiMobile
                     return true;
                 }
 
-                // Re-sign with Google credential
                 User = await auth.SignInWithCredentialAsync(cred);
-                OnFirebaseAuthChanged?.Invoke(User);
+                if (User != null)
+                    OnFirebaseAuthChanged?.Invoke(User);
                 return User != null;
             }
             catch (Exception e)
@@ -309,41 +336,55 @@ namespace BumiMobile
                 return false;
             }
         }
-#endif // BUMI_AUTH_HAS_GOOGLE_SIGNIN
+#endif
 
         // ====================================================================
-        // Firebase Anonymous Fallback
+        // ANONYMOUS
         // ====================================================================
 
-        static async UniTask<bool> EnsureFirebaseAnonIfPossibleAsync()
+        static async UniTask<bool> CreateAnonymousAsync()
         {
             try
             {
                 var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
                 if (dep != DependencyStatus.Available)
                 {
-                    Debug.LogWarning($"[Auth] Firebase deps not available for anonymous: {dep}");
+                    Debug.LogWarning($"[Auth] Firebase deps for anonymous: {dep}");
                     return false;
                 }
 
                 var auth = FirebaseAuth.DefaultInstance;
-                if (auth.CurrentUser != null)
+                var res = await auth.SignInAnonymouslyAsync();
+                User = res?.User;
+                if (User != null)
                 {
-                    User = auth.CurrentUser;
+                    Debug.Log($"[Auth] Anonymous OK: {User.UserId}");
+                    OnFirebaseAuthChanged?.Invoke(User);
                     return true;
                 }
 
-                var res = await auth.SignInAnonymouslyAsync();
-                User = res?.User;
-                Debug.Log($"[Auth] Firebase Anonymous OK: {User?.UserId}");
-                OnFirebaseAuthChanged?.Invoke(User);
-                return User != null;
+                Debug.LogWarning("[Auth] Anonymous sign-in returned null user.");
+                return false;
             }
             catch (Exception e)
             {
                 Debug.LogWarning("[Auth] Anonymous sign-in failed: " + e.Message);
                 return false;
             }
+        }
+
+        // ====================================================================
+        // PLAYER PREFS
+        // ====================================================================
+
+        static void PersistPlayerId(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId))
+                return;
+
+            PlayerId = playerId;
+            PlayerPrefs.SetString(PREF_PLAYER_ID, playerId);
+            PlayerPrefs.Save();
         }
     }
 }
