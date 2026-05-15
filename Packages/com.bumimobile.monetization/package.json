@@ -1,0 +1,19 @@
+{
+  "name": "com.bumimobile.monetization",
+  "displayName": "Bumi Mobile Monetization",
+  "version": "0.1.4",
+  "unity": "2021.3",
+  "description": "Ads, purchasing, and monetization orchestration for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "monetization",
+    "ads",
+    "iap"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.1",
+    "com.unity.textmeshpro": "3.0.9"
+  },
+  "_fingerprint": "22c09284ee657a231bb43ffd8f188f3104f4e127"
+}
