@@ -12,4 +12,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
-- Initial release of the Feedback package.
+- `FeedbackPanel` MonoBehaviour for in-app feedback submission (email, message, issue category, screenshot).
+- `FeedbackAlertMessage` fade-in/fade-out toast notification component.
+- `IssueToggle` toggle row UI component with localised and default issue labels.
+- `FeedbackFormData`, `FeedbackResponseData`, and `IssueData` serialisable data models.
+- `ApiController` async HTTP client (`IApiClient`) with retry, timeout, cancellation, multipart upload, and `ApiResponse<T>` wrapper.
+- `ApiConfiguration` ScriptableObject for base URL, timeout, retries, and named routes with context-menu code generation to a static `ApiRoutes` class.
+- `IApiClient` interface for dependency injection / testing.
+- `IJsonSerializer` / `NewtonsoftJsonSerializer` pluggable JSON layer.
+- `SecretKeystore` AES-256-CBC encrypted key-value store (PBKDF2 key derivation) for API keys and tokens, loaded from `Resources/secrets.keystore.bytes`.
+- `KeystorePassword` partial class pattern — runtime password supplied via gitignored `KeystorePassword.Local.cs`.
+- `ImageCompressor` static pipeline that compresses `Texture2D` to ≤ 2 MB (PNG → JPEG quality steps → downscale) for upload.
+- Editor window (`Tools > 🔐 Secret Keystore`) for creating, unlocking, and managing secrets.
+- Demo scene showcasing the full feedback flow.

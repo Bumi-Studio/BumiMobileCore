@@ -3,15 +3,26 @@
   "displayName": "Bumi Mobile Feedback",
   "version": "0.1.0",
   "unity": "2021.3",
-  "description": "User feedback, rating prompts, and survey orchestration for Bumi Mobile projects.",
+  "description": "In-app feedback form with screenshot attachment, encrypted API key storage, and async HTTP client for Bumi Mobile projects.",
   "keywords": [
     "bumi",
     "feedback",
-    "rating",
-    "survey"
+    "report",
+    "screenshot",
+    "keystore",
+    "api"
   ],
   "category": "Framework",
+  "samples": [
+    {
+      "displayName": "Feedback",
+      "description": "Pre-configured Feedback prefab and settings assets to kickstart in-app feedback with screenshot attachment in your project.",
+      "path": "Samples~/Feedback"
+    }
+  ],
   "dependencies": {
-    "com.bumimobile.core": "0.1.1"
+    "com.bumimobile.core": "0.1.1",
+    "com.bumimobile.gallery": "0.1.3",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }
