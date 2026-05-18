@@ -7,12 +7,11 @@ namespace BumiMobile
     public static class AudioController
     {
         private static List<PooledSource> audioSourcesPool;
+        private static Transform _poolRoot;
+        private static int _maxPoolSize = 64;
 
         private static AudioLibrary audioLibrary;
         public static AudioLibrary AudioLibrary => audioLibrary;
-
-        /// <summary>Backwards-compatible accessor for the default button click sound (resolves "UI/Button" from AudioLibrary).</summary>
-        public static AudioClip buttonSound => GetClip("UI/Button");
 
         private static AudioListener audioListener;
         public static AudioListener AudioListener => audioListener;
@@ -26,14 +25,15 @@ namespace BumiMobile
 
         private static Dictionary<AudioType, float> volumeDictionary;
 
-        public static void Init(AudioLibrary audioLibrary, int audioSourcesPoolSize)
+        public static void Init(AudioLibrary audioLibrary, int audioSourcesPoolSize, int maxPoolSize = 64)
         {
             if (audioLibrary == null)
             {
                 Debug.LogError("[AudioController]: Audio Library is NULL! Please assign an AudioLibrary asset on the Audio Controller module.");
-
                 return;
             }
+
+            _maxPoolSize = Mathf.Max(audioSourcesPoolSize, maxPoolSize);
 
             volumeDictionary = new Dictionary<AudioType, float>();
             // Create audio listener
@@ -41,7 +41,15 @@ namespace BumiMobile
 
             AudioController.audioLibrary = audioLibrary;
 
-            //Create audio source objects
+            // Create pool root to keep scene hierarchy clean
+            if (_poolRoot == null)
+            {
+                var root = new GameObject("[AUDIO POOL]");
+                GameObject.DontDestroyOnLoad(root);
+                _poolRoot = root.transform;
+            }
+
+            // Create audio source objects
             audioSourcesPool = new List<PooledSource>();
             for (int i = 0; i < audioSourcesPoolSize; i++)
             {
@@ -115,10 +123,13 @@ namespace BumiMobile
             }
         }
 
-        public static void PlaySound(AudioClip clip, float volumePercentage = 1.0f, float pitch = 1.0f, float minDelay = 0f)
+        public static void PlaySound(AudioClip clip, float volumePercentage = 1.0f, float pitch = 1.0f)
         {
             if (clip == null)
+            {
                 Debug.LogError("[AudioController]: Audio clip is null");
+                return;
+            }
 
             PooledSource source = GetAudioSource();
 
@@ -129,10 +140,13 @@ namespace BumiMobile
             source.Play(clip, volumePercentage, AudioType.Sound);
         }
 
-        public static void PlaySound(AudioClip clip, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f, float minDelay = 0f)
+        public static void PlaySound(AudioClip clip, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f)
         {
             if (clip == null)
+            {
                 Debug.LogError("[AudioController]: Audio clip is null");
+                return;
+            }
 
             PooledSource source = GetAudioSource();
 
@@ -241,6 +255,12 @@ namespace BumiMobile
             PooledSource createdSource = new PooledSource();
             audioSourcesPool.Add(createdSource);
 
+            if (audioSourcesPool.Count > _maxPoolSize)
+            {
+                Debug.LogWarning($"[AudioController] Audio source pool exceeded max size ({_maxPoolSize}). " +
+                                 $"Current: {audioSourcesPool.Count}. Consider increasing maxPoolSize in Init().");
+            }
+
             return createdSource;
         }
 
@@ -291,6 +311,8 @@ namespace BumiMobile
             volumeDictionary = null;
 
             VolumeChanged = null;
+
+            _poolRoot = null;
         }
 
         // ──────────────────────────────────
@@ -312,6 +334,8 @@ namespace BumiMobile
             public PooledSource()
             {
                 gameObject = new GameObject("[AUDIO SOURCE OBJECT]");
+                if (_poolRoot != null)
+                    gameObject.transform.SetParent(_poolRoot, false);
 
                 GameObject.DontDestroyOnLoad(gameObject);
 
