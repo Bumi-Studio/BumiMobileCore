@@ -58,6 +58,16 @@
         "com.unity.ugui": "2.0.0"
       }
     },
+    "com.bumimobile.feedback": {
+      "version": "file:com.bumimobile.feedback",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.1",
+        "com.bumimobile.gallery": "0.1.3",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
     "com.bumimobile.fullserializer": {
       "version": "file:com.bumimobile.fullserializer",
       "depth": 0,
