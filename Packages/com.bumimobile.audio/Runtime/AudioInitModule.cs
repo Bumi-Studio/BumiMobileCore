@@ -9,7 +9,7 @@ namespace BumiMobile
     {
         public override string ModuleName => "Audio Controller";
 
-        [SerializeField] AudioClips audioSettings;
+        [SerializeField] AudioLibrary audioSettings;
         [SerializeField] int audioSourcesPoolSize = 4;
 
         [Header("3D")]

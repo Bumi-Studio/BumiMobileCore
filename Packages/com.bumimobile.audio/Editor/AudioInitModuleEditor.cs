@@ -9,28 +9,28 @@ namespace BumiMobile
     {
         public override void OnCreated()
         {
-            AudioClips audioClips = EditorUtils.GetAsset<AudioClips>();
-            if(audioClips == null)
+            AudioLibrary audioLibrary = EditorUtils.GetAsset<AudioLibrary>();
+            if (audioLibrary == null)
             {
-                audioClips = (AudioClips)ScriptableObject.CreateInstance<AudioClips>();
-                audioClips.name = "Audio Clips";
+                audioLibrary = (AudioLibrary)ScriptableObject.CreateInstance<AudioLibrary>();
+                audioLibrary.name = "Audio Library";
 
                 string referencePath = AssetDatabase.GetAssetPath(target);
                 string directoryPath = Path.GetDirectoryName(referencePath);
 
                 // Create a unique file path for the ScriptableObject
-                string assetPath = Path.Combine(directoryPath, audioClips.name + ".asset");
+                string assetPath = Path.Combine(directoryPath, audioLibrary.name + ".asset");
                 assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
 
                 // Save the ScriptableObject to the determined path
-                AssetDatabase.CreateAsset(audioClips, assetPath);
+                AssetDatabase.CreateAsset(audioLibrary, assetPath);
                 AssetDatabase.SaveAssets();
 
                 EditorUtility.SetDirty(target);
             }
 
             serializedObject.Update();
-            serializedObject.FindProperty("audioSettings").objectReferenceValue = audioClips;
+            serializedObject.FindProperty("audioSettings").objectReferenceValue = audioLibrary;
             serializedObject.ApplyModifiedProperties();
         }
     }

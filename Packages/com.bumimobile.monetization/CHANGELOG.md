@@ -4,9 +4,12 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.5] - 2026-05-15
 
-- (Add unreleased changes here)
+### Added
+
+- Sample package (`Samples~/Monetization`) registered in `package.json` so it is discoverable and installable through the Unity Package Manager Editor window.
+- Documentation for installing the sample via the UPM Editor or manually from `Samples~`.
 
 ## [0.1.4] - 2025-12-15
 
