@@ -1,29 +1,29 @@
 {
-    "name": "BumiMobile.Auth",
-    "rootNamespace": "",
-    "references": [
-        "BumiMobile.Core",
-        "UniTask",
-        "Google.Play.Games"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.google.firebase.app",
-            "expression": "0.0.0",
-            "define": "BUMI_AUTH_HAS_FIREBASE"
-        },
-        {
-            "name": "com.google.play.games",
-            "expression": "0.0.0",
-            "define": "BUMI_AUTH_HAS_GPGS"
-        }
-    ],
-    "noEngineReferences": false
+  "name": "BumiMobile.Auth",
+  "rootNamespace": "",
+  "references": [
+    "BumiMobile.Core",
+    "UniTask",
+    "GoogleSignin"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.google.firebase.app",
+      "expression": "0.0.0",
+      "define": "BUMI_AUTH_HAS_FIREBASE"
+    },
+    {
+      "name": "com.google.signin",
+      "expression": "0.0.0",
+      "define": "BUMI_AUTH_HAS_GOOGLE_SIGNIN"
+    }
+  ],
+  "noEngineReferences": false
 }

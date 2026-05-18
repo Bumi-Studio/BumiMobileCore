@@ -80,6 +80,12 @@
         "com.bumimobile.core": "0.1.1"
       }
     },
+    "com.bumimobile.keystore": {
+      "version": "file:com.bumimobile.keystore",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.bumimobile.leaderboard": {
       "version": "file:com.bumimobile.leaderboard",
       "depth": 0,
@@ -89,12 +95,6 @@
         "com.bumimobile.save": "0.1.1",
         "com.bumimobile.auth": "0.1.2"
       }
-    },
-    "com.bumimobile.keystore": {
-      "version": "file:com.bumimobile.keystore",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
     },
     "com.bumimobile.localization": {
       "version": "file:com.bumimobile.localization",
@@ -182,6 +182,23 @@
       "source": "git",
       "dependencies": {},
       "hash": "73a63b7f672b88f7e9992f6917eb458a8cbb6fa9"
+    },
+    "com.google.external-dependency-manager": {
+      "version": "https://github.com/googlesamples/unity-jar-resolver.git?path=upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "38f31affdc54bf7ed0ffb8b97f3444395912a398"
+    },
+    "com.google.signin": {
+      "version": "https://github.com/Thaina/google-signin-unity.git#newmigration",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.google.external-dependency-manager": "1.2.175"
+      },
+      "hash": "99f82f9eb9ad367cdbaddc90550a5f359f396b45"
     },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
