@@ -46,7 +46,7 @@ Configure the Web Client ID **once** (before any UI is shown), then wire a butto
 
 ```csharp
 // Do this early (e.g. before AuthenticatedInitModule runs)
-AuthService.WebClientId = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com";
+AuthService.Initialize("YOUR_WEB_CLIENT_ID.apps.googleusercontent.com");
 
 // Wire to a UI button
 public async void OnSignInWithGoogleClicked()
@@ -58,6 +58,28 @@ public async void OnSignInWithGoogleClicked()
 ```
 
 The Web Client ID is created in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) under **Credentials → Create Credentials → OAuth client ID → Web application**.
+
+#### iOS Setup (additional)
+
+Google Sign-In on iOS requires additional native integration beyond Android:
+
+1. **Reversed Client ID URL scheme** — Add the following to your `Info.plist` (replacing `{CLIENT_ID}` with your OAuth client ID without the `.apps.googleusercontent.com` suffix):
+   ```xml
+   <key>CFBundleURLTypes</key>
+   <array>
+     <dict>
+       <key>CFBundleURLSchemes</key>
+       <array>
+         <string>com.googleusercontent.apps.{CLIENT_ID}</string>
+       </array>
+     </dict>
+   </array>
+   ```
+2. **Google Sign-In iOS SDK** — The Google Sign-In Unity plugin (`com.google.signin`) typically includes the iOS native library. Ensure the SDK is present (CocoaPods or embedded `.framework`).
+3. **`openURL` hook** — The plugin must receive the OAuth callback. Most Google Sign-In Unity plugins handle this via `UnityAppController` swizzling. If using a custom `UnityAppController` subclass, ensure `openURL:` is forwarded to `GIDSignIn`.
+4. **Firebase iOS setup** — Add `GoogleService-Info.plist` to your Xcode project (with `REVERSED_CLIENT_ID` matching the URL scheme above).
+
+For detailed iOS steps, refer to the [Google Sign-In Unity plugin docs](https://github.com/googlesamples/google-signin-unity).
 
 ### 4. Enable scripting define symbols
 
@@ -123,12 +145,12 @@ Sign Out
 
 ### State flags after each scenario
 
-| Scenario | `IsAuthenticated` | `IsSignedIn` | `IsFirebaseAnonymous` |
-|----------|:---:|:---:|:---:|
-| First launch (after `SignInAsync`) | ✓ | ✗ | ✓ |
-| Restart with linked account | ✓ | ✓ | ✗ |
-| After tapping "Sign in with Google" | ✓ | ✓ | ✗ |
-| After `SignOutAsync()` | ✓ | ✗ | ✓ |
+| Scenario | `IsAuthenticated` | `IsSignedIn` | `IsFirebaseAnonymous` | `User` |
+|----------|:---:|:---:|:---:|:---|
+| First launch (after `SignInAsync`) | ✓ | ✗ | ✓ | Anonymous |
+| Restart with linked account | ✓ | ✓ | ✗ | Linked |
+| After tapping "Sign in with Google" | ✓ | ✓ | ✗ | Linked |
+| After `SignOutAsync()` | ✓ | ✗ | ✓ | **Anonymous** (not `null`!) |
 
 ## Folder Layout
 

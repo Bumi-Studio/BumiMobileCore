@@ -16,6 +16,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `GetUserLabel()` simplified to use Firebase `User` directly.
 - Reduced PlayerPrefs persistence to only `PREF_PLAYER_ID` (Google Sign-In user ID, not cached by Firebase).
 
+### Fixed
+
+- `GetUserLabel()` now returns `"Guest {uid_prefix}"` for anonymous users instead of an empty string.
+- `CreateAnonymousAsync` now fires `OnPlatformAuthFinished(false)` to signal platform auth was skipped.
+- Added explicit-sign-out gate: if the user signs out via `SignOutAsync`, the next cold start skips silent Google Sign-In to prevent unwanted auto-re-authentication.
+- `WebClientId` setter is now `private`; use `AuthService.Initialize(webClientId)` to set it once.
+- `OnPgsAuthFinished` is now marked `[Obsolete]` with an auto-forwarding wrapper to `OnPlatformAuthFinished`.
+
+### Breaking
+
+- **`SignInAsync` no longer accepts `forceRefreshToken`** — the parameter was unused and has been removed.
+- **`SignOutAsync` behavior change**: After sign-out, `User` is no longer `null` — a fresh anonymous `FirebaseUser` is created immediately. `OnFirebaseAuthChanged` fires with `null` (sign-out) then with the new anonymous user (re-auth). Code checking `User == null` after sign-out should use `IsSignedIn` instead.
+- **`SignInWithCredentialAsync` on existing non-anonymous users**: If `auth.CurrentUser` is non-null and non-anonymous, calling `SignInWithCredentialAsync` creates a **new Firebase user with a different UID**, orphaning cloud data tied to the old UID. This occurs when a user switches Google accounts. Consider prompting the user before this path.
+- **`WebClientId` is now `private set`** — must be set via `AuthService.Initialize(webClientId)`.
+
+### Added
+
+- `AuthService.Initialize(string webClientId)` — sets the OAuth Web Client ID once before any sign-in call.
+- Silent Google Sign-In is now gated behind a `PlayerPrefs` flag (`__auth_explicitly_signed_out__`) that is set by `SignOutAsync` and cleared on successful sign-in.
+
 ## [0.2.1] - 2026-05-13
 
 ### Changed

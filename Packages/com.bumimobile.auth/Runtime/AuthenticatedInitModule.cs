@@ -102,7 +102,7 @@ namespace BumiMobile
 
                 try
                 {
-                    var signInTask = AuthService.SignInAsync(true);
+                    var signInTask = AuthService.SignInAsync();
                     if (timeoutSeconds > 0f)
                     {
                         var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
