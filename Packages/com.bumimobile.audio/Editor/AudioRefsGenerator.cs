@@ -39,13 +39,24 @@ namespace BumiMobile
 
             static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
             {
+                // Snapshot old cache BEFORE EnsureCacheInitialized rebuilds it,
+                // so we can detect deleted libraries (they won't be in the rebuilt cache).
+                var oldGuids = _audioLibraryGuids;
+
                 EnsureCacheInitialized();
 
                 bool libraryChanged =
                     importedAssets.Any(IsLibraryPath) ||
-                    deletedAssets.Any(IsLibraryPath) ||
                     movedAssets.Any(IsLibraryPath) ||
                     movedFromAssetPaths.Any(IsLibraryPath);
+
+                // Check deletions against the OLD cache (before the deleted asset was removed)
+                if (!libraryChanged && deletedAssets.Length > 0 && oldGuids != null)
+                {
+                    libraryChanged = deletedAssets.Any(d =>
+                        string.Equals(Path.GetExtension(d), ".asset", StringComparison.OrdinalIgnoreCase) &&
+                        oldGuids.Contains(AssetDatabase.AssetPathToGUID(d)));
+                }
 
                 if (libraryChanged)
                 {
@@ -111,12 +122,27 @@ namespace BumiMobile
                 var groupIdentifier = SanitizeIdentifier(kvp.Key, "Group");
                 sb.AppendLine($"        public static class {groupIdentifier}");
                 sb.AppendLine("        {");
+
+                // Track used identifiers to detect and resolve sanitized collisions
+                // (e.g., "Button" and "button" both sanitize to "Button")
+                var usedIds = new HashSet<string>(StringComparer.Ordinal);
+
                 foreach (var id in kvp.Value.OrderBy(x => x, StringComparer.Ordinal))
                 {
                     var idIdentifier = SanitizeIdentifier(id, "Id");
+
+                    // Append numeric suffix on collision: Button, Button_1, Button_2, ...
+                    var finalId = idIdentifier;
+                    int suffix = 1;
+                    while (!usedIds.Add(finalId))
+                    {
+                        finalId = $"{idIdentifier}_{suffix++}";
+                    }
+
                     // Property returning a SoundKey
-                    sb.AppendLine($"            public static SoundKey {idIdentifier} => new SoundKey(\"{kvp.Key}\", \"{id}\");");
+                    sb.AppendLine($"            public static SoundKey {finalId} => new SoundKey(\"{kvp.Key}\", \"{id}\");");
                 }
+
                 sb.AppendLine("        }");
             }
 
@@ -131,6 +157,26 @@ namespace BumiMobile
                 AssetDatabase.ImportAsset(GeneratedPath);
             }
         }
+
+        private static readonly HashSet<string> CSharpKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            // Reserved keywords
+            "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked",
+            "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else",
+            "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for",
+            "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock",
+            "long", "namespace", "new", "null", "object", "operator", "out", "override", "params",
+            "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed",
+            "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw",
+            "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using",
+            "virtual", "void", "volatile", "while",
+            // Contextual keywords
+            "add", "alias", "and", "ascending", "async", "await", "by", "descending", "dynamic",
+            "equals", "from", "get", "global", "group", "init", "into", "join", "let", "managed",
+            "nameof", "nint", "not", "notnull", "nuint", "on", "or", "orderby", "partial", "record",
+            "remove", "required", "select", "set", "unmanaged", "value", "var", "when", "where",
+            "with", "yield",
+        };
 
         private static string SanitizeIdentifier(string raw, string fallback)
         {
@@ -151,22 +197,9 @@ namespace BumiMobile
 
             var result = sb.ToString();
 
-            // Avoid reserved keyword collisions minimally by suffixing underscore for common cases
-            switch (result)
-            {
-                case "class":
-                case "namespace":
-                case "public":
-                case "internal":
-                case "protected":
-                case "private":
-                case "static":
-                case "void":
-                case "new":
-                case "return":
-                    result += "_";
-                    break;
-            }
+            // Suffix underscore if the identifier collides with a C# keyword
+            if (CSharpKeywords.Contains(result))
+                result += "_";
 
             return result;
         }

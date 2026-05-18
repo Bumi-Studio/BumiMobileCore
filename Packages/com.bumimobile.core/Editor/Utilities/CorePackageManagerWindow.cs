@@ -387,7 +387,6 @@ namespace BumiMobile
                     new PackageDefinition("com.bumimobile.haptic", "Haptic", "Haptic feedback abstractions and presets.", "Packages/com.bumimobile.haptic", defaultVersion),
                     new PackageDefinition("com.bumimobile.leaderboard", "Leaderboard", "Firestore-backed leaderboard service with caching and warmup helpers.", "Packages/com.bumimobile.leaderboard", defaultVersion),
                     new PackageDefinition("com.bumimobile.localization", "Localization", "Localization data pipelines and helpers.", "Packages/com.bumimobile.localization", defaultVersion),
-                    new PackageDefinition("com.bumimobile.monetization", "Monetization", "Ads and IAP settings UI plus runtime glue.", "Packages/com.bumimobile.monetization", defaultVersion),
                     new PackageDefinition("com.bumimobile.nativeshare", "Native Share", "Sharing bridges for iOS/Android.", "Packages/com.bumimobile.nativeshare", defaultVersion),
                     new PackageDefinition("com.bumimobile.pool", "Pool", "Object pooling utilities.", "Packages/com.bumimobile.pool", defaultVersion),
                     new PackageDefinition("com.bumimobile.pushnotification", "Push Notification", "Push notification bridges and helpers.", "Packages/com.bumimobile.pushnotification", defaultVersion),

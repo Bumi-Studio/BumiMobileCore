@@ -16,10 +16,23 @@ namespace BumiMobile
         private const string LibraryResourcePath = "AudioLibrary";
         private const float Spacing = 2f;
 
+        // Cache the AudioLibrary so we don't call Resources.Load on every OnGUI repaint.
+        // Invalidated by CacheInvalidator AssetPostprocessor whenever assets change.
+        private static AudioLibrary _cachedLibrary;
+        private static bool _cacheInitialized;
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             // Label row + Group row + Id row
-            return EditorGUIUtility.singleLineHeight * 3 + Spacing * 2;
+            float height = EditorGUIUtility.singleLineHeight * 3 + Spacing * 2;
+
+            // Reserve extra line for the warning HelpBox when library is missing
+            if (!_cacheInitialized)
+                RefreshCache();
+            if (_cachedLibrary == null)
+                height += EditorGUIUtility.singleLineHeight + Spacing;
+
+            return height;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -36,22 +49,27 @@ namespace BumiMobile
             SerializedProperty groupProp = property.FindPropertyRelative("Group");
             SerializedProperty idProp    = property.FindPropertyRelative("Id");
 
-            AudioLibrary library = Resources.Load<AudioLibrary>(LibraryResourcePath);
+            if (!_cacheInitialized)
+                RefreshCache();
 
-            Rect groupRect = new Rect(position.x, position.y + lineH + Spacing, position.width, lineH);
-            Rect idRect    = new Rect(position.x, position.y + (lineH + Spacing) * 2, position.width, lineH);
+            float yBase = position.y + lineH + Spacing;
+            Rect groupRect = new Rect(position.x, yBase, position.width, lineH);
+            Rect idRect    = new Rect(position.x, yBase + lineH + Spacing, position.width, lineH);
 
-            if (library == null)
+            if (_cachedLibrary == null)
             {
                 // Fallback: plain text fields if library not found
                 EditorGUI.PropertyField(groupRect, groupProp, new GUIContent("Group"));
                 EditorGUI.PropertyField(idRect,    idProp,    new GUIContent("Id"));
-                EditorGUI.HelpBox(idRect, $"AudioLibrary not found at Resources/{LibraryResourcePath}", MessageType.Warning);
+
+                // HelpBox on its own line below Id (space reserved in GetPropertyHeight)
+                Rect helpRect = new Rect(position.x, idRect.y + lineH + Spacing, position.width, lineH);
+                EditorGUI.HelpBox(helpRect, $"AudioLibrary not found at Resources/{LibraryResourcePath}", MessageType.Warning);
             }
             else
             {
-                DrawGroupDropdown(groupRect, groupProp, idProp, library);
-                DrawIdDropdown(idRect, groupProp, idProp, library);
+                DrawGroupDropdown(groupRect, groupProp, idProp, _cachedLibrary);
+                DrawIdDropdown(idRect, groupProp, idProp, _cachedLibrary);
             }
 
             EditorGUI.indentLevel--;
@@ -98,6 +116,25 @@ namespace BumiMobile
 
             int newIndex = EditorGUI.Popup(rect, "Id", currentIndex, ids);
             idProp.stringValue = ids[newIndex];
+        }
+
+        private static void RefreshCache()
+        {
+            _cachedLibrary = Resources.Load<AudioLibrary>(LibraryResourcePath);
+            _cacheInitialized = true;
+        }
+
+        /// <summary>
+        /// Invalidates the cached library whenever assets change.
+        /// Next OnGUI repaint will re-cache with a single Resources.Load call.
+        /// </summary>
+        private class CacheInvalidator : AssetPostprocessor
+        {
+            private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+            {
+                _cacheInitialized = false;
+                _cachedLibrary = null;
+            }
         }
     }
 }

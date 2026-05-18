@@ -38,7 +38,37 @@ namespace BumiMobile
 #if UNITY_EDITOR
         private void OnValidate()
         {
+            NormalizeAndValidate();
             BuildLookup();
+        }
+
+        private void NormalizeAndValidate()
+        {
+            var seen = new HashSet<string>();
+
+            foreach (var g in groups)
+            {
+                if (g == null) continue;
+
+                g.name = g.name?.Trim() ?? "";
+                if (string.IsNullOrWhiteSpace(g.name)) continue;
+
+                foreach (var item in g.items)
+                {
+                    if (item == null) continue;
+
+                    item.id = item.id?.Trim() ?? "";
+                    if (string.IsNullOrWhiteSpace(item.id)) continue;
+
+                    if (!seen.Add($"{g.name}|{item.id}"))
+                    {
+                        Debug.LogWarning(
+                            $"[AudioLibrary] Duplicate (group, id) pair: ({g.name}, {item.id}) in '{name}'. " +
+                            "Last one wins at runtime — rename or remove the duplicate.",
+                            this);
+                    }
+                }
+            }
         }
 #endif
 
@@ -85,8 +115,9 @@ namespace BumiMobile
 
         public IEnumerable<string> GetIdsInGroup(string group)
         {
-            var g = groups.FirstOrDefault(x => string.Equals(x.name, group, StringComparison.Ordinal));
-            return g == null ? Enumerable.Empty<string>() : g.items.Select(i => i?.id).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct();
+            var trimmed = group?.Trim();
+            var g = groups.FirstOrDefault(x => string.Equals(x?.name?.Trim() ?? "", trimmed, StringComparison.Ordinal));
+            return g == null ? Enumerable.Empty<string>() : g.items.Select(i => i?.id?.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct();
         }
     }
 }
