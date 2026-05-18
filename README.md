@@ -20,7 +20,7 @@ Modular Unity packages for mobile & hyper-casual games. Install the core once, t
 | Package                          | What it covers                                                                                                                                                         |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Core** (`com.bumimobile.core`) | Base inspectors, tween utilities, initializer helpers, custom editor styles. Installed by default.                                                                     |
-| **Auth** (`com.bumimobile.auth`) | Firebase Auth bootstrap with optional Google Play Games v2 sign-in; requires external SDKs and define flags (`BUMI_AUTH_HAS_FIREBASE`, optional `BUMI_AUTH_HAS_GPGS`). |
+| **Auth** (`com.bumimobile.auth`) | Anonymous-first Firebase Auth — auto-restores or creates an anonymous session, upgrades to Google-linked on manual sign-in. |
 | **Audio**                        | Lightweight BGM/SFX routing, init module, and editor config.                                                                                                           |
 | **Currency**                     | Currency definitions, balances, and formatters.                                                                                                                        |
 | **Defines**                      | Shared scripting define presets and toggles.                                                                                                                           |
@@ -87,7 +87,7 @@ Save the file and Unity will resolve each package. Keep `Packages/packages-lock.
 
 Some packages require external SDKs that Unity will not install automatically:
 
-- **Auth** — Install Firebase Core/Auth (`com.google.firebase.app`, `com.google.firebase.auth`) and, for Android Google sign-in, Google Play Games v2 (`com.google.play.games`). After importing these SDKs add scripting defines `BUMI_AUTH_HAS_FIREBASE` (required) and `BUMI_AUTH_HAS_GPGS` (optional) under _Project Settings ▸ Player ▸ Scripting Define Symbols_.
+- **Auth** — Install Firebase Core/Auth (`com.google.firebase.app`, `com.google.firebase.auth`). For the "Sign in with Google" button, also install Google Sign-In (`com.google.signin.google-signin-unity`) and set `AuthService.WebClientId`. The package auto-enables `BUMI_AUTH_HAS_FIREBASE` and `BUMI_AUTH_HAS_GOOGLE_SIGNIN` when those SDKs are present.
 - **Leaderboard** — Requires Firebase Core/Auth plus Firebase Firestore (`com.google.firebase.firestore`). When Firestore is present the package auto-enables `BUMI_LEADERBOARD_HAS_FIRESTORE`; otherwise it runs in offline stub mode.
 
 ---

@@ -1,94 +1,131 @@
 # Bumi Mobile Audio
 
-Audio playback, pooling, and configuration helpers used across Bumi Mobile projects. The package provides a catalog-driven workflow for organizing sound effects, pooled playback utilities, and init-module glue that keeps setup consistent between games.
+Audio playback, pooling, and configuration helpers used across Bumi Mobile projects. The package provides a data-driven `AudioLibrary` workflow for organising sound effects, a `SoundKey` struct for type-safe clip references, pooled `AudioSource` utilities, and an init-module that keeps setup consistent between games.
 
 ## Features
 
-- Identifier-based `AudioClips` catalog with grouped slots, automatic lookup cache, and backwards-compatible button click support.
-- `AudioClipReference` struct for serializing catalog references without hard-coding `AudioClip` assets inside prefabs.
-- `AudioController` static facade with pooled `AudioSource`s, default 2D/3D settings, clip lookup helpers, and `TryPlaySound` shortcuts.
-- Optional `AudioInitModule` that plugs into the Core initializer to bootstrap the listener, catalog, and source pool at startup.
-- Volume routing per `AudioType`, persistence via the Save module (when `MODULE_SAVE` is available), and change callbacks for UI sliders.
-- Utilities such as `AudioClipHandler`, `MusicSource`, and tween-friendly fade helpers for advanced UX flows.
+- `AudioLibrary` ScriptableObject with a **Group → Item** model – add, remove, and reorder clips in the Inspector without editing code.
+- `SoundKey` struct for serialising grouped clip references (`Group` + `Id`) inside prefabs and ScriptableObjects.
+- `SoundKeyDrawer` custom property drawer – Group and Id dropdowns are auto-populated from the `AudioLibrary` in Resources.
+- `AudioRefsGenerator` editor tool – auto-generates a strongly-typed `AudioKeys` class (e.g. `AudioKeys.UI.Button`) so you never hard-code string identifiers.
+- `AudioController` static facade with pooled `AudioSource`s, default 2D/3D settings, clip lookup via `SoundKey` or `"Group/Id"` strings, and `TryPlaySound` shortcuts.
+- `AudioInitModule` that plugs into the Core initializer to bootstrap the listener, library, and source pool at startup.
+- Volume routing per `AudioType` with `VolumeChanged` callback for UI sliders.
 
 ## Requirements
 
 - Unity 2021.3 or newer.
 - `com.bumimobile.core` (the initializer, module registry, and shared utilities live there).
-- Optional: `MODULE_SAVE` define plus the Save module if you want `AudioController` volumes to persist between sessions.
 
 ## Getting Started
 
-1. **Create an `AudioClips` catalog**
+1. **Create an AudioLibrary catalog**
 
-   - Project window ▸ Create ▸ _Audio Clips_ (searchable via the asset menu). Populate groups (UI, Gameplay, etc.) and add slots with unique identifiers such as `ui/button` or `fx/explosion_big`.
-   - The legacy `buttonSound` field resolves to the `ui/button` slot so existing references keep working.
+   - Project window ▸ Create ▸ _Audio ▸ Audio Library (Data-Driven)_.
+   - Add groups (UI, Game, Music, etc.) and items with unique string IDs such as `Button`, `Win`, `Explosion_Big`.
+   - Place the asset in a **Resources** folder and name it `AudioLibrary` so the `SoundKeyDrawer` can locate it automatically.
 
 2. **Add the Audio Init Module (recommended)**
 
    - Open your `ProjectInitSettings` asset (from `com.bumimobile.core`).
    - Click **Add Module** and select **Audio Controller**.
-   - Assign the `AudioClips` catalog and configure the pool size plus optional 3D defaults (max distance, spread, rolloff curve).
-   - The initializer now bootstraps `AudioController` before the rest of your gameplay systems run.
+   - Assign the `AudioLibrary` catalog and configure the pool size plus optional 3D defaults (max distance, spread, rolloff curve).
+   - The editor auto-creates an `AudioLibrary` asset when you first add the module.
 
 3. **Manual initialization (alternative)**
 
 ```csharp
-[SerializeField] private AudioClips catalog;
+[SerializeField] private AudioLibrary library;
 [SerializeField] private int poolSize = 8;
 
 void Awake()
 {
     AudioController.OverrideDefault3DAudioSettings(30f, 180f, AnimationCurve.EaseInOut(0, 1, 1, 0));
-    AudioController.Init(catalog, poolSize);
+    AudioController.Init(library, poolSize);
+}
+```
+
+## Using SoundKey References
+
+`SoundKey` is a serialisable struct with `Group` and `Id` fields. In the Inspector it renders as two dropdowns populated from the `AudioLibrary` in Resources.
+
+```csharp
+[SerializeField] private SoundKey rewardSound;
+
+public void OnRewardGranted()
+{
+    if (AudioController.TryPlaySound(rewardSound))
+    {
+        // Sound played successfully
+    }
 }
 ```
 
 ## Using the Catalog at Runtime
 
-- Fetch clips directly: `var clip = AudioController.GetClip("ui/button");`
-- Fire-and-forget playback with validation:
+- Fetch clips by string key (supports `"Group/Id"` format and bare `Id` fallback):
 
 ```csharp
-AudioController.TryPlaySound("ui/button");
-AudioController.TryPlaySound("fx/explosion_small", transform.position, 0.8f, 1.1f);
+AudioController.TryPlaySound("UI/Button");
+AudioController.TryPlaySound("UI/Button", position, 0.8f, 1.1f);
 ```
 
-- Serialize safe references inside prefabs or scriptable objects:
+- Fetch clips by `SoundKey`:
 
 ```csharp
-[SerializeField] private AudioClipReference rewardSound;
-
-public void OnRewardGranted()
-{
-    if (rewardSound.TryResolve(out var clip))
-    {
-        AudioController.PlaySound(clip);
-    }
-}
+var key = new SoundKey("UI", "Button");
+AudioController.TryPlaySound(key);
 ```
 
-- Iterate every slot for tooling/integration:
+- Resolve a clip directly without playing:
 
 ```csharp
-foreach (var slot in audioClips.EnumerateSlots())
-{
-    Debug.Log($"{slot.Id} -> {slot.DisplayName}");
-}
+var clip = AudioController.GetClip("UI/Button");
+var clip = AudioController.GetClip(new SoundKey("FX", "Explosion"));
 ```
 
-## Volume, Music, and Advanced Playback
+## Strongly-Typed Audio Keys (Auto-Generated)
 
-- Call `AudioController.SetVolume(AudioType.Sound, sliderValue);` to update SFX levels; subscribe to `AudioController.VolumeChanged` for UI feedback.
-- When the Save module is present the current volumes are serialized via `AudioSave`, so `SetVolume` automatically flags data for persistence.
-- Add a `MusicSource` to scene singletons. Call `musicSource.Init()` once, optionally `SetAsDefault()`/`Activate()` to control cross-fading between multiple theme tracks.
-- Use `AudioClipHandler` components for designer-friendly knobs: it supports cooldowns, dynamic pitch stepping, dedicated `AudioSource`s, and tween-friendly fades.
+The `AudioRefsGenerator` produces a `AudioKeys.g.cs` file containing nested static classes that mirror your `AudioLibrary` groups and IDs:
+
+```csharp
+// Auto-generated: AudioKeys.UI.Button => new SoundKey("UI", "Button")
+AudioController.TryPlaySound(AudioKeys.UI.Button);
+AudioController.TryPlaySound(AudioKeys.Game.Win, position);
+```
+
+The file is regenerated automatically whenever an `AudioLibrary` asset changes. You can also generate it manually via **Tools ▸ Audio ▸ Generate Audio Keys**.
+
+## Volume Control
+
+- `AudioController.SetVolume(AudioType.Sound, sliderValue);` updates SFX levels.
+- Subscribe to `AudioController.VolumeChanged` for UI feedback:
+  ```csharp
+  AudioController.VolumeChanged += (type, volume) => { /* update slider */ };
+  ```
 
 ## Troubleshooting
 
-- `TryPlaySound` logs a warning if the clip identifier is missing. Keep identifiers unique per catalog slot to avoid silent failures.
+- `TryPlaySound` logs a warning if the clip key is missing in the library. Keep Group/Id pairs unique to avoid silent failures.
 - If nothing plays, verify the Audio Init Module ran (check the `Initializer` prefab) or ensure `AudioController.Init` was called manually before any playback requests.
-- The listener is auto-created when the controller initializes. Use `AudioController.AttachAudioListener` to parent it to a camera/character rig when needed.
+- The listener is auto-created when the controller initialises. Use `AudioController.AttachAudioListener` to parent it to a camera or character rig.
+- If `SoundKeyDrawer` dropdowns appear empty, confirm an `AudioLibrary` asset exists inside a **Resources** folder.
+
+## Migration from 0.1.x
+
+The 0.2.0 release replaces several legacy types:
+
+| Old (0.1.x)            | New (0.2.0)      | Notes |
+|-------------------------|-------------------|-------|
+| `AudioClips` / `MD_AudioClips` | `AudioLibrary` | Data model changed to Group → Item |
+| `AudioClipReference`   | `SoundKey`        | Two-field struct instead of single string |
+| `AudioCase`            | `SoundKey`        | Use `AudioController.TryPlaySound(key)` |
+| `AudioSourceCase`      | Internal `PooledSource` | Managed automatically by `AudioController` |
+| `AudioClipHandler`     | —                 | Use `SoundKey` + `AudioController` directly |
+| `AudioSave`            | —                 | Volume persistence left to consumers |
+| `MusicSource`          | —                 | Removed; use a dedicated `AudioSource` for music |
+
+The `AudioController.buttonSound` property still resolves to `"UI/Button"` in the new library for backwards compatibility.
 
 ## License
 

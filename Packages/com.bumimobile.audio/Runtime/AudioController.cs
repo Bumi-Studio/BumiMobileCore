@@ -6,17 +6,15 @@ namespace BumiMobile
     [StaticUnload]
     public static class AudioController
     {
-        private static List<AudioSourceCase> audioSourcesPool;
+        private static List<PooledSource> audioSourcesPool;
+        private static Transform _poolRoot;
+        private static int _maxPoolSize = 64;
 
-        private static AudioClips audioClips;
-        public static AudioClips AudioClips => audioClips;
+        private static AudioLibrary audioLibrary;
+        public static AudioLibrary AudioLibrary => audioLibrary;
 
         private static AudioListener audioListener;
         public static AudioListener AudioListener => audioListener;
-
-#if MODULE_SAVE
-    private static AudioSave save;
-#endif
 
         // Default 3D audio settings
         private static float maxDistance = 30;
@@ -27,39 +25,35 @@ namespace BumiMobile
 
         private static Dictionary<AudioType, float> volumeDictionary;
 
-        public static void Init(AudioClips audioClips, int audioSourcesPoolSize)
+        public static void Init(AudioLibrary audioLibrary, int audioSourcesPoolSize, int maxPoolSize = 64)
         {
-            if (audioClips == null)
+            if (audioLibrary == null)
             {
-                Debug.LogError("[AudioController]: Audio Clips is NULL! Please assign audio clips scriptable on Audio Controller script.");
-
+                Debug.LogError("[AudioController]: Audio Library is NULL! Please assign an AudioLibrary asset on the Audio Controller module.");
                 return;
             }
 
+            _maxPoolSize = Mathf.Max(audioSourcesPoolSize, maxPoolSize);
+
             volumeDictionary = new Dictionary<AudioType, float>();
-#if MODULE_SAVE
-            // Get volume save when module is available
-            save = SaveController.GetSaveObject<AudioSave>("audio");
-
-            if (save.VolumeDatas != null)
-            {
-                foreach (AudioSave.VolumeData volumeData in save.VolumeDatas)
-                {
-                    volumeDictionary[volumeData.AudioType] = volumeData.Volume;
-                }
-            }
-#endif
-
             // Create audio listener
             CreateAudioListener();
 
-            AudioController.audioClips = audioClips;
+            AudioController.audioLibrary = audioLibrary;
 
-            //Create audio source objects
-            audioSourcesPool = new List<AudioSourceCase>();
+            // Create pool root to keep scene hierarchy clean
+            if (_poolRoot == null)
+            {
+                var root = new GameObject("[AUDIO POOL]");
+                GameObject.DontDestroyOnLoad(root);
+                _poolRoot = root.transform;
+            }
+
+            // Create audio source objects
+            audioSourcesPool = new List<PooledSource>();
             for (int i = 0; i < audioSourcesPoolSize; i++)
             {
-                audioSourcesPool.Add(new AudioSourceCase());
+                audioSourcesPool.Add(new PooledSource());
             }
         }
 
@@ -120,47 +114,80 @@ namespace BumiMobile
         /// </summary>
         public static void ReleaseSources()
         {
-            foreach (AudioSourceCase sourceCase in audioSourcesPool)
+            foreach (PooledSource source in audioSourcesPool)
             {
-                if (sourceCase.IsPlaying)
+                if (source.IsPlaying)
                 {
-                    sourceCase.AudioSource.Stop();
+                    source.AudioSource.Stop();
                 }
             }
         }
 
-        public static void PlaySound(AudioClip clip, float volumePercentage = 1.0f, float pitch = 1.0f, float minDelay = 0f)
+        public static void PlaySound(AudioClip clip, float volumePercentage = 1.0f, float pitch = 1.0f)
         {
             if (clip == null)
+            {
                 Debug.LogError("[AudioController]: Audio clip is null");
+                return;
+            }
 
-            AudioSourceCase sourceCase = GetAudioSource();
+            PooledSource source = GetAudioSource();
 
-            AudioSource source = sourceCase.AudioSource;
-            source.spatialBlend = 0.0f; // 2D sound
-            source.pitch = pitch;
+            AudioSource audioSource = source.AudioSource;
+            audioSource.spatialBlend = 0.0f; // 2D sound
+            audioSource.pitch = pitch;
 
-            sourceCase.Play(clip, volumePercentage, AudioType.Sound);
+            source.Play(clip, volumePercentage, AudioType.Sound);
         }
 
-        public static void PlaySound(AudioClip clip, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f, float minDelay = 0f)
+        public static void PlaySound(AudioClip clip, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f)
         {
             if (clip == null)
+            {
                 Debug.LogError("[AudioController]: Audio clip is null");
+                return;
+            }
 
-            AudioSourceCase sourceCase = GetAudioSource();
+            PooledSource source = GetAudioSource();
 
-            AudioSource source = sourceCase.AudioSource;
-            source.transform.position = position;
-            source.spatialBlend = 1.0f; // 3D sound
-            source.pitch = pitch;
+            AudioSource audioSource = source.AudioSource;
+            audioSource.transform.position = position;
+            audioSource.spatialBlend = 1.0f; // 3D sound
+            audioSource.pitch = pitch;
 
-            sourceCase.Play(clip, volumePercentage, AudioType.Sound);
+            source.Play(clip, volumePercentage, AudioType.Sound);
         }
 
+        /// <summary>
+        /// Resolve a clip from the AudioLibrary by a string key in "Group/Id" format (e.g. "UI/Button").
+        /// Falls back to searching all groups when the key does not contain a '/'.
+        /// </summary>
         public static AudioClip GetClip(string clipId)
         {
-            return audioClips != null ? audioClips.GetClipOrNull(clipId) : null;
+            if (audioLibrary == null) return null;
+
+            if (TryParseSoundKey(clipId, out var key))
+            {
+                return audioLibrary.Get(key);
+            }
+
+            // No '/' separator – search all groups for a matching id
+            foreach (var groupName in audioLibrary.GetGroupNames())
+            {
+                var clip = audioLibrary.Get(groupName, clipId);
+                if (clip != null)
+                    return clip;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolve a clip from the AudioLibrary by SoundKey.
+        /// </summary>
+        public static AudioClip GetClip(SoundKey key)
+        {
+            return audioLibrary != null ? audioLibrary.Get(key) : null;
         }
 
         public static bool TryPlaySound(string clipId, float volumePercentage = 1.0f, float pitch = 1.0f)
@@ -168,7 +195,7 @@ namespace BumiMobile
             var clip = GetClip(clipId);
             if (clip == null)
             {
-                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the catalog.");
+                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the AudioLibrary catalog.");
                 return false;
             }
 
@@ -181,7 +208,7 @@ namespace BumiMobile
             var clip = GetClip(clipId);
             if (clip == null)
             {
-                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the catalog.");
+                Debug.LogWarning($"[AudioController] Clip '{clipId}' was not found in the AudioLibrary catalog.");
                 return false;
             }
 
@@ -189,34 +216,62 @@ namespace BumiMobile
             return true;
         }
 
-        private static AudioSourceCase GetAudioSource()
+        public static bool TryPlaySound(SoundKey key, float volumePercentage = 1.0f, float pitch = 1.0f)
         {
-            foreach (AudioSourceCase audioSource in audioSourcesPool)
+            var clip = GetClip(key);
+            if (clip == null)
             {
-                if (!audioSource.IsPlaying)
+                Debug.LogWarning($"[AudioController] SoundKey '{key}' was not found in the AudioLibrary catalog.");
+                return false;
+            }
+
+            PlaySound(clip, volumePercentage, pitch);
+            return true;
+        }
+
+        public static bool TryPlaySound(SoundKey key, Vector3 position, float volumePercentage = 1.0f, float pitch = 1.0f)
+        {
+            var clip = GetClip(key);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioController] SoundKey '{key}' was not found in the AudioLibrary catalog.");
+                return false;
+            }
+
+            PlaySound(clip, position, volumePercentage, pitch);
+            return true;
+        }
+
+        private static PooledSource GetAudioSource()
+        {
+            foreach (PooledSource source in audioSourcesPool)
+            {
+                if (!source.IsPlaying)
                 {
-                    return audioSource;
+                    return source;
                 }
             }
 
-            AudioSourceCase createdSource = new AudioSourceCase();
+            PooledSource createdSource = new PooledSource();
             audioSourcesPool.Add(createdSource);
+
+            if (audioSourcesPool.Count > _maxPoolSize)
+            {
+                Debug.LogWarning($"[AudioController] Audio source pool exceeded max size ({_maxPoolSize}). " +
+                                 $"Current: {audioSourcesPool.Count}. Consider increasing maxPoolSize in Init().");
+            }
 
             return createdSource;
         }
 
         public static void SetVolume(AudioType audioType, float volume)
         {
-            foreach (AudioSourceCase audioSource in audioSourcesPool)
+            foreach (PooledSource source in audioSourcesPool)
             {
-                audioSource.OverrideVolume(audioType, volume);
+                source.OverrideVolume(audioType, volume);
             }
 
             volumeDictionary[audioType] = volume;
-
-#if MODULE_SAVE
-            SaveController.MarkAsSaveIsRequired();
-#endif
 
             VolumeChanged?.Invoke(audioType, volume);
         }
@@ -234,20 +289,79 @@ namespace BumiMobile
             return GetVolume(audioType);
         }
 
+        private static bool TryParseSoundKey(string clipId, out SoundKey key)
+        {
+            key = default;
+            if (string.IsNullOrEmpty(clipId)) return false;
+
+            int slashIndex = clipId.IndexOf('/');
+            if (slashIndex <= 0 || slashIndex >= clipId.Length - 1) return false;
+
+            key = new SoundKey(clipId.Substring(0, slashIndex), clipId.Substring(slashIndex + 1));
+            return true;
+        }
+
         private static void UnloadStatic()
         {
             audioSourcesPool = null;
 
-            audioClips = null;
+            audioLibrary = null;
             audioListener = null;
-
-#if MODULE_SAVE
-            save = null;
-#endif
 
             volumeDictionary = null;
 
             VolumeChanged = null;
+
+            _poolRoot = null;
+        }
+
+        // ──────────────────────────────────
+        // Private pooled audio source (replaces former AudioSourceCase)
+        // ──────────────────────────────────
+        private class PooledSource
+        {
+            private readonly AudioSource audioSource;
+            public AudioSource AudioSource => audioSource;
+
+            public bool IsPlaying => audioSource.isPlaying;
+
+            private AudioType audioType;
+            private float clipVolume;
+
+            private readonly GameObject gameObject;
+            public GameObject GameObject => gameObject;
+
+            public PooledSource()
+            {
+                gameObject = new GameObject("[AUDIO SOURCE OBJECT]");
+                if (_poolRoot != null)
+                    gameObject.transform.SetParent(_poolRoot, false);
+
+                GameObject.DontDestroyOnLoad(gameObject);
+
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+
+                AudioController.ApplyDefaultSettings(ref audioSource);
+            }
+
+            public void Play(AudioClip audioClip, float clipVolume, AudioType type = AudioType.Sound)
+            {
+                audioType = type;
+                this.clipVolume = clipVolume;
+
+                audioSource.clip = audioClip;
+                audioSource.volume = clipVolume * AudioController.GetVolume(audioType);
+
+                audioSource.Play();
+            }
+
+            public void OverrideVolume(AudioType type, float volume)
+            {
+                if (!audioSource.isPlaying || audioType != type) return;
+
+                audioSource.volume = volume * clipVolume;
+            }
         }
 
         public delegate void OnVolumeChangedCallback(AudioType audioType, float volume);
@@ -259,31 +373,3 @@ namespace BumiMobile
         Sound = 1
     }
 }
-
-// -----------------
-// Audio Controller v 0.4
-// -----------------
-
-// Changelog
-// v 0.4
-// • Vibration settings removed
-// v 0.3.3
-// • Method for separate music and sound volume override
-// v 0.3.2
-// • Added audio listener creation method
-// v 0.3.2
-// • Added volume float
-// • AudioSettings variable removed (now sounds, music and vibrations can be reached directly)
-// v 0.3.1
-// • Added OnVolumeChanged callback
-// • Renamed AudioSettings to Settings
-// v 0.3
-// • Added IsAudioModuleEnabled method
-// • Added IsVibrationModuleEnabled method
-// • Removed VibrationToggleButton class
-// v 0.2
-// • Removed MODULE_VIBRATION
-// v 0.1
-// • Added basic version
-// • Added support of new initialization
-// • Music and Sound volume is combined
