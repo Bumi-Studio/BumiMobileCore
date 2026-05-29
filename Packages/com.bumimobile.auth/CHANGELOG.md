@@ -4,7 +4,7 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.2] - 2026-05-29
 
 ### Changed
 
@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Fixed
 
+- Handle "credential already in use" error during `ManualSignInAsync`: when signing in with Google and the credential belongs to a different Firebase account, sign into that existing account instead of failing. Added `IsCredentialAlreadyInUseError` helper that recurses into `InnerException`.
 - `GetUserLabel()` now returns `"Guest {uid_prefix}"` for anonymous users instead of an empty string.
 - `CreateAnonymousAsync` now fires `OnPlatformAuthFinished(false)` to signal platform auth was skipped.
 - Added explicit-sign-out gate: if the user signs out via `SignOutAsync`, the next cold start skips silent Google Sign-In to prevent unwanted auto-re-authentication.
