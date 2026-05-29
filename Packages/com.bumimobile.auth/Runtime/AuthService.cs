@@ -399,11 +399,35 @@ namespace BumiMobile
 
                 if (auth.CurrentUser.IsAnonymous)
                 {
-                    await auth.CurrentUser.LinkWithCredentialAsync(cred);
-                    await auth.CurrentUser.ReloadAsync();
-                    User = auth.CurrentUser;
-                    OnFirebaseAuthChanged?.Invoke(User);
-                    return true;
+                    // await auth.CurrentUser.LinkWithCredentialAsync(cred);
+                    // await auth.CurrentUser.ReloadAsync();
+                    // User = auth.CurrentUser;
+                    // OnFirebaseAuthChanged?.Invoke(User);
+                    // return true;
+
+                    try
+                    {
+                        await auth.CurrentUser.LinkWithCredentialAsync(cred);
+                        await auth.CurrentUser.ReloadAsync();
+                        User = auth.CurrentUser;
+                        OnFirebaseAuthChanged?.Invoke(User);
+                        return true;
+                    }
+                    catch (Exception e) when (IsCredentialAlreadyInUseError(e))
+                    {
+                        // Credential already linked to a different Firebase account.
+                        // Sign into that existing account, discarding the anonymous one.
+                        Debug.Log("[Auth] Google credential already linked to another account. Signing into that account.");
+                        User = await auth.SignInWithCredentialAsync(cred);
+                        if (User != null)
+                        {
+                            OnFirebaseAuthChanged?.Invoke(User);
+                            return true;
+                        }
+
+                        LastAuthFailureReason = "[Auth] Sign-in to existing account returned null user.";
+                        return false;
+                    }
                 }
 
                 // IMPORTANT: When auth.CurrentUser is non-null AND non-anonymous,
@@ -481,6 +505,14 @@ namespace BumiMobile
                 PlayerPrefs.DeleteKey(PREF_USER_EXPLICITLY_SIGNED_OUT);
 
             PlayerPrefs.Save();
+        }
+
+        private static bool IsCredentialAlreadyInUseError(Exception e)
+        {
+            if (e == null) return false;
+            var msg = e.Message ?? string.Empty;
+            if (msg.Contains("already associated")) return true;
+            return IsCredentialAlreadyInUseError(e.InnerException);
         }
     }
 }
