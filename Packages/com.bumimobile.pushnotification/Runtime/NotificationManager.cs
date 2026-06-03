@@ -14,10 +14,13 @@ public static class NotificationManager
     private const string DefaultChannelId = "default_channel";
     private const int SameTimeThresholdMinutes = 5;
     private const int MinimumIntervalHours = 4;
+    private const int GlobalMaxPerDay = 1;
+    private const int GlobalCooldownHours = 4;
 
     private static NotificationTemplateCatalog _catalog;
     private static bool _enableDeduplication = true;
     private static System.Random _random = new System.Random();
+    private static readonly HashSet<string> _idempotencyKeys = new HashSet<string>();
 
     public static NotificationTemplateCatalog Catalog => LoadCatalog();
 
@@ -37,9 +40,97 @@ public static class NotificationManager
         return _enableDeduplication;
     }
 
+    private static string ResolveLocalizedText(string fallback, string key)
+    {
+        if (!string.IsNullOrEmpty(key))
+        {
+            var resolved = BumiMobile.LocalizationController.Localize(key);
+            if (!string.IsNullOrEmpty(resolved) && resolved != key)
+            {
+                return resolved;
+            }
+        }
+
+        return fallback ?? string.Empty;
+    }
+
+    private static DateTime GetPlayerTime(NotificationScheduleContext context)
+    {
+        return context?.PlayerLocalTime ?? context?.Now ?? DateTime.Now;
+    }
+
+    private static DateTime GetPlayerDate(NotificationScheduleContext context)
+    {
+        var time = GetPlayerTime(context);
+        return new DateTime(time.Year, time.Month, time.Day, 0, 0, 0, time.Kind);
+    }
+
+    private static string GenerateIdempotencyKey(NotificationTemplate template, NotificationScheduleContext context, DateTime deliveryDate)
+    {
+        var playerId = !string.IsNullOrEmpty(context?.PlayerId) ? context.PlayerId : "unknown";
+        var type = template.type;
+        var trigger = template.trigger.triggerType;
+        var entityId = !string.IsNullOrEmpty(template.relatedEntityId) ? template.relatedEntityId : "none";
+        var dateKey = deliveryDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        return $"{playerId}:{type}:{trigger}:{dateKey}:{entityId}";
+    }
+
+    private static bool HasAnyNotificationToday(NotificationScheduleContext context)
+    {
+        if (context == null)
+        {
+            return false;
+        }
+
+        var today = GetPlayerDate(context);
+        foreach (var type in Enum.GetValues(typeof(NotificationType)))
+        {
+            var history = context.GetHistory((NotificationType)type);
+            if (history != null && history.Any(h => h.Date == today.Date))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsInGlobalCooldown(NotificationScheduleContext context, DateTime now)
+    {
+        if (context == null)
+        {
+            return false;
+        }
+
+        var threshold = now.AddHours(-GlobalCooldownHours);
+        foreach (var type in Enum.GetValues(typeof(NotificationType)))
+        {
+            var history = context.GetHistory((NotificationType)type);
+            if (history != null && history.Any(h => h >= threshold))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsDuplicateByIdempotency(NotificationTemplate template, NotificationScheduleContext context, DateTime deliveryDate)
+    {
+        var key = GenerateIdempotencyKey(template, context, deliveryDate);
+        return _idempotencyKeys.Contains(key);
+    }
+
+    private static void RegisterIdempotencyKey(NotificationTemplate template, NotificationScheduleContext context, DateTime deliveryDate)
+    {
+        var key = GenerateIdempotencyKey(template, context, deliveryDate);
+        _idempotencyKeys.Add(key);
+    }
+
     public static IReadOnlyList<ScheduledNotification> ScheduleAllNotifications(NotificationScheduleContext context = null)
     {
         context ??= new NotificationScheduleContext();
+        _idempotencyKeys.Clear();
 
         ClearScheduledNotifications();
 
@@ -47,6 +138,28 @@ public static class NotificationManager
         if (catalog == null || catalog.Notifications == null || catalog.Notifications.Count == 0)
         {
             Debug.LogWarning("[NotificationManager] No notification templates configured.");
+            return Array.Empty<ScheduledNotification>();
+        }
+
+        var now = GetPlayerTime(context);
+
+        // Global Rule 3: Do not send if player is currently active
+        if (context.IsPlayerActive)
+        {
+            Debug.Log("[NotificationManager] Player is currently active. Skipping all notifications.");
+            return Array.Empty<ScheduledNotification>();
+        }
+
+        // Global Rule 1 & 2: Max 1 per day, 4h cooldown
+        if (HasAnyNotificationToday(context))
+        {
+            Debug.Log("[NotificationManager] Player already received a notification today. Skipping all.");
+            return Array.Empty<ScheduledNotification>();
+        }
+
+        if (IsInGlobalCooldown(context, now))
+        {
+            Debug.Log("[NotificationManager] Player is in global cooldown (4h). Skipping all.");
             return Array.Empty<ScheduledNotification>();
         }
 
@@ -64,19 +177,30 @@ public static class NotificationManager
             }
         }
 
-        // Apply deduplication if enabled
+        // Global Rule 7: Priority filtering - if multiple qualify on same day, keep only highest priority
+        allCandidates = FilterByPriority(allCandidates);
+
+        // Global Rule 9 & 16: Copy variation deduplication and merge duplicates
         if (_enableDeduplication)
         {
             allCandidates = DeduplicateNotifications(allCandidates, context);
         }
 
-        // Now schedule the deduplicated list
+        // Global Rules 13-18: Idempotency and duplicate prevention
         var scheduled = new List<ScheduledNotification>();
         foreach (var candidate in allCandidates)
         {
+            var deliveryDate = new DateTime(candidate.FireTime.Year, candidate.FireTime.Month, candidate.FireTime.Day);
+            if (IsDuplicateByIdempotency(candidate.Template, context, deliveryDate))
+            {
+                Debug.Log($"[NotificationManager] Skipping duplicate notification for {candidate.Type} on {deliveryDate:yyyy-MM-dd}.");
+                continue;
+            }
+
             SchedulePlatformNotification(candidate);
             scheduled.Add(candidate);
             context.AppendHistory(candidate.Type, candidate.FireTime);
+            RegisterIdempotencyKey(candidate.Template, context, deliveryDate);
         }
 
         return scheduled;
@@ -114,7 +238,7 @@ public static class NotificationManager
             yield break;
         }
 
-        var now = context?.Now ?? DateTime.Now;
+        var now = GetPlayerTime(context);
 
         if (IsInCooldown(template, context, now))
         {
@@ -134,15 +258,36 @@ public static class NotificationManager
             return slots == int.MaxValue || scheduledCount < slots;
         }
 
-        switch (template.trigger.triggerType)
+        switch (template.type)
         {
-            case NotificationTriggerType.DailyAtLocalTime:
-                if (template.trigger.skipIfLoggedInToday && context?.HasLoggedInToday == true)
+            case NotificationType.DailyRetention:
+                // Rule: Only send to players who have opened the game before
+                if (context?.LastGameOpenTime == null)
                 {
                     yield break;
                 }
 
-                if (template.trigger.skipIfDailyRewardClaimed && context?.DailyRewardClaimedToday == true)
+                // Rule: Only send if player has not opened the game since 00:00 today
+                if (template.trigger.skipIfLoggedInToday && context.HasLoggedInToday)
+                {
+                    yield break;
+                }
+
+                // Rule: Send only on H+1 and H+2 after last open
+                var daysSinceLastOpen = (now.Date - context.LastGameOpenTime.Value.Date).Days;
+                if (daysSinceLastOpen != 1 && daysSinceLastOpen != 2)
+                {
+                    yield break;
+                }
+
+                // Rule: Do not send on the same day the player last opened the game
+                if (now.Date == context.LastGameOpenTime.Value.Date)
+                {
+                    yield break;
+                }
+
+                // Rule: If player still has not opened by H+3, move to Re-engagement (don't send DailyRetention)
+                if (daysSinceLastOpen >= 3)
                 {
                     yield break;
                 }
@@ -153,48 +298,32 @@ public static class NotificationManager
                 }
 
                 var dailyFireTime = GetNextFixedTime(template.trigger, now);
-                var dailySchedule = CreateSchedule(template, dailyFireTime, true, now);
+                var dailySchedule = CreateSchedule(template, dailyFireTime, false, now);
                 scheduledCount++;
                 yield return dailySchedule;
                 break;
 
-            case NotificationTriggerType.InactivityThreshold:
-                if (context?.LastLogin == null)
+            case NotificationType.Reengagement:
+                // Rule: Only send to players who have completed at least 1 level
+                if (template.trigger.requiresCompletedLevel && context?.HasEverCompletedLevel != true)
                 {
                     yield break;
                 }
 
-                var hoursInactive = (now - context.LastLogin.Value).TotalHours;
-                if (hoursInactive < template.trigger.inactivityThresholdHours)
+                if (context?.LastGameOpenTime == null)
                 {
                     yield break;
                 }
 
-                if (!HasCapacity())
+                // Rule: Do not send if the player has already opened the game on that day
+                if (template.trigger.skipIfLoggedInToday && context.HasLoggedInToday)
                 {
                     yield break;
                 }
 
-                var inactivityFire = GetNextFixedTime(template.trigger, now);
-                var inactivitySchedule = CreateSchedule(template, inactivityFire, false, now);
-                scheduledCount++;
-                yield return inactivitySchedule;
-                break;
-
-            case NotificationTriggerType.LevelStuck:
-                if (context?.LevelStuckSince == null)
-                {
-                    yield break;
-                }
-
-                var stuckDuration = (now - context.LevelStuckSince.Value).TotalHours;
-                if (stuckDuration < template.trigger.levelStuckThresholdHours)
-                {
-                    yield break;
-                }
-
-                if (template.trigger.reengagementBlockHours > 0 &&
-                    HasRecentNotification(NotificationType.Reengagement, TimeSpan.FromHours(template.trigger.reengagementBlockHours), context, now))
+                // Rule: Send on H+3 and H+7
+                var inactiveDays = (now.Date - context.LastGameOpenTime.Value.Date).Days;
+                if (inactiveDays != 3 && inactiveDays != 7)
                 {
                     yield break;
                 }
@@ -204,37 +333,108 @@ public static class NotificationManager
                     yield break;
                 }
 
-                var levelFire = now.AddMinutes(Math.Max(template.trigger.eventDelayMinutes, 0));
-                if (levelFire <= now)
-                {
-                    levelFire = now.AddMinutes(1);
-                }
-
-                var levelSchedule = CreateSchedule(template, levelFire, false, now);
+                var reengagementFire = GetNextFixedTime(template.trigger, now);
+                var reengagementSchedule = CreateSchedule(template, reengagementFire, false, now);
                 scheduledCount++;
-                yield return levelSchedule;
+                yield return reengagementSchedule;
                 break;
 
-            case NotificationTriggerType.FeatureEvent:
-                if (context?.FeatureLaunchTime == null)
+            case NotificationType.MotivateLevelProgression:
+                // Rule: Only send if the player has opened the game on that day
+                if (context?.LastGameOpenTime == null || context.LastGameOpenTime.Value.Date != now.Date)
                 {
                     yield break;
                 }
 
+                // Rule: Do not send if the player has completed at least 1 level on that day
+                if (context.LevelsCompletedToday > 0)
+                {
+                    yield break;
+                }
+
+                // Rule: Player must have opened the game before the threshold time
+                var thresholdTime = new DateTime(now.Year, now.Month, now.Day, template.trigger.gameOpenBeforeHour, template.trigger.gameOpenBeforeMinute, 0);
+                if (context.LastGameOpenTime.Value > thresholdTime)
+                {
+                    yield break;
+                }
+
+                if (!HasCapacity())
+                {
+                    yield break;
+                }
+
+                var motivateFire = GetNextFixedTime(template.trigger, now);
+                var motivateSchedule = CreateSchedule(template, motivateFire, false, now);
+                scheduledCount++;
+                yield return motivateSchedule;
+                break;
+
+            case NotificationType.RewardReminder:
+                // Rule: Only send if the player has an available reward or bonus that has not been claimed
+                if (template.trigger.skipIfDailyRewardClaimed && context?.DailyRewardClaimedToday == true)
+                {
+                    yield break;
+                }
+
+                var hasUnclaimed = context?.UnclaimedRewards != null && context.UnclaimedRewards.Count > 0;
+                if (!hasUnclaimed)
+                {
+                    yield break;
+                }
+
+                // Rule: For 12:00 trigger, check 3-day login streak
+                if (template.trigger.hour == 12 && context?.LoginStreakDays < template.trigger.loginStreakDays)
+                {
+                    yield break;
+                }
+
+                if (!HasCapacity())
+                {
+                    yield break;
+                }
+
+                var rewardFire = GetNextFixedTime(template.trigger, now);
+                var rewardSchedule = CreateSchedule(template, rewardFire, false, now);
+                scheduledCount++;
+                yield return rewardSchedule;
+                break;
+
+            case NotificationType.FeatureAnnouncement:
+                // Rule: Only send to players who completed at least 1 level within the last 7 days
+                // (Caller should set up context appropriately; we check if LastGameOpenTime is within 7 days)
+                if (context?.LastGameOpenTime == null || (now - context.LastGameOpenTime.Value).TotalDays > 7)
+                {
+                    yield break;
+                }
+
+                // Rule: Do not send if the player has opened the game after the feature release date/time
                 if (template.trigger.skipIfFeatureInteracted && context.HasInteractedWithLatestFeature)
                 {
                     yield break;
                 }
 
+                if (context?.FeatureReleaseDate == null)
+                {
+                    yield break;
+                }
+
+                // Rule: For events, only send while the event is still active
+                if (context.CompetitionEndTime.HasValue && now > context.CompetitionEndTime.Value)
+                {
+                    yield break;
+                }
+
                 if (!HasCapacity())
                 {
                     yield break;
                 }
 
-                var featureFire = context.FeatureLaunchTime.Value.AddMinutes(Math.Max(template.trigger.eventDelayMinutes, 0));
-                if (featureFire < now)
+                var featureFire = GetNextFixedTime(template.trigger, now);
+                // Ensure it's after the feature release date
+                if (featureFire < context.FeatureReleaseDate.Value)
                 {
-                    featureFire = now.AddMinutes(1);
+                    featureFire = context.FeatureReleaseDate.Value.AddHours(1);
                 }
 
                 var featureSchedule = CreateSchedule(template, featureFire, false, now);
@@ -242,36 +442,65 @@ public static class NotificationManager
                 yield return featureSchedule;
                 break;
 
-            case NotificationTriggerType.CompetitionLifecycle:
-                if (context?.CompetitionStartTime == null || context.CompetitionEndTime == null)
+            case NotificationType.SocialCompetition:
+                // Rule: Only send to players who were in the top 100 leaderboard before the reset
+                if (context?.LeaderboardRankBeforeReset > 100)
                 {
                     yield break;
                 }
 
-                if (template.trigger.includeStartEvent && HasCapacity())
+                // Rule: Only send if the player has not opened the game after the leaderboard reset
+                if (context?.LeaderboardResetTime == null)
                 {
-                    var startTime = context.CompetitionStartTime.Value;
-                    if (startTime > now)
-                    {
-                        var startSchedule = CreateSchedule(template, startTime, false, now);
-                        scheduledCount++;
-                        yield return startSchedule;
-                    }
+                    yield break;
                 }
 
-                if (template.trigger.includeLastCall && HasCapacity())
+                if (context.LastGameOpenTime.HasValue && context.LastGameOpenTime.Value > context.LeaderboardResetTime.Value)
                 {
-                    var lastCallTime = context.CompetitionEndTime.Value.AddHours(-Math.Abs(template.trigger.competitionLastCallLeadHours));
-                    if (lastCallTime > now)
-                    {
-                        var lastCallSchedule = CreateSchedule(template, lastCallTime, false, now);
-                        scheduledCount++;
-                        yield return lastCallSchedule;
-                    }
+                    yield break;
                 }
 
+                if (!HasCapacity())
+                {
+                    yield break;
+                }
+
+                var competitionFire = GetNextFixedTime(template.trigger, now);
+                var competitionSchedule = CreateSchedule(template, competitionFire, false, now);
+                scheduledCount++;
+                yield return competitionSchedule;
                 break;
         }
+    }
+
+    private static List<ScheduledNotification> FilterByPriority(List<ScheduledNotification> candidates)
+    {
+        if (candidates == null || candidates.Count <= 1)
+        {
+            return candidates ?? new List<ScheduledNotification>();
+        }
+
+        // Global Rule 7: If a player qualifies for more than one push trigger on the same day,
+        // send only the push with the highest priority.
+        var playerDateGroups = candidates.GroupBy(n => n.FireTime.Date);
+        var result = new List<ScheduledNotification>();
+
+        foreach (var dateGroup in playerDateGroups)
+        {
+            var ordered = dateGroup
+                .OrderBy(n => (int)n.Template.rules.priority)
+                .ThenBy(n => n.FireTime)
+                .ToList();
+            var highestPriority = ordered.First();
+            result.Add(highestPriority);
+
+            if (ordered.Count > 1)
+            {
+                Debug.Log($"[NotificationManager] Priority filter: {ordered.Count} notifications for {dateGroup.Key:yyyy-MM-dd}. Selected {highestPriority.Type} with priority {(int)highestPriority.Template.rules.priority}. Skipped: {string.Join(", ", ordered.Skip(1).Select(o => o.Type))}.");
+            }
+        }
+
+        return result;
     }
 
     private static List<ScheduledNotification> DeduplicateNotifications(
@@ -285,73 +514,26 @@ public static class NotificationManager
 
         var result = new List<ScheduledNotification>();
 
-        // Group by notification type
-        var typeGroups = candidates.GroupBy(n => n.Type);
+        // Group by notification type + delivery date (copy variation handling)
+        var groups = candidates.GroupBy(n => new { n.Type, Date = n.FireTime.Date });
 
-        foreach (var typeGroup in typeGroups)
+        foreach (var group in groups)
         {
-            var notifications = typeGroup.OrderBy(n => n.FireTime).ToList();
+            var notifications = group.ToList();
 
-            // Process each notification
-            for (int i = 0; i < notifications.Count; i++)
+            if (notifications.Count > 1)
             {
-                var current = notifications[i];
-                var duplicates = new List<ScheduledNotification> { current };
+                // Rule 9: Same type + same trigger on same day = copy variations. Pick one, skip rest.
+                // Rule 16: Multiple jobs/segments = merge and send one.
+                var selectedIndex = _random.Next(notifications.Count);
+                var selected = notifications[selectedIndex];
+                result.Add(selected);
 
-                // Find duplicates within the same time threshold
-                for (int j = i + 1; j < notifications.Count; j++)
-                {
-                    var next = notifications[j];
-                    var timeDiff = (next.FireTime - current.FireTime).TotalMinutes;
-
-                    // Check if notifications are at the same time (within threshold)
-                    if (timeDiff <= SameTimeThresholdMinutes)
-                    {
-                        duplicates.Add(next);
-                    }
-                    else if (timeDiff >= MinimumIntervalHours * 60)
-                    {
-                        // If this notification is 4+ hours away, stop checking
-                        break;
-                    }
-                }
-
-                // Handle duplicates
-                if (duplicates.Count > 1)
-                {
-                    // Randomly select one to keep at original time
-                    var selectedIndex = _random.Next(duplicates.Count);
-                    var selected = duplicates[selectedIndex];
-                    result.Add(selected);
-
-                    Debug.Log($"[NotificationManager] Found {duplicates.Count} duplicate {current.Type} notifications at {current.FireTime:yyyy-MM-dd HH:mm}. Selected notification at index {selectedIndex} to keep.");
-
-                    // Reschedule the rest
-                    var dayOffset = 1;
-                    for (int k = 0; k < duplicates.Count; k++)
-                    {
-                        if (k == selectedIndex)
-                        {
-                            continue; // Skip the selected one
-                        }
-
-                        var notification = duplicates[k];
-                        var newFireTime = notification.FireTime.AddDays(dayOffset);
-                        notification.FireTime = newFireTime;
-                        result.Add(notification);
-
-                        Debug.Log($"[NotificationManager] Rescheduled duplicate {notification.Type} to {newFireTime:yyyy-MM-dd HH:mm} (+{dayOffset} day{(dayOffset > 1 ? "s" : "")}).");
-                        dayOffset++;
-                    }
-
-                    // Skip the processed duplicates
-                    i += duplicates.Count - 1;
-                }
-                else
-                {
-                    // No duplicates, add as is
-                    result.Add(current);
-                }
+                Debug.Log($"[NotificationManager] Copy variation / duplicate merge: {notifications.Count} {group.Key.Type} notifications for {group.Key.Date:yyyy-MM-dd}. Selected index {selectedIndex}. Skipped {notifications.Count - 1}.");
+            }
+            else
+            {
+                result.Add(notifications[0]);
             }
         }
 
@@ -556,11 +738,16 @@ public static class NotificationManager
             return;
         }
 
+        var msg = scheduled.Template.message;
+        var resolvedTitle = ResolveLocalizedText(msg.title, msg.titleKey);
+        var resolvedBody = ResolveLocalizedText(msg.body, msg.bodyKey);
+        var resolvedCta = ResolveLocalizedText(msg.callToAction, msg.callToActionKey);
+
 #if UNITY_ANDROID
         var notification = new AndroidNotification
         {
-            Title = scheduled.Template.message.title,
-            Text = scheduled.Template.message.body,
+            Title = resolvedTitle,
+            Text = resolvedBody,
             FireTime = scheduled.FireTime,
             SmallIcon = !string.IsNullOrEmpty(scheduled.Template.media.iconResource) ? scheduled.Template.media.iconResource : "icon_small"
         };
@@ -572,9 +759,9 @@ public static class NotificationManager
 
         notification.RepeatInterval = scheduled.RepeatDaily ? TimeSpan.FromDays(1) : (TimeSpan?)null;
 
-        if (!string.IsNullOrEmpty(scheduled.Template.message.callToAction))
+        if (!string.IsNullOrEmpty(resolvedCta))
         {
-            notification.IntentData = scheduled.Template.message.callToAction;
+            notification.IntentData = resolvedCta;
         }
 
         AndroidNotificationCenter.SendNotification(notification, scheduled.ChannelId);
@@ -605,24 +792,24 @@ public static class NotificationManager
         var notification = new iOSNotification
         {
             Identifier = $"{scheduled.Type}_{scheduled.FireTime:yyyyMMddHHmmss}",
-            Title = scheduled.Template.message.title,
-            Body = scheduled.Template.message.body,
+            Title = resolvedTitle,
+            Body = resolvedBody,
             ShowInForeground = true,
             ForegroundPresentationOption = PresentationOption.Alert | PresentationOption.Sound,
             Trigger = trigger
         };
 
-        if (!string.IsNullOrEmpty(scheduled.Template.message.callToAction))
+        if (!string.IsNullOrEmpty(resolvedCta))
         {
             notification.UserInfo = new Dictionary<string, string>
             {
-                { "cta", scheduled.Template.message.callToAction }
+                { "cta", resolvedCta }
             };
         }
 
         iOSNotificationCenter.ScheduleNotification(notification);
 #else
-        Debug.Log($"[NotificationManager] Scheduled '{scheduled.Template.message.title}' for {scheduled.FireTime} (repeatDaily: {scheduled.RepeatDaily})");
+        Debug.Log($"[NotificationManager] Scheduled '{resolvedTitle}' for {scheduled.FireTime} (repeatDaily: {scheduled.RepeatDaily})");
 #endif
     }
 
@@ -652,17 +839,37 @@ public sealed class ScheduledNotification
     public string ChannelId { get; }
 }
 
+[Serializable]
+public class UnclaimedReward
+{
+    public string RewardId;
+    public DateTime? ExpirationTime;
+    public bool IsDailyReward;
+}
+
 public sealed class NotificationScheduleContext
 {
+    public string PlayerId { get; set; }
     public DateTime Now { get; set; } = DateTime.Now;
+    public DateTime? PlayerLocalTime { get; set; }
     public DateTime? LastLogin { get; set; }
     public bool HasLoggedInToday { get; set; }
+    public DateTime? LastGameOpenTime { get; set; }
+    public bool IsPlayerActive { get; set; }
+    public bool HasEverCompletedLevel { get; set; }
+    public int LevelsCompletedToday { get; set; }
+    public int LevelsStartedToday { get; set; }
+    public int LoginStreakDays { get; set; }
+    public List<UnclaimedReward> UnclaimedRewards { get; set; } = new List<UnclaimedReward>();
     public DateTime? LevelStuckSince { get; set; }
     public bool DailyRewardClaimedToday { get; set; }
     public bool HasInteractedWithLatestFeature { get; set; }
     public DateTime? FeatureLaunchTime { get; set; }
+    public DateTime? FeatureReleaseDate { get; set; }
     public DateTime? CompetitionStartTime { get; set; }
     public DateTime? CompetitionEndTime { get; set; }
+    public int LeaderboardRankBeforeReset { get; set; } = int.MaxValue;
+    public DateTime? LeaderboardResetTime { get; set; }
 
     private readonly Dictionary<NotificationType, List<DateTime>> history = new Dictionary<NotificationType, List<DateTime>>();
 
