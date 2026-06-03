@@ -1,0 +1,33 @@
+Packages/com.bumimobile.pushnotification/Editor/BumiMobile.PushNotification.Editor.asmdef
+  s_04e0c30ec4645f::t_3f006fa746b84c 1-16
+Packages/com.bumimobile.pushnotification/Editor/NotificationTemplateEditor.cs
+  s_04e0c30ec4645f::t_bb1039e8c38f89 53
+  s_04e0c30ec4645f::t_b441700c00baf0 68-71
+  s_04e0c30ec4645f::t_b6f6ee9b54f8da 224-225
+  s_04e0c30ec4645f::t_736bf49bdfb0b5 244-245
+  s_04e0c30ec4645f::t_91f9214381c28b 269-270
+  s_04e0c30ec4645f::t_5ccba18c6c6fa3 309-311,313-331
+  s_04e0c30ec4645f::t_7f80720df58bc2 19
+  s_04e0c30ec4645f::t_069646b9a1aa30 230,232-243,246-257,259-265,267-268,271-272,274-279,281-286,288-295
+  s_04e0c30ec4645f::t_e180d9107e5f9d 1-18,21-50,54-60,80-82,94-223,226-228,231,258,266,273,280,287,296-308,312,332-391
+  s_04e0c30ec4645f::t_6e37cac95c13a7 51-52
+  s_04e0c30ec4645f::t_038b3981667d27 20,229
+  s_04e0c30ec4645f::t_7f87dfdb4b95f1 61-67,72-79
+  s_04e0c30ec4645f::t_45505002453f27 83-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e0749ec561c3046f540aa5da278d643e07bd9ed2",
+  "prompts": {},
+  "sessions": {
+    "s_04e0c30ec4645f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17330eca8ffezYtKv9rlg5ukGX",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
