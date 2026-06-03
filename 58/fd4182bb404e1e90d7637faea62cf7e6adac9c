@@ -1,0 +1,34 @@
+Packages/com.bumimobile.pushnotification/Runtime/NotificationManager.cs
+  s_04e0c30ec4645f::t_2f8b4b727a4740 43-44,46,49-55
+  s_04e0c30ec4645f::t_7f310186a494ec 842-848
+  s_04e0c30ec4645f::t_74bc9de3567c4a 57-69,71-88,90-128
+  s_04e0c30ec4645f::t_9f3914a45f6f22 741-745,749-750,762,764,795-796,802,806,812
+  s_04e0c30ec4645f::t_9947b9d5710a05 852,859
+  s_04e0c30ec4645f::t_224ba052601c0f 490-493
+  s_04e0c30ec4645f::t_678068847fc6d0 483-485,494-499
+  s_04e0c30ec4645f::t_98a7a9975d8ac9 89
+  s_04e0c30ec4645f::t_ccc424ffea6a25 241,261,263-265,270-287,435,437,445-453,458,460,463,465,468-471
+  s_04e0c30ec4645f::t_6d38cdefc4e628 70
+  s_04e0c30ec4645f::t_b1e63eb7d4750a 476-481,486-489,500-504
+  s_04e0c30ec4645f::t_011f3c7b386bd8 517-518,520,522,524,526-530,532-536
+  s_04e0c30ec4645f::t_3d36616bdbb28c 854,857-858,860-863,868,871-872
+  s_04e0c30ec4645f::t_5f84ca4f654d7c 133,144-165,180-183,189,193-199,203
+  s_04e0c30ec4645f::t_f0d57376e535d2 17-18,23
+  s_04e0c30ec4645f::t_0358576dd853af 45,47-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "58fd4182bb404e1e90d7637faea62cf7e6adac9c",
+  "prompts": {},
+  "sessions": {
+    "s_04e0c30ec4645f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17330eca8ffezYtKv9rlg5ukGX",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
