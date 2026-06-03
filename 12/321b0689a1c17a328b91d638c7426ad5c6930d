@@ -1,0 +1,24 @@
+Packages/com.bumimobile.pushnotification/package.json
+  s_04e0c30ec4645f::t_350faf65e7eb3c 4
+  s_04e0c30ec4645f::t_ab1062df6b1b55 15
+Packages/com.bumimobile.pushnotification/CHANGELOG.md
+  s_04e0c30ec4645f::t_01280f8f7c40f8 47
+  s_04e0c30ec4645f::t_bc5a66e8a66aef 36
+  s_04e0c30ec4645f::t_6488dc75d12fc2 11-35,37-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "12321b0689a1c17a328b91d638c7426ad5c6930d",
+  "prompts": {},
+  "sessions": {
+    "s_04e0c30ec4645f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17330eca8ffezYtKv9rlg5ukGX",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
