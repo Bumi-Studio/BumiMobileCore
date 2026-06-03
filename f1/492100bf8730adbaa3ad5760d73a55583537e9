@@ -1,0 +1,19 @@
+Packages/com.bumimobile.pushnotification/Runtime/BumiMobile.PushNotification.asmdef
+  s_04e0c30ec4645f::t_1a809ee68893df 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "f1492100bf8730adbaa3ad5760d73a55583537e9",
+  "prompts": {},
+  "sessions": {
+    "s_04e0c30ec4645f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17330eca8ffezYtKv9rlg5ukGX",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
