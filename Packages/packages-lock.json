@@ -148,6 +148,7 @@
       "source": "embedded",
       "dependencies": {
         "com.bumimobile.core": "0.1.1",
+        "com.bumimobile.localization": "0.1.0",
         "com.unity.mobile.notifications": "2.4.1"
       }
     },
