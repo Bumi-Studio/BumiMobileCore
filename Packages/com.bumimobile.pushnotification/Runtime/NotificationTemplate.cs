@@ -17,6 +17,12 @@ public class NotificationTemplate : ScriptableObject
     [Tooltip("The notification type associated with this template.")]
     public NotificationType type = NotificationType.DailyRetention;
 
+    [Tooltip("Copy variation ID. If multiple templates share the same type and copyVariationId, only one will be sent per day.")]
+    public string copyVariationId;
+
+    [Tooltip("Related entity ID (event ID, feature ID, reward ID, leaderboard reset ID) for idempotency and tracking.")]
+    public string relatedEntityId;
+
     public NotificationRules rules = new NotificationRules();
     public NotificationTriggerSettings trigger = new NotificationTriggerSettings();
     public NotificationMessage message = new NotificationMessage();
@@ -56,6 +62,16 @@ public enum NotificationType
     SocialCompetition
 }
 
+public enum NotificationPriority
+{
+    FeatureAnnouncement = 1,
+    RewardReminder = 2,
+    Reengagement = 3,
+    SocialCompetition = 4,
+    MotivateLevelProgression = 5,
+    DailyRetention = 6
+}
+
 public enum NotificationPeriod
 {
     Day,
@@ -76,6 +92,7 @@ public enum NotificationTriggerType
 [Serializable]
 public class NotificationRules
 {
+    public NotificationPriority priority = NotificationPriority.DailyRetention;
     public int maxPerPeriod = 1;
     public NotificationPeriod period = NotificationPeriod.Day;
     public int periodHoursOverride;
@@ -111,6 +128,20 @@ public class NotificationTriggerSettings
     public bool includeStartEvent = true;
     public bool includeLastCall = true;
 
+    [Tooltip("Only send to players who have completed at least 1 level.")]
+    public bool requiresCompletedLevel;
+
+    [Tooltip("For Motivate Level Progression: player must have opened the game before this hour.")]
+    [Range(0, 23)]
+    public int gameOpenBeforeHour = 14;
+
+    [Tooltip("For Motivate Level Progression: player must have opened the game before this minute.")]
+    [Range(0, 59)]
+    public int gameOpenBeforeMinute = 30;
+
+    [Tooltip("For Reward Reminder: required login streak days (e.g. 3 for 3-day streak).")]
+    public int loginStreakDays = 3;
+
     [TextArea]
     public string description;
 }
@@ -122,6 +153,15 @@ public class NotificationMessage
     [TextArea]
     public string body;
     public string callToAction;
+
+    [Tooltip("Localization key for the title. If set, it will be resolved at runtime. Fallback to 'title' if resolver is not registered.")]
+    public string titleKey;
+
+    [Tooltip("Localization key for the body. If set, it will be resolved at runtime. Fallback to 'body' if resolver is not registered.")]
+    public string bodyKey;
+
+    [Tooltip("Localization key for the call to action. If set, it will be resolved at runtime. Fallback to 'callToAction' if resolver is not registered.")]
+    public string callToActionKey;
 }
 
 [Serializable]
@@ -132,7 +172,7 @@ public class NotificationMediaAssets
     public string iconEmoji;
 }
 
-internal static class NotificationTemplateDefaults
+public static class NotificationTemplateDefaults
 {
     private sealed class TemplateDefinition
     {
@@ -152,121 +192,155 @@ internal static class NotificationTemplateDefaults
     {
         new TemplateDefinition("Daily Retention", NotificationType.DailyRetention, template =>
         {
+            template.rules.priority = NotificationPriority.DailyRetention;
             template.rules.maxPerPeriod = 1;
             template.rules.period = NotificationPeriod.Day;
-            template.rules.targetDescription = "All active players";
-            template.rules.cooldownHours = 24;
-            template.rules.exceptionDescription = "Skip if player already logged in today.";
+            template.rules.targetDescription = "Players who opened the game before but have not opened since 00:00 today.";
+            template.rules.cooldownHours = 4;
+            template.rules.exceptionDescription = "Skip if player already logged in today. Skip if player is currently active. Send only on H+1 and H+2.";
 
             template.trigger.triggerType = NotificationTriggerType.DailyAtLocalTime;
-            template.trigger.hour = 12;
+            template.trigger.hour = 10;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
             template.trigger.skipIfLoggedInToday = true;
-            template.trigger.description = "Every day at 12:00 PM (GMT+8), if the player hasn't logged in.";
+            template.trigger.inactivityThresholdHours = 24;
+            template.trigger.description = "Send at 10:00 on H+1 or H+2 after the player last opened the game. Do not send on the same day the player last opened.";
 
-            template.message.title = "Your Daily Gift Awaits 🎁";
-            template.message.body = "Don't miss today's reward. Extra coins are waiting for you.";
-            template.message.callToAction = "Play now and claim your daily reward!";
+            template.message.title = "We miss you! Come back 🎁";
+            template.message.body = "Your daily reward is waiting. Don't break your streak!";
+            template.message.callToAction = "Play now and claim your reward!";
+            template.message.titleKey = "notification.daily_retention.title";
+            template.message.bodyKey = "notification.daily_retention.body";
+            template.message.callToActionKey = "notification.daily_retention.cta";
             template.media.iconEmoji = "🎁";
         }),
         new TemplateDefinition("Re-engagement", NotificationType.Reengagement, template =>
         {
-            template.rules.maxPerPeriod = 2;
+            template.rules.priority = NotificationPriority.Reengagement;
+            template.rules.maxPerPeriod = 1;
             template.rules.period = NotificationPeriod.Week;
-            template.rules.targetDescription = "Players inactive for >=72h (since last login)";
-            template.rules.cooldownHours = 72;
-            template.rules.exceptionDescription = string.Empty;
+            template.rules.targetDescription = "Players inactive for H+3 or H+7 who have completed at least 1 level.";
+            template.rules.cooldownHours = 4;
+            template.rules.exceptionDescription = "Skip if player already logged in today. Reset inactive-day count if player opens the game.";
 
             template.trigger.triggerType = NotificationTriggerType.InactivityThreshold;
             template.trigger.inactivityThresholdHours = 72;
-            template.trigger.hour = 15;
+            template.trigger.hour = 10;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
-            template.trigger.description = "At 15:00 (GMT+8), if the player's last login was 72h ago or more.";
+            template.trigger.requiresCompletedLevel = true;
+            template.trigger.skipIfLoggedInToday = true;
+            template.trigger.description = "Send at 10:00 on H+3 (and optionally H+7). Only if player has not opened the game on that day.";
 
             template.message.title = "We miss you! 🔧";
-            template.message.body = "The bolts won't unscrew themselves, return now and keep progressing.";
+            template.message.body = "The bolts won't unscrew themselves. Return now and keep progressing!";
             template.message.callToAction = "Come back and continue your puzzle journey!";
+            template.message.titleKey = "notification.reengagement.title";
+            template.message.bodyKey = "notification.reengagement.body";
+            template.message.callToActionKey = "notification.reengagement.cta";
             template.media.iconEmoji = "🔧";
         }),
         new TemplateDefinition("Motivate Level Progression", NotificationType.MotivateLevelProgression, template =>
         {
-            template.rules.maxPerPeriod = 3;
-            template.rules.period = NotificationPeriod.Custom;
-            template.rules.periodHoursOverride = 72;
-            template.rules.cooldownHours = 8;
-            template.rules.targetDescription = "Active players who have logged in for three consecutive days.";
-            template.rules.exceptionDescription = "Skip if the player already received a notification in the last 8 hours.";
+            template.rules.priority = NotificationPriority.MotivateLevelProgression;
+            template.rules.maxPerPeriod = 1;
+            template.rules.period = NotificationPeriod.Day;
+            template.rules.cooldownHours = 4;
+            template.rules.targetDescription = "Players who opened the game today but completed 0 levels.";
+            template.rules.exceptionDescription = "Skip if player completed at least 1 level today. Push 1 and Push 2 are copy variations.";
 
             template.trigger.triggerType = NotificationTriggerType.DailyAtLocalTime;
-            template.trigger.hour = 8;
+            template.trigger.hour = 15;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
-            template.trigger.description = "Send at 08:00 (GMT+8) after three consecutive days of play, for up to three days.";
+            template.trigger.gameOpenBeforeHour = 14;
+            template.trigger.gameOpenBeforeMinute = 30;
+            template.trigger.description = "Send at 15:00 if player opened game before 14:30 and completed 0 levels today.";
 
-            template.message.title = "Capai level tertinggi!";
-            template.message.body = "Terus main, capai level tertinggi, dan dapatkan hadiahnya!";
-            template.message.callToAction = "Main sekarang!";
+            template.message.title = "Keep going! You're doing great!";
+            template.message.body = "You started strong today. Finish a level and claim your progress!";
+            template.message.callToAction = "Play now!";
+            template.message.titleKey = "notification.motivate_level.title";
+            template.message.bodyKey = "notification.motivate_level.body";
+            template.message.callToActionKey = "notification.motivate_level.cta";
             template.media.largePictureResource = "motivate_level_large";
             template.media.iconResource = "motivate_level_icon";
             template.media.iconEmoji = string.Empty;
         }),
         new TemplateDefinition("Reward Reminder", NotificationType.RewardReminder, template =>
         {
+            template.rules.priority = NotificationPriority.RewardReminder;
             template.rules.maxPerPeriod = 1;
             template.rules.period = NotificationPeriod.Day;
-            template.rules.cooldownHours = 24;
-            template.rules.targetDescription = "Players who haven't claimed their daily reward or special shop offers.";
-            template.rules.exceptionDescription = "Do not send if the daily reward has already been claimed.";
+            template.rules.cooldownHours = 4;
+            template.rules.targetDescription = "Players with an available unclaimed reward or bonus.";
+            template.rules.exceptionDescription = "Do not send if reward already claimed. Prioritize closest expiration time.";
 
             template.trigger.triggerType = NotificationTriggerType.DailyAtLocalTime;
-            template.trigger.hour = 20;
+            template.trigger.hour = 12;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
             template.trigger.skipIfDailyRewardClaimed = true;
-            template.trigger.description = "Every day at 20:00 (GMT+8), only if the daily reward is still unclaimed.";
+            template.trigger.loginStreakDays = 3;
+            template.trigger.description = "Send at 12:00 if player has a 3-day login streak and unclaimed Daily Reward. Also send at 20:00 if Daily Reward still unclaimed.";
 
-            template.message.title = "Why miss free loot? 🤔";
-            template.message.body = "Log in now! Grab today's coins before the daily reset wipes them out.";
+            template.message.title = "Your reward is waiting! 🤔";
+            template.message.body = "Don't let it expire! Claim your reward before it's gone.";
             template.message.callToAction = "Claim your reward before it disappears!";
+            template.message.titleKey = "notification.reward_reminder.title";
+            template.message.bodyKey = "notification.reward_reminder.body";
+            template.message.callToActionKey = "notification.reward_reminder.cta";
             template.media.iconEmoji = "🤔";
         }),
         new TemplateDefinition("Feature Announcement", NotificationType.FeatureAnnouncement, template =>
         {
+            template.rules.priority = NotificationPriority.FeatureAnnouncement;
             template.rules.maxPerPeriod = 1;
             template.rules.period = NotificationPeriod.Event;
-            template.rules.cooldownHours = 48;
-            template.rules.targetDescription = "All active players (logged in within last 7 days).";
-            template.rules.exceptionDescription = "Do not send if the player has already interacted with the new feature.";
+            template.rules.cooldownHours = 0;
+            template.rules.targetDescription = "Players who completed at least 1 level within the last 7 days.";
+            template.rules.exceptionDescription = "Do not send if player opened the game after feature release or event start. Only send while event is active.";
 
             template.trigger.triggerType = NotificationTriggerType.FeatureEvent;
-            template.trigger.eventDelayMinutes = 60;
+            template.trigger.hour = 11;
+            template.trigger.minute = 0;
+            template.trigger.timezone = "GMT+8";
             template.trigger.skipIfFeatureInteracted = true;
-            template.trigger.description = "Within 60 minutes after a feature or event launch, send to all players.";
+            template.trigger.description = "Send once in the first 11:00 delivery slot after feature release or event start.";
 
             template.message.title = "This changes EVERYTHING! 🔥";
-            template.message.body = "New feature/event just dropped and players are going crazy! Don't get left behind. Check it out now!";
+            template.message.body = "New feature/event just dropped! Don't get left behind. Check it out now!";
             template.message.callToAction = "Be the first to experience this!";
+            template.message.titleKey = "notification.feature_announcement.title";
+            template.message.bodyKey = "notification.feature_announcement.body";
+            template.message.callToActionKey = "notification.feature_announcement.cta";
             template.media.iconEmoji = "🔥";
         }),
         new TemplateDefinition("Social Competition", NotificationType.SocialCompetition, template =>
         {
-            template.rules.maxPerPeriod = 2;
+            template.rules.priority = NotificationPriority.SocialCompetition;
+            template.rules.maxPerPeriod = 1;
             template.rules.period = NotificationPeriod.Event;
             template.rules.cooldownHours = 0;
-            template.rules.targetDescription = "All active players (logged in within last 7 days).";
-            template.rules.exceptionDescription = string.Empty;
+            template.rules.targetDescription = "Players in the top 100 leaderboard before the reset.";
+            template.rules.exceptionDescription = "Only send if player has not opened the game after leaderboard reset.";
 
             template.trigger.triggerType = NotificationTriggerType.CompetitionLifecycle;
+            template.trigger.hour = 10;
+            template.trigger.minute = 0;
+            template.trigger.timezone = "GMT+8";
             template.trigger.competitionLastCallLeadHours = 48;
             template.trigger.includeStartEvent = true;
-            template.trigger.includeLastCall = true;
-            template.trigger.description = "Send when a competition starts and 48 hours before it ends.";
+            template.trigger.includeLastCall = false;
+            template.trigger.description = "Send once in the first 10:00 delivery slot after leaderboard reset. Use pre-reset ranking data.";
 
             template.message.title = "Someone just DESTROYED your record! 😱";
             template.message.body = "Your leaderboard position is under attack! Jump in and show them who's boss before it's too late!";
             template.message.callToAction = "Crush your rivals now!";
+            template.message.titleKey = "notification.social_competition.title";
+            template.message.bodyKey = "notification.social_competition.body";
+            template.message.callToActionKey = "notification.social_competition.cta";
             template.media.iconEmoji = "😱";
         })
     };
