@@ -1,0 +1,20 @@
+Packages/com.bumimobile.core/Editor/Utilities/CorePackageManagerWindow.cs
+  s_7be1ebf6ca0968::t_4cc888a0c821c3 436
+  s_7be1ebf6ca0968::t_e67764155499b0 250-256,258,263-274,505,570
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8447412080d3e753348a331dea94b73f5cc347ce",
+  "prompts": {},
+  "sessions": {
+    "s_7be1ebf6ca0968": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_16f153061ffegnwbunySW3CDoC",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
