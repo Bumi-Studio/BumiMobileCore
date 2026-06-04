@@ -1,0 +1,14 @@
+Packages/com.bumimobile.localization/CHANGELOG.md
+  h_0612cf7e255131 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "231020c7757198ba11cde7a000c701c3473fb2e5",
+  "prompts": {},
+  "humans": {
+    "h_0612cf7e255131": {
+      "author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
