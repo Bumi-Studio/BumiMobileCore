@@ -17,7 +17,7 @@ using Unity.EditorCoroutines.Editor;
 
 namespace BumiMobile
 {
-    [CreateAssetMenu(fileName = "LocalizationSettings", menuName = "Bumimobile/Localization Settings")]
+    [CreateAssetMenu(fileName = "LocalizationSettings", menuName = "BumiMobile/Localization Settings")]
     public class LocalizationSettings : ScriptableObject
     {
         /// <summary>
