@@ -23,7 +23,6 @@ namespace BumiMobile
         private string requestPackageName;
         private string statusMessage;
         private double statusMessageUntil;
-        private PackageDefinition activeInstallDefinition;
         private readonly Queue<PackageDefinition.PostInstallDependency> dependencyQueue = new Queue<PackageDefinition.PostInstallDependency>();
         private PackageDefinition.PostInstallDependency activeDependency;
         private bool dependencyProcessingActive;
@@ -68,15 +67,6 @@ namespace BumiMobile
                     activeDependency = null;
                     TryProcessNextDependency();
                 }
-                else if (activeInstallDefinition != null)
-                {
-                    bool queued = EnqueueMissingDependencies(activeInstallDefinition);
-                    activeInstallDefinition = null;
-                    if (queued)
-                    {
-                        TryProcessNextDependency();
-                    }
-                }
             }
             else if (pendingRequest.Status >= StatusCode.Failure)
             {
@@ -87,7 +77,6 @@ namespace BumiMobile
                     activeDependency = null;
                     dependencyQueue.Clear();
                 }
-                activeInstallDefinition = null;
                 dependencyProcessingActive = false;
             }
 
@@ -212,16 +201,12 @@ namespace BumiMobile
                 return;
             }
 
-            dependencyQueue.Clear();
-            activeDependency = null;
-            activeInstallDefinition = definition;
-            dependencyProcessingActive = false;
+            if (!TryQueuePackageInstall(definition, versionTag))
+            {
+                return;
+            }
 
-            string gitUrl = definition.BuildGitUrl(RepositoryUrl, versionTag);
-            pendingRequest = Client.Add(gitUrl);
-            requestPackageName = definition.DisplayName;
-            statusMessage = $"Installing {definition.DisplayName}...";
-            statusMessageUntil = double.MaxValue;
+            TryProcessNextDependency();
         }
 
         private void RefreshInstalledPackages()
@@ -246,24 +231,105 @@ namespace BumiMobile
             Repaint();
         }
 
-        private bool EnqueueMissingDependencies(PackageDefinition definition)
+        private bool TryQueuePackageInstall(PackageDefinition definition, string versionTag)
         {
-            if (definition.PostInstallDependencies == null || definition.PostInstallDependencies.Count == 0)
+            dependencyQueue.Clear();
+            activeDependency = null;
+            dependencyProcessingActive = false;
+
+            var resolvedPackageIds = new HashSet<string>();
+            var resolvingPackageIds = new HashSet<string>();
+
+            if (!TryEnqueuePackageWithDependencies(definition, versionTag, resolvedPackageIds, resolvingPackageIds))
             {
                 return false;
             }
 
-            bool added = false;
+            dependencyProcessingActive = dependencyQueue.Count > 0;
+            return true;
+        }
+
+        private bool TryEnqueuePackageWithDependencies(
+            PackageDefinition definition,
+            string versionTag,
+            HashSet<string> resolvedPackageIds,
+            HashSet<string> resolvingPackageIds)
+        {
+            if (definition == null)
+            {
+                return false;
+            }
+
+            if (definition.IsEmbedded || resolvedPackageIds.Contains(definition.Name))
+            {
+                return true;
+            }
+
+            if (!resolvingPackageIds.Add(definition.Name))
+            {
+                statusMessage = $"Circular package dependency detected at {definition.DisplayName}.";
+                statusMessageUntil = EditorApplication.timeSinceStartup + 8f;
+                return false;
+            }
+
             foreach (var dependency in definition.PostInstallDependencies)
             {
-                if (!installedPackages.ContainsKey(dependency.PackageId))
+                if (dependency.InstallMode == PackageDefinition.DependencyInstallMode.BumiGitPackage)
                 {
-                    dependencyQueue.Enqueue(dependency);
-                    added = true;
+                    PackageDefinition dependencyDefinition = FindPackageDefinition(dependency.PackageId);
+                    if (dependencyDefinition == null)
+                    {
+                        statusMessage = $"Package dependency {dependency.PackageId} is not listed in the Bumi package catalog.";
+                        statusMessageUntil = EditorApplication.timeSinceStartup + 8f;
+                        resolvingPackageIds.Remove(definition.Name);
+                        return false;
+                    }
+
+                    string dependencyVersion = string.IsNullOrWhiteSpace(dependency.Version)
+                        ? GetPackageVersionInput(dependencyDefinition)
+                        : dependency.Version;
+
+                    if (!TryEnqueuePackageWithDependencies(dependencyDefinition, dependencyVersion, resolvedPackageIds, resolvingPackageIds))
+                    {
+                        resolvingPackageIds.Remove(definition.Name);
+                        return false;
+                    }
+
+                    continue;
                 }
+
+                // Only Bumi package dependencies are installed automatically.
+                // External dependencies stay manual via the package's package.json / Unity Package Manager.
             }
-            dependencyProcessingActive |= added;
-            return added;
+
+            if (!installedPackages.ContainsKey(definition.Name) || !PackageDefinition.IsSameVersion(installedPackages[definition.Name].version, versionTag))
+            {
+                dependencyQueue.Enqueue(PackageDefinition.PostInstallDependency.BumiPackage(definition.Name, definition.DisplayName, versionTag));
+            }
+
+            resolvingPackageIds.Remove(definition.Name);
+            resolvedPackageIds.Add(definition.Name);
+            return true;
+        }
+
+        private PackageDefinition FindPackageDefinition(string packageId)
+        {
+            return packageCatalog.FirstOrDefault(package => string.Equals(package.Name, packageId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string GetPackageVersionInput(PackageDefinition definition)
+        {
+            if (definition == null)
+            {
+                return null;
+            }
+
+            if (versionInputs.TryGetValue(definition.Name, out string version) && !string.IsNullOrWhiteSpace(version))
+            {
+                return version;
+            }
+
+            return definition.DefaultVersion;
         }
 
         private void TryProcessNextDependency()
@@ -277,13 +343,29 @@ namespace BumiMobile
             {
                 var dependency = dependencyQueue.Dequeue();
 
-                if (installedPackages.ContainsKey(dependency.PackageId))
+                if (IsDependencyAlreadySatisfied(dependency))
                 {
                     continue;
                 }
 
                 switch (dependency.InstallMode)
                 {
+                    case PackageDefinition.DependencyInstallMode.BumiGitPackage:
+                        PackageDefinition dependencyDefinition = FindPackageDefinition(dependency.PackageId);
+                        if (dependencyDefinition == null)
+                        {
+                            statusMessage = $"Package dependency {dependency.PackageId} is not listed in the Bumi package catalog.";
+                            statusMessageUntil = EditorApplication.timeSinceStartup + 8f;
+                            dependencyQueue.Clear();
+                            dependencyProcessingActive = false;
+                            return;
+                        }
+
+                        string version = string.IsNullOrWhiteSpace(dependency.Version)
+                            ? GetPackageVersionInput(dependencyDefinition)
+                            : dependency.Version;
+                        StartDependencyInstall(dependency, dependencyDefinition.BuildGitUrl(RepositoryUrl, version));
+                        return;
                     case PackageDefinition.DependencyInstallMode.Registry:
                         StartDependencyInstall(dependency, dependency.GetIdentifier());
                         return;
@@ -332,10 +414,25 @@ namespace BumiMobile
 
             if (dependencyProcessingActive)
             {
-                statusMessage = "All dependencies installed or skipped.";
+                statusMessage = "Package installation completed.";
                 statusMessageUntil = EditorApplication.timeSinceStartup + 4f;
                 dependencyProcessingActive = false;
             }
+        }
+
+        private bool IsDependencyAlreadySatisfied(PackageDefinition.PostInstallDependency dependency)
+        {
+            if (!installedPackages.TryGetValue(dependency.PackageId, out PackageInfo installedPackage))
+            {
+                return false;
+            }
+
+            if (dependency.InstallMode != PackageDefinition.DependencyInstallMode.BumiGitPackage || string.IsNullOrWhiteSpace(dependency.Version))
+            {
+                return true;
+            }
+
+            return PackageDefinition.IsSameVersion(installedPackage.version, dependency.Version);
         }
 
         private void StartDependencyInstall(PackageDefinition.PostInstallDependency dependency, string identifier)
@@ -371,29 +468,52 @@ namespace BumiMobile
 
             public static List<PackageDefinition> CreateDefaults()
             {
-                const string defaultVersion = "main";
+                const string defaultVersion = "dev";
                 return new List<PackageDefinition>
                 {
                     new PackageDefinition("com.bumimobile.core", "Core", "Base tooling, settings, and utilities. Already embedded in this project.", "Packages/com.bumimobile.core", defaultVersion, true),
                     new PackageDefinition("com.bumimobile.auth", "Auth", "Firebase Auth bootstrap with optional Google Play Games sign-in.", "Packages/com.bumimobile.auth", defaultVersion, false, new List<PostInstallDependency>
                     {
+                        PostInstallDependency.BumiPackage("com.bumimobile.core", "Core"),
                         PostInstallDependency.LocalEmbedded("com.google.play.games", "Google Play Games", "Packages/com.google.play.games")
                     }),
-                    new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion),
-                    new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion),
-                    new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion),
-                    new PackageDefinition("com.bumimobile.eventcalendar", "Event Calendar", "Local-only seasonal scheduling, sprite swap runtime, and editor authoring tools.", "Packages/com.bumimobile.eventcalendar", defaultVersion),
-                    new PackageDefinition("com.bumimobile.fullserializer", "FullSerializer", "Bumi-packaged FullSerializer JSON pipeline for shared use.", "Packages/com.bumimobile.fullserializer", defaultVersion),
-                    new PackageDefinition("com.bumimobile.haptic", "Haptic", "Haptic feedback abstractions and presets.", "Packages/com.bumimobile.haptic", defaultVersion),
-                    new PackageDefinition("com.bumimobile.leaderboard", "Leaderboard", "Firestore-backed leaderboard service with caching and warmup helpers.", "Packages/com.bumimobile.leaderboard", defaultVersion),
-                    new PackageDefinition("com.bumimobile.localization", "Localization", "Localization data pipelines and helpers.", "Packages/com.bumimobile.localization", defaultVersion),
-                    new PackageDefinition("com.bumimobile.nativeshare", "Native Share", "Sharing bridges for iOS/Android.", "Packages/com.bumimobile.nativeshare", defaultVersion),
-                    new PackageDefinition("com.bumimobile.pool", "Pool", "Object pooling utilities.", "Packages/com.bumimobile.pool", defaultVersion),
-                    new PackageDefinition("com.bumimobile.pushnotification", "Push Notification", "Push notification bridges and helpers.", "Packages/com.bumimobile.pushnotification", defaultVersion),
-                    new PackageDefinition("com.bumimobile.save", "Save", "Save system entry points and persistence helpers.", "Packages/com.bumimobile.save", defaultVersion),
-                    new PackageDefinition("com.bumimobile.security", "Security", "SaveCrypto encryption utilities and editor tooling.", "Packages/com.bumimobile.security", defaultVersion),
-                    new PackageDefinition("com.bumimobile.skins", "Skins", "Skin/theme data structures and runtime.", "Packages/com.bumimobile.skins", defaultVersion),
-                    new PackageDefinition("com.bumimobile.ui", "UI", "Common UI widgets and theming.", "Packages/com.bumimobile.ui", defaultVersion),
+                    new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.eventcalendar", "Event Calendar", "Local-only seasonal scheduling, sprite swap runtime, and editor authoring tools.", "Packages/com.bumimobile.eventcalendar", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.fullserializer", "FullSerializer", "Bumi-packaged FullSerializer JSON pipeline for shared use.", "Packages/com.bumimobile.fullserializer", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.haptic", "Haptic", "Haptic feedback abstractions and presets.", "Packages/com.bumimobile.haptic", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.leaderboard", "Leaderboard", "Firestore-backed leaderboard service with caching and warmup helpers.", "Packages/com.bumimobile.leaderboard", defaultVersion, false, new List<PostInstallDependency>
+                    {
+                        PostInstallDependency.BumiPackage("com.bumimobile.core", "Core"),
+                        PostInstallDependency.BumiPackage("com.bumimobile.save", "Save"),
+                        PostInstallDependency.BumiPackage("com.bumimobile.auth", "Auth")
+                    }),
+                    new PackageDefinition("com.bumimobile.localization", "Localization", "Localization data pipelines and helpers.", "Packages/com.bumimobile.localization", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.nativeshare", "Native Share", "Sharing bridges for iOS/Android.", "Packages/com.bumimobile.nativeshare", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.pool", "Pool", "Object pooling utilities.", "Packages/com.bumimobile.pool", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.pushnotification", "Push Notification", "Push notification bridges and helpers.", "Packages/com.bumimobile.pushnotification", defaultVersion, false, new List<PostInstallDependency>
+                    {
+                        PostInstallDependency.BumiPackage("com.bumimobile.core", "Core"),
+                        PostInstallDependency.BumiPackage("com.bumimobile.localization", "Localization")
+                    }),
+                    new PackageDefinition("com.bumimobile.save", "Save", "Save system entry points and persistence helpers.", "Packages/com.bumimobile.save", defaultVersion, false, new List<PostInstallDependency>
+                    {
+                        PostInstallDependency.BumiPackage("com.bumimobile.core", "Core"),
+                        PostInstallDependency.BumiPackage("com.bumimobile.fullserializer", "FullSerializer"),
+                        PostInstallDependency.BumiPackage("com.bumimobile.security", "Security")
+                    }),
+                    new PackageDefinition("com.bumimobile.security", "Security", "SaveCrypto encryption utilities and editor tooling.", "Packages/com.bumimobile.security", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.skins", "Skins", "Skin/theme data structures and runtime.", "Packages/com.bumimobile.skins", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.ui", "UI", "Common UI widgets and theming.", "Packages/com.bumimobile.ui", defaultVersion, false, CoreDependency()),
+                };
+            }
+
+            private static List<PostInstallDependency> CoreDependency()
+            {
+                return new List<PostInstallDependency>
+                {
+                    PostInstallDependency.BumiPackage("com.bumimobile.core", "Core")
                 };
             }
 
@@ -443,6 +563,11 @@ namespace BumiMobile
                     return new PostInstallDependency(packageId, null, DependencyInstallMode.LocalEmbedded, displayName, embeddedRelativePath);
                 }
 
+                public static PostInstallDependency BumiPackage(string packageId, string displayName, string version = null)
+                {
+                    return new PostInstallDependency(packageId, version, DependencyInstallMode.BumiGitPackage, displayName);
+                }
+
                 public string GetIdentifier()
                 {
                     if (string.IsNullOrEmpty(Version))
@@ -468,6 +593,7 @@ namespace BumiMobile
 
             public enum DependencyInstallMode
             {
+                BumiGitPackage,
                 Registry,
                 LocalTarball,
                 LocalEmbedded
