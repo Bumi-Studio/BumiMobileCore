@@ -1,0 +1,14 @@
+Packages/com.bumimobile.localization/Runtime/LocalizationSettings.cs
+  h_0612cf7e255131 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "21621df0b84ab41ed09c96b459160e3e1da01a96",
+  "prompts": {},
+  "humans": {
+    "h_0612cf7e255131": {
+      "author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
