@@ -17,7 +17,7 @@ using Unity.EditorCoroutines.Editor;
 
 namespace BumiMobile
 {
-    [CreateAssetMenu(fileName = "LocalizationSettings", menuName = "Data/Simple Localization/Settings")]
+    [CreateAssetMenu(fileName = "LocalizationSettings", menuName = "BumiMobile/Localization Settings")]
     public class LocalizationSettings : ScriptableObject
     {
         /// <summary>
@@ -35,9 +35,9 @@ namespace BumiMobile
 
         public static DateTime Timestamp;
 
-        public static event Action OnRunEditor = () => {};
+        public static event Action OnRunEditor = () => { };
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
 
         public void Awake()
         {
@@ -51,7 +51,7 @@ namespace BumiMobile
         {
             EditorCoroutineUtility.StartCoroutineOwnerless(DownloadGoogleSheetsCoroutine(callback));
         }
-        
+
         public IEnumerator DownloadGoogleSheetsCoroutine(Action callback = null, bool silent = false)
         {
             if (string.IsNullOrEmpty(TableId) || Sheets.Count == 0)
@@ -79,7 +79,7 @@ namespace BumiMobile
                     yield break;
                 }
             }
-            
+
             Timestamp = DateTime.UtcNow;
 
             if (!silent) ClearSaveFolder();
@@ -92,7 +92,7 @@ namespace BumiMobile
                 Debug.Log($"Downloading <color=grey>{url}</color>");
 
                 var request = UnityWebRequest.Get(url);
-                var progress = (float) (i + 1) / Sheets.Count;
+                var progress = (float)(i + 1) / Sheets.Count;
 
                 if (EditorUtility.DisplayCancelableProgressBar("Downloading sheets...", $"[{(int)(100 * progress)}%] [{i + 1}/{Sheets.Count}] Downloading {sheet.Name}...", progress))
                 {
@@ -281,6 +281,6 @@ namespace BumiMobile
             }
         }
 
-        #endif
+#endif
     }
 }
