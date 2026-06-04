@@ -10,6 +10,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - _Nothing yet._
 
+## [0.1.4] - 2026-06-04
+
+### Added
+
+- Bumi Core Package Manager now resolves and installs missing `com.bumimobile.*` package dependencies before installing the selected package.
+- Added recursive dependency ordering and circular dependency detection for Bumi package installs.
+
+### Changed
+
+- Bumi Core Package Manager now defaults package installs to the `dev` branch instead of `main`.
+- External package dependencies remain manual and are no longer queued by the Bumi package dependency installer.
+
 ## [0.1.3] - 2025-12-04
 
 ### Added
