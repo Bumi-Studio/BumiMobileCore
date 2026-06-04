@@ -12,7 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
-- Updated the `LocalizationSettings` asset menu path to `Bumimobile/Localization Settings`.
+- Updated the `LocalizationSettings` asset menu path to `BumiMobile/Localization Settings`.
 
 ## [0.1.3] - 2025-12-11
 
