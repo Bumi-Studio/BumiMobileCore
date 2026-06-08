@@ -8,7 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- _Nothing yet._
+### Added
+
+- Added `com.bumimobile.build` to the Bumi Core Package Manager catalog.
 
 ## [0.1.4] - 2026-06-04
 

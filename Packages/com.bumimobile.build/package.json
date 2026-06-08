@@ -1,0 +1,18 @@
+{
+  "name": "com.bumimobile.build",
+  "displayName": "Bumi Mobile Build",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Reusable Android pre-build confirmation, versioning, build preset, and signing tools for Bumi Mobile projects.",
+  "keywords": [
+    "bumi",
+    "build",
+    "android",
+    "version",
+    "keystore"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.4"
+  }
+}
