@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - Added `com.bumimobile.build` to the Bumi Core Package Manager catalog.
 
+### Changed
+
+- Updated the Build package catalog entry for its Unity 6 Android Build Profile workflow.
+
 ## [0.1.4] - 2026-06-04
 
 ### Added

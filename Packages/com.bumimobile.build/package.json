@@ -1,9 +1,9 @@
 {
   "name": "com.bumimobile.build",
   "displayName": "Bumi Mobile Build",
-  "version": "0.1.0",
-  "unity": "2021.3",
-  "description": "Reusable Android pre-build confirmation, versioning, build preset, and signing tools for Bumi Mobile projects.",
+  "version": "0.2.0",
+  "unity": "6000.0",
+  "description": "Reusable Android Build Profile confirmation, versioning, and signing tools for Bumi Mobile projects.",
   "keywords": [
     "bumi",
     "build",

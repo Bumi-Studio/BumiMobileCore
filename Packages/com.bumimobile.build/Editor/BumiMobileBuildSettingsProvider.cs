@@ -15,10 +15,6 @@ namespace BumiMobile.Build
 
             var serializedSettings = new SerializedObject(settings);
             SerializedProperty enableProperty = serializedSettings.FindProperty("enablePreBuildWindow");
-            SerializedProperty internalTestLabelProperty = serializedSettings.FindProperty("internalTestLabel");
-            SerializedProperty cheatLabelProperty = serializedSettings.FindProperty("cheatLabel");
-            SerializedProperty productionLabelProperty = serializedSettings.FindProperty("productionLabel");
-            SerializedProperty cheatDefineProperty = serializedSettings.FindProperty("cheatScriptingDefine");
 
             return new SettingsProvider(SettingsPath, SettingsScope.Project)
             {
@@ -28,10 +24,9 @@ namespace BumiMobile.Build
                     "Bumi Mobile",
                     "Build",
                     "Android",
+                    "Build Profile",
                     "Version",
-                    "Keystore",
-                    "Cheat",
-                    "Scripting Define"
+                    "Keystore"
                 },
                 guiHandler = _ =>
                 {
@@ -46,31 +41,12 @@ namespace BumiMobile.Build
                         "Show the confirmation window before Android builds started from Unity's Build Player window."));
 
                     EditorGUILayout.Space(8f);
-                    EditorGUILayout.LabelField("Preset Labels", EditorStyles.boldLabel);
-                    EditorGUILayout.PropertyField(internalTestLabelProperty, new GUIContent("Internal Test Label"));
-                    EditorGUILayout.PropertyField(cheatLabelProperty, new GUIContent("Cheat Label"));
-                    EditorGUILayout.PropertyField(productionLabelProperty, new GUIContent("Production Label"));
-
-                    EditorGUILayout.Space(8f);
-                    EditorGUILayout.LabelField("Cheat Build", EditorStyles.boldLabel);
-                    EditorGUILayout.PropertyField(cheatDefineProperty, new GUIContent(
-                        "Cheat Scripting Define",
-                        "Added only to Development - Cheat builds and removed from the other presets."));
-
-                    string cheatDefine = cheatDefineProperty.stringValue == null
-                        ? string.Empty
-                        : cheatDefineProperty.stringValue.Trim();
-
-                    if (!BumiMobileBuildSettings.IsValidScriptingDefine(cheatDefine))
-                    {
-                        EditorGUILayout.HelpBox(
-                            "Cheat Scripting Define must be a valid C# preprocessor identifier.",
-                            MessageType.Error);
-                    }
+                    EditorGUILayout.HelpBox(
+                        "Build type, package format, version, and publishing settings are read from the selected Android Build Profile. Enable Customize Player Settings on each profile to edit version and keystore values in the confirmation window.",
+                        MessageType.Info);
 
                     if (EditorGUI.EndChangeCheck())
                     {
-                        cheatDefineProperty.stringValue = cheatDefine;
                         serializedSettings.ApplyModifiedProperties();
                         settings.SaveSettings();
                     }

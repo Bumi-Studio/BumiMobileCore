@@ -13,7 +13,3 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   enablePreBuildWindow: 1
-  internalTestLabel: Development - Internal Test
-  cheatLabel: Development - Cheat
-  productionLabel: Production
-  cheatScriptingDefine: BUMI_CHEAT_BUILD

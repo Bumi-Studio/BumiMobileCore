@@ -1,39 +1,49 @@
 # Bumi Mobile Build
 
-Editor-only Android build tooling for Bumi Mobile projects.
+Editor-only Android build tooling for Unity 6 projects.
 
-## Features
+## Requirements
 
-- Shows a confirmation window before builds started from Unity's Build Player window.
-- Lets the developer confirm the app version, Android bundle version code, and custom keystore credentials.
-- Provides Internal Test, Cheat, and Production presets without replacing unrelated build flags or extra scripting defines.
-- Stores shared configuration in `ProjectSettings/BumiMobileBuildSettings.asset`.
-- Stores the last selected preset locally for each developer and project.
+- Unity 6000.0 or newer.
+- At least one Android Build Profile.
+- **Customize Player Settings** enabled on every profile whose version and signing settings should be editable from the confirmation window.
 
-## Configuration
+## Setup
 
-Open `Edit > Project Settings > Bumi Mobile > Build`.
+1. Open `File > Build Profiles`.
+2. Create the required Android profiles, such as Development and Production.
+3. Configure **Development Build** and **Build App Bundle** on each profile.
+4. Enable **Customize Player Settings** on each profile.
+5. Configure the initial app version, bundle version code, and Android publishing settings.
 
-- **Enable Pre-Build Window** controls whether Android builds are intercepted.
-- **Internal Test Label**, **Cheat Label**, and **Production Label** control the preset names shown in the window.
-- **Cheat Scripting Define** controls the define added only by the Cheat preset. Its default value is `BUMI_CHEAT_BUILD`.
+The selected Build Profile is the source of truth for build type, APK/AAB format, Player Settings, and scripting defines.
 
-The scripting define must be a valid C# preprocessor identifier. Projects migrating an existing implementation can replace the default with a project-specific define such as `SBP_CHEAT_BUILD`.
+## Confirmation Window
 
-## Runtime Usage
+Android builds started from Unity's Build Profiles or Build Player UI show `Confirm Build Profile` before the build runs.
 
-Game code can conditionally enable cheat-only behavior:
+The window provides:
+
+- Selection from all Android Build Profiles in the project.
+- Read-only Development/Production, APK/AAB, and cheat status derived from the active profile.
+- App version and Android bundle version code editing.
+- Custom keystore path, alias, and password editing.
+- Validation for version code and custom keystore credentials.
+
+Switching profiles activates the selected profile and reopens the window after Unity finishes any required domain reload. Unsaved edits must be discarded before switching.
+
+Keystore passwords are stored per profile in the current developer's `EditorPrefs`. Version and publishing settings are saved to the selected Build Profile asset.
+
+Development profiles use Unity's built-in `DEVELOPMENT_BUILD` scripting define. Projects can use it directly:
 
 ```csharp
-#if UNITY_EDITOR || BUMI_CHEAT_BUILD
-    EnableCheatTools();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    EnableDevelopmentTools();
 #endif
 ```
 
-## Presets
+## Project Settings
 
-- **Development - Internal Test** enables `BuildOptions.Development` and removes the configured cheat define.
-- **Development - Cheat** enables `BuildOptions.Development` and adds the configured cheat define.
-- **Production** disables `BuildOptions.Development` and removes the configured cheat define.
+Open `Edit > Project Settings > Bumi Mobile > Build`.
 
-Builds for targets other than Android continue through Unity's default build flow without showing the confirmation window.
+**Enable Pre-Build Window** controls whether Android builds are intercepted. Builds for other targets always continue through Unity's default build handler.
