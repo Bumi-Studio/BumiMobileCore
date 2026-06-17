@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - Custom keystore enablement, keystore path, and key alias are now read from and saved back to the selected Android Build Profile.
 - The confirmation window no longer writes app version, bundle version code, or Android signing fields to shared global Player Settings when saving.
-- Added clearer Build Profile examples to the README.
+- Added usable Development, Internal Test, and Production Android Build Profile assets to the project.
 
 ## [0.2.1] - 2026-06-17
 

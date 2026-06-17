@@ -19,28 +19,6 @@ Editor-only Android build tooling for Unity 6 projects.
 
 The selected Build Profile is the source of truth for build type, APK/AAB format, app version, bundle version code, Android signing settings, Player Settings, and scripting defines.
 
-## Example Build Profiles
-
-A typical Android project should keep separate profiles for development and release builds:
-
-| Profile | Development Build | Package | Version example | Bundle code example | Signing |
-| --- | --- | --- | --- | --- | --- |
-| `Development - Cheat` | Enabled | APK | `1.7.00-dev` | `24` | Debug or development keystore |
-| `Internal Test` | Disabled | AAB | `1.7.00-rc1` | `24` | Upload keystore |
-| `Production` | Disabled | AAB | `1.7.00` | `24` | Upload keystore |
-
-Each profile stores its own editable values in the Build Profile asset:
-
-```yaml
-bundleVersion: 1.7.00
-AndroidBundleVersionCode: 24
-androidUseCustomKeystore: 1
-AndroidKeystoreName: '{inproject}: Keystore/upload.keystore'
-AndroidKeyaliasName: upload
-```
-
-Changing `Production` in the confirmation window updates only `Production.asset`; it should not overwrite the version or signing fields in `Development - Cheat.asset` or `Internal Test.asset`.
-
 ## Confirmation Window
 
 Android builds started from Unity's Build Profiles or Build Player UI show `Confirm Build Profile` before the build runs.
