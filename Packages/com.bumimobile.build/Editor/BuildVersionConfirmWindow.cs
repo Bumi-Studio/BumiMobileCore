@@ -24,6 +24,9 @@ namespace BumiMobile.Build
         private const string SessionLocationPathKey = "BumiMobile.Build.PreBuildWindow.LocationPath";
         private const string SessionManifestPathKey = "BumiMobile.Build.PreBuildWindow.ManifestPath";
         private const string SessionBuildOptionsKey = "BumiMobile.Build.PreBuildWindow.BuildOptions";
+        private const string SessionSwitchAttemptKey = "BumiMobile.Build.PreBuildWindow.SwitchAttempt";
+        private const string SessionBuildAfterSwitchKey = "BumiMobile.Build.PreBuildWindow.BuildAfterSwitch";
+        private const int MaxProfileSwitchAttempts = 5;
 
         private const double ProfileSwitchFallbackDelaySeconds = 2d;
 
@@ -126,22 +129,14 @@ namespace BumiMobile.Build
                 return true;
             }
 
-            string activeProfileGuid = GetProfileGuid(BuildProfile.GetActiveBuildProfile());
-            string requestedProfileGuid = !string.IsNullOrEmpty(preferredProfileGuid)
+            string profileGuid = !string.IsNullOrEmpty(preferredProfileGuid)
                 ? preferredProfileGuid
-                : activeProfileGuid;
+                : GetProfileGuid(BuildProfile.GetActiveBuildProfile());
 
-            selectedProfileIndex = FindProfileIndex(requestedProfileGuid);
+            selectedProfileIndex = FindProfileIndex(profileGuid);
             if (selectedProfileIndex < 0)
             {
                 selectedProfileIndex = FindBestMatchingProfileIndex(options);
-            }
-
-            ProfileEntry selectedProfile = GetSelectedProfile();
-            if (selectedProfile != null && selectedProfile.Guid != activeProfileGuid)
-            {
-                BeginProfileSwitch(selectedProfile);
-                return false;
             }
 
             LoadSelectedProfileSettings();
@@ -237,8 +232,9 @@ namespace BumiMobile.Build
                     }
 
                     selectedProfileIndex = nextProfileIndex;
-                    BeginProfileSwitch(GetSelectedProfile());
-                    GUIUtility.ExitGUI();
+                    LoadSelectedProfileSettings();
+                    CaptureLoadedValues();
+                    Repaint();
                 }
 
                 ProfileEntry selectedProfile = GetSelectedProfile();
@@ -314,12 +310,6 @@ namespace BumiMobile.Build
                 return;
             }
 
-            if (GetProfileGuid(BuildProfile.GetActiveBuildProfile()) != selectedProfile.Guid)
-            {
-                SetValidationMessage("The selected Build Profile is not active. Switch the profile and try again.");
-                return;
-            }
-
             if (!selectedHasCustomPlayerSettings)
             {
                 SetValidationMessage("Enable Customize Player Settings for the selected Build Profile before building.");
@@ -376,17 +366,21 @@ namespace BumiMobile.Build
                 }
             }
 
-            PlayerSettings.bundleVersion = trimmedVersion;
-            PlayerSettings.Android.bundleVersionCode = parsedBundleVersionCode;
-            PlayerSettings.Android.useCustomKeystore = useCustomKeystore;
-            PlayerSettings.Android.keystoreName = trimmedKeystorePath;
-            PlayerSettings.Android.keyaliasName = trimmedKeyAlias;
-            PlayerSettings.Android.keystorePass = keystorePassword;
-            PlayerSettings.Android.keyaliasPass = keyAliasPassword;
+            // Edited platform settings are stored on the selected Build Profile.
+            SetProfileYamlSetting(selectedProfile.Profile, "bundleVersion", trimmedVersion);
+            SetProfileYamlSetting(
+                selectedProfile.Profile,
+                "AndroidBundleVersionCode",
+                parsedBundleVersionCode.ToString(CultureInfo.InvariantCulture));
+            SetProfileYamlSetting(selectedProfile.Profile, "androidUseCustomKeystore", useCustomKeystore ? "1" : "0");
+            SetProfileYamlSetting(selectedProfile.Profile, "AndroidKeystoreName", ToProfileYamlString(trimmedKeystorePath));
+            SetProfileYamlSetting(selectedProfile.Profile, "AndroidKeyaliasName", ToProfileYamlString(trimmedKeyAlias));
+            RemoveProfileYamlSetting(selectedProfile.Profile, "AndroidUseCustomKeystore");
 
-            SaveProfilePasswords(selectedProfile.Guid);
             EditorUtility.SetDirty(selectedProfile.Profile);
             AssetDatabase.SaveAssetIfDirty(selectedProfile.Profile);
+
+            SaveProfilePasswords(selectedProfile.Guid);
 
             string outputPath = NormalizeAndroidBuildPath(buildOptions.locationPathName, buildAppBundle);
             var profileBuildOptions = new BuildPlayerWithProfileOptions
@@ -397,10 +391,37 @@ namespace BumiMobile.Build
                 options = buildOptions.options & BuildRequestOptionMask
             };
 
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+            {
+                BeginProfileSwitch(selectedProfile, true);
+                return;
+            }
+
             ClearBuildRequestSession();
             Close();
 
-            EditorApplication.delayCall += () => BuildPipeline.BuildPlayer(profileBuildOptions);
+            ScheduleBuild(profileBuildOptions, keystorePassword, keyAliasPassword);
+        }
+
+        private static void ScheduleBuild(
+            BuildPlayerWithProfileOptions profileBuildOptions,
+            string buildKeystorePassword,
+            string buildKeyAliasPassword)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    PlayerSettings.Android.keystorePass = buildKeystorePassword;
+                    PlayerSettings.Android.keyaliasPass = buildKeyAliasPassword;
+                    BuildPipeline.BuildPlayer(profileBuildOptions);
+                }
+                finally
+                {
+                    PlayerSettings.Android.keystorePass = string.Empty;
+                    PlayerSettings.Android.keyaliasPass = string.Empty;
+                }
+            };
         }
 
         private void DiscoverProfiles()
@@ -449,14 +470,26 @@ namespace BumiMobile.Build
         {
             var serializedProfile = new SerializedObject(profile);
             SerializedProperty buildTargetProperty = serializedProfile.FindProperty("m_BuildTarget");
-            return buildTargetProperty != null && buildTargetProperty.intValue == (int)BuildTarget.Android;
+            if (buildTargetProperty == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_BuildTarget' property. Unity may have changed the internal serialization format.");
+                return false;
+            }
+
+            return buildTargetProperty.intValue == (int)BuildTarget.Android;
         }
 
         private static bool HasCustomPlayerSettings(BuildProfile profile)
         {
             var serializedProfile = new SerializedObject(profile);
             SerializedProperty playerSettingsYaml = serializedProfile.FindProperty("m_PlayerSettingsYaml");
-            SerializedProperty settings = playerSettingsYaml?.FindPropertyRelative("m_Settings");
+            if (playerSettingsYaml == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_PlayerSettingsYaml' property. Unity may have changed the internal serialization format.");
+                return false;
+            }
+
+            SerializedProperty settings = playerSettingsYaml.FindPropertyRelative("m_Settings");
             return settings != null && settings.isArray && settings.arraySize > 0;
         }
 
@@ -480,15 +513,45 @@ namespace BumiMobile.Build
         {
             var serializedProfile = new SerializedObject(profile);
             SerializedProperty platformSettings = serializedProfile.FindProperty("m_PlatformBuildProfile");
-            SerializedProperty developmentProperty = platformSettings?.FindPropertyRelative("m_Development");
+            if (platformSettings == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_PlatformBuildProfile' property. Unity may have changed the internal serialization format.");
+                development = false;
+                return false;
+            }
 
+            SerializedProperty developmentProperty = platformSettings.FindPropertyRelative("m_Development");
             if (developmentProperty == null)
             {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_Development' property. Unity may have changed the internal serialization format.");
                 development = false;
                 return false;
             }
 
             development = developmentProperty.boolValue;
+            return true;
+        }
+
+        private static bool TryGetSerializedBuildAppBundleSetting(BuildProfile profile, out bool buildAppBundle)
+        {
+            var serializedProfile = new SerializedObject(profile);
+            SerializedProperty platformSettings = serializedProfile.FindProperty("m_PlatformBuildProfile");
+            if (platformSettings == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_PlatformBuildProfile' property. Unity may have changed the internal serialization format.");
+                buildAppBundle = false;
+                return false;
+            }
+
+            SerializedProperty buildAppBundleProperty = platformSettings.FindPropertyRelative("m_BuildAppBundle");
+            if (buildAppBundleProperty == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] BuildProfile '{profile.name}' is missing 'm_BuildAppBundle' property. Unity may have changed the internal serialization format.");
+                buildAppBundle = false;
+                return false;
+            }
+
+            buildAppBundle = buildAppBundleProperty.boolValue;
             return true;
         }
 
@@ -504,14 +567,50 @@ namespace BumiMobile.Build
             }
 
             selectedHasCustomPlayerSettings = HasCustomPlayerSettings(selectedProfile.Profile);
-            developmentBuild = EditorUserBuildSettings.development;
-            buildAppBundle = EditorUserBuildSettings.buildAppBundle;
 
-            version = PlayerSettings.bundleVersion;
-            bundleVersionCode = PlayerSettings.Android.bundleVersionCode.ToString(CultureInfo.InvariantCulture);
-            useCustomKeystore = PlayerSettings.Android.useCustomKeystore;
-            keystorePath = PlayerSettings.Android.keystoreName;
-            keyAlias = PlayerSettings.Android.keyaliasName;
+            if (!TryGetSerializedDevelopmentSetting(selectedProfile.Profile, out developmentBuild))
+                developmentBuild = EditorUserBuildSettings.development;
+
+            if (!TryGetSerializedBuildAppBundleSetting(selectedProfile.Profile, out buildAppBundle))
+                buildAppBundle = EditorUserBuildSettings.buildAppBundle;
+
+            if (TryGetProfileYamlSetting(selectedProfile.Profile, "bundleVersion", out string profileVersion))
+                version = profileVersion;
+            else
+                version = PlayerSettings.bundleVersion;
+
+            if (TryGetProfileYamlSetting(selectedProfile.Profile, "AndroidBundleVersionCode", out string profileBundleCode) &&
+                int.TryParse(profileBundleCode, out int parsedCode))
+            {
+                bundleVersionCode = parsedCode.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                bundleVersionCode = PlayerSettings.Android.bundleVersionCode.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (TryGetProfileYamlSetting(selectedProfile.Profile, "androidUseCustomKeystore", out string profileUseCustomKeystore) ||
+                TryGetProfileYamlSetting(selectedProfile.Profile, "AndroidUseCustomKeystore", out profileUseCustomKeystore))
+            {
+                useCustomKeystore =
+                    string.Equals(profileUseCustomKeystore, "1", StringComparison.Ordinal) ||
+                    string.Equals(profileUseCustomKeystore, "true", StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                useCustomKeystore = PlayerSettings.Android.useCustomKeystore;
+            }
+
+            if (TryGetProfileYamlSetting(selectedProfile.Profile, "AndroidKeystoreName", out string profileKeystorePath))
+                keystorePath = profileKeystorePath;
+            else
+                keystorePath = PlayerSettings.Android.keystoreName;
+
+            if (TryGetProfileYamlSetting(selectedProfile.Profile, "AndroidKeyaliasName", out string profileKeyAlias))
+                keyAlias = profileKeyAlias;
+            else
+                keyAlias = PlayerSettings.Android.keyaliasName;
+
             keystorePassword = EditorPrefs.GetString(
                 GetPasswordPreferenceKey(selectedProfile.Guid, KeystorePasswordSuffix),
                 string.Empty);
@@ -519,6 +618,117 @@ namespace BumiMobile.Build
                 GetPasswordPreferenceKey(selectedProfile.Guid, KeyAliasPasswordSuffix),
                 string.Empty);
             validationMessage = string.Empty;
+        }
+
+        private static bool TryGetProfileYamlSetting(BuildProfile profile, string key, out string value)
+        {
+            value = string.Empty;
+            var serializedProfile = new SerializedObject(profile);
+            SerializedProperty playerSettingsYaml = serializedProfile.FindProperty("m_PlayerSettingsYaml");
+            if (playerSettingsYaml == null)
+                return false;
+
+            SerializedProperty settings = playerSettingsYaml.FindPropertyRelative("m_Settings");
+            if (settings == null || !settings.isArray)
+                return false;
+
+            string searchPrefix = "|   " + key + ":";
+            for (int i = 0; i < settings.arraySize; i++)
+            {
+                SerializedProperty lineProperty = settings.GetArrayElementAtIndex(i);
+                SerializedProperty lineText = lineProperty?.FindPropertyRelative("line");
+                if (lineText == null || string.IsNullOrEmpty(lineText.stringValue))
+                    continue;
+
+                string line = lineText.stringValue;
+                if (line.StartsWith(searchPrefix, StringComparison.Ordinal))
+                {
+                    value = FromProfileYamlString(line.Substring(searchPrefix.Length).Trim());
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void SetProfileYamlSetting(BuildProfile profile, string key, string value)
+        {
+            var serializedProfile = new SerializedObject(profile);
+            SerializedProperty playerSettingsYaml = serializedProfile.FindProperty("m_PlayerSettingsYaml");
+            if (playerSettingsYaml == null)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] Cannot set '{key}' - profile '{profile.name}' has no m_PlayerSettingsYaml.");
+                return;
+            }
+
+            SerializedProperty settings = playerSettingsYaml.FindPropertyRelative("m_Settings");
+            if (settings == null || !settings.isArray)
+            {
+                Debug.LogWarning($"[BuildVersionConfirmWindow] Cannot set '{key}' - profile '{profile.name}' has no m_Settings array.");
+                return;
+            }
+
+            string searchPrefix = "|   " + key + ":";
+            for (int i = 0; i < settings.arraySize; i++)
+            {
+                SerializedProperty lineProperty = settings.GetArrayElementAtIndex(i);
+                SerializedProperty lineText = lineProperty?.FindPropertyRelative("line");
+                if (lineText == null || string.IsNullOrEmpty(lineText.stringValue))
+                    continue;
+
+                if (lineText.stringValue.StartsWith(searchPrefix, StringComparison.Ordinal))
+                {
+                    lineText.stringValue = searchPrefix + " " + value;
+                    serializedProfile.ApplyModifiedProperties();
+                    return;
+                }
+            }
+
+            settings.InsertArrayElementAtIndex(settings.arraySize);
+            SerializedProperty newLineProperty = settings.GetArrayElementAtIndex(settings.arraySize - 1);
+            SerializedProperty newLineText = newLineProperty?.FindPropertyRelative("line");
+            if (newLineText != null)
+            {
+                newLineText.stringValue = searchPrefix + " " + value;
+                serializedProfile.ApplyModifiedProperties();
+            }
+        }
+
+        private static void RemoveProfileYamlSetting(BuildProfile profile, string key)
+        {
+            var serializedProfile = new SerializedObject(profile);
+            SerializedProperty playerSettingsYaml = serializedProfile.FindProperty("m_PlayerSettingsYaml");
+            SerializedProperty settings = playerSettingsYaml?.FindPropertyRelative("m_Settings");
+            if (settings == null || !settings.isArray)
+                return;
+
+            string searchPrefix = "|   " + key + ":";
+            for (int i = settings.arraySize - 1; i >= 0; i--)
+            {
+                SerializedProperty lineProperty = settings.GetArrayElementAtIndex(i);
+                SerializedProperty lineText = lineProperty?.FindPropertyRelative("line");
+                if (lineText != null && lineText.stringValue.StartsWith(searchPrefix, StringComparison.Ordinal))
+                {
+                    settings.DeleteArrayElementAtIndex(i);
+                }
+            }
+
+            serializedProfile.ApplyModifiedProperties();
+        }
+
+        private static string ToProfileYamlString(string value)
+        {
+            return "'" + (value ?? string.Empty).Replace("'", "''") + "'";
+        }
+
+        private static string FromProfileYamlString(string value)
+        {
+            if (value.Length >= 2 && value[0] == '\'' && value[value.Length - 1] == '\'')
+            {
+                return value.Substring(1, value.Length - 2).Replace("''", "'");
+            }
+
+            return value;
         }
 
         private void SaveProfilePasswords(string profileGuid)
@@ -536,7 +746,7 @@ namespace BumiMobile.Build
             return PasswordPreferencePrefix + profileGuid + suffix;
         }
 
-        private void BeginProfileSwitch(ProfileEntry profile)
+        private void BeginProfileSwitch(ProfileEntry profile, bool buildAfterSwitch)
         {
             if (profile == null)
                 return;
@@ -545,6 +755,8 @@ namespace BumiMobile.Build
             SessionState.SetString(SessionProfileGuidKey, profile.Guid);
             SessionState.SetBool(SessionPendingWindowKey, true);
             SessionState.SetBool(SessionWaitingForReloadKey, true);
+            SessionState.SetBool(SessionBuildAfterSwitchKey, buildAfterSwitch);
+            SessionState.SetInt(SessionSwitchAttemptKey, 1);
             SessionState.SetString(
                 SessionSwitchStartedKey,
                 EditorApplication.timeSinceStartup.ToString(CultureInfo.InvariantCulture));
@@ -582,6 +794,18 @@ namespace BumiMobile.Build
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
                 return;
 
+            int attempt = SessionState.GetInt(SessionSwitchAttemptKey, 0);
+            if (attempt >= MaxProfileSwitchAttempts)
+            {
+                ClearPendingWindowState();
+                EditorUtility.DisplayDialog(
+                    "Build Profile Switch Failed",
+                    "The Build Profile could not be activated after multiple attempts. " +
+                    "Please activate it manually in Unity Build Profiles and try again.",
+                    "OK");
+                return;
+            }
+
             if (SessionState.GetBool(SessionWaitingForReloadKey, false))
             {
                 string startedValue = SessionState.GetString(SessionSwitchStartedKey, string.Empty);
@@ -605,6 +829,7 @@ namespace BumiMobile.Build
             if (requestedProfile != null && GetProfileGuid(BuildProfile.GetActiveBuildProfile()) != profileGuid)
             {
                 SessionState.SetBool(SessionWaitingForReloadKey, true);
+                SessionState.SetInt(SessionSwitchAttemptKey, attempt + 1);
                 SessionState.SetString(
                     SessionSwitchStartedKey,
                     EditorApplication.timeSinceStartup.ToString(CultureInfo.InvariantCulture));
@@ -624,8 +849,54 @@ namespace BumiMobile.Build
             }
 
             BuildPlayerOptions options = LoadBuildRequest();
+            bool buildAfterSwitch = SessionState.GetBool(SessionBuildAfterSwitchKey, false);
             ClearPendingWindowState();
+
+            if (buildAfterSwitch)
+            {
+                ResumeBuildAfterProfileSwitch(options, requestedProfile, profileGuid);
+                return;
+            }
+
             OpenWindow(options, profileGuid);
+        }
+
+        private static void ResumeBuildAfterProfileSwitch(
+            BuildPlayerOptions options,
+            BuildProfile profile,
+            string profileGuid)
+        {
+            if (profile == null)
+            {
+                ClearBuildRequestSession();
+                EditorUtility.DisplayDialog(
+                    "Build Profile Missing",
+                    "The selected Build Profile could not be loaded after switching platforms.",
+                    "OK");
+                return;
+            }
+
+            bool profileBuildAppBundle = TryGetSerializedBuildAppBundleSetting(profile, out bool buildAppBundle)
+                ? buildAppBundle
+                : EditorUserBuildSettings.buildAppBundle;
+
+            var profileBuildOptions = new BuildPlayerWithProfileOptions
+            {
+                buildProfile = profile,
+                locationPathName = NormalizeAndroidBuildPath(options.locationPathName, profileBuildAppBundle),
+                assetBundleManifestPath = options.assetBundleManifestPath,
+                options = options.options & BuildRequestOptionMask
+            };
+
+            string buildKeystorePassword = EditorPrefs.GetString(
+                GetPasswordPreferenceKey(profileGuid, KeystorePasswordSuffix),
+                string.Empty);
+            string buildKeyAliasPassword = EditorPrefs.GetString(
+                GetPasswordPreferenceKey(profileGuid, KeyAliasPasswordSuffix),
+                string.Empty);
+
+            ClearBuildRequestSession();
+            ScheduleBuild(profileBuildOptions, buildKeystorePassword, buildKeyAliasPassword);
         }
 
         private static void SaveBuildRequest(BuildPlayerOptions options)
@@ -649,8 +920,10 @@ namespace BumiMobile.Build
         {
             SessionState.SetBool(SessionPendingWindowKey, false);
             SessionState.SetBool(SessionWaitingForReloadKey, false);
+            SessionState.SetBool(SessionBuildAfterSwitchKey, false);
             SessionState.EraseString(SessionSwitchStartedKey);
             SessionState.EraseString(SessionProfileGuidKey);
+            SessionState.EraseInt(SessionSwitchAttemptKey);
         }
 
         private static void ClearBuildRequestSession()

@@ -14,9 +14,32 @@ Editor-only Android build tooling for Unity 6 projects.
 2. Create the required Android profiles, such as Development and Production.
 3. Configure **Development Build** and **Build App Bundle** on each profile.
 4. Enable **Customize Player Settings** on each profile.
-5. Configure the initial app version, bundle version code, and Android publishing settings.
+5. Configure the initial app version and bundle version code on each profile.
+6. Configure Android publishing settings on each profile.
 
-The selected Build Profile is the source of truth for build type, APK/AAB format, Player Settings, and scripting defines.
+The selected Build Profile is the source of truth for build type, APK/AAB format, app version, bundle version code, Android signing settings, Player Settings, and scripting defines.
+
+## Example Build Profiles
+
+A typical Android project should keep separate profiles for development and release builds:
+
+| Profile | Development Build | Package | Version example | Bundle code example | Signing |
+| --- | --- | --- | --- | --- | --- |
+| `Development - Cheat` | Enabled | APK | `1.7.00-dev` | `24` | Debug or development keystore |
+| `Internal Test` | Disabled | AAB | `1.7.00-rc1` | `24` | Upload keystore |
+| `Production` | Disabled | AAB | `1.7.00` | `24` | Upload keystore |
+
+Each profile stores its own editable values in the Build Profile asset:
+
+```yaml
+bundleVersion: 1.7.00
+AndroidBundleVersionCode: 24
+androidUseCustomKeystore: 1
+AndroidKeystoreName: '{inproject}: Keystore/upload.keystore'
+AndroidKeyaliasName: upload
+```
+
+Changing `Production` in the confirmation window updates only `Production.asset`; it should not overwrite the version or signing fields in `Development - Cheat.asset` or `Internal Test.asset`.
 
 ## Confirmation Window
 
@@ -25,14 +48,14 @@ Android builds started from Unity's Build Profiles or Build Player UI show `Conf
 The window provides:
 
 - Selection from all Android Build Profiles in the project.
-- Read-only Development/Production, APK/AAB, and cheat status derived from the active profile.
+- Read-only Development/Production, APK/AAB, and cheat status derived from the selected profile.
 - App version and Android bundle version code editing.
 - Custom keystore path, alias, and password editing.
 - Validation for version code and custom keystore credentials.
 
-Switching profiles activates the selected profile and reopens the window after Unity finishes any required domain reload. Unsaved edits must be discarded before switching.
+Switching profiles in the window loads that profile's settings without immediately activating it. If Unity must switch the active target to Android before building, the build resumes automatically after the switch completes.
 
-Keystore passwords are stored per profile in the current developer's `EditorPrefs`. Version and publishing settings are saved to the selected Build Profile asset.
+Version, Android bundle version code, keystore enablement, keystore path, and key alias are saved to the selected Build Profile asset. Keystore passwords are stored per profile in the current developer's `EditorPrefs`, applied only during the scheduled build, and cleared afterward.
 
 Development profiles use Unity's built-in `DEVELOPMENT_BUILD` scripting define. Projects can use it directly:
 
