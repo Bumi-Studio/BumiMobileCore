@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.core",
   "displayName": "Bumi Mobile Core",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "unity": "2021.3",
   "description": "Core runtime and initialization utilities for Bumi Mobile modular stack.",
   "keywords": [
@@ -12,6 +12,7 @@
   "category": "Framework",
   "dependencies": {
     "com.unity.textmeshpro": "3.0.9",
-    "com.unity.inputsystem": "1.7.0"
+    "com.unity.inputsystem": "1.7.0",
+    "com.bumimobile.build": "0.2.2"
   }
 }

@@ -24,6 +24,14 @@
         "com.bumimobile.core": "0.1.3"
       }
     },
+    "com.bumimobile.build": {
+      "version": "file:com.bumimobile.build",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.bumimobile.core": "0.1.5"
+      }
+    },
     "com.bumimobile.core": {
       "version": "file:com.bumimobile.core",
       "depth": 0,

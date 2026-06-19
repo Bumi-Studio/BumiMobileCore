@@ -478,6 +478,7 @@ namespace BumiMobile
                         PostInstallDependency.LocalEmbedded("com.google.play.games", "Google Play Games", "Packages/com.google.play.games")
                     }),
                     new PackageDefinition("com.bumimobile.audio", "Audio", "Audio systems, mixers, and helpers.", "Packages/com.bumimobile.audio", defaultVersion, false, CoreDependency()),
+                    new PackageDefinition("com.bumimobile.build", "Build", "Android Build Profile confirmation, versioning, and signing tools.", "Packages/com.bumimobile.build", defaultVersion, false, CoreDependency()),
                     new PackageDefinition("com.bumimobile.currency", "Currency", "Currency definitions and handlers.", "Packages/com.bumimobile.currency", defaultVersion, false, CoreDependency()),
                     new PackageDefinition("com.bumimobile.defines", "Defines", "Shared scripting defines and configuration presets.", "Packages/com.bumimobile.defines", defaultVersion, false, CoreDependency()),
                     new PackageDefinition("com.bumimobile.eventcalendar", "Event Calendar", "Local-only seasonal scheduling, sprite swap runtime, and editor authoring tools.", "Packages/com.bumimobile.eventcalendar", defaultVersion, false, CoreDependency()),
