@@ -13,6 +13,6 @@
   ],
   "category": "Framework",
   "dependencies": {
-    "com.bumimobile.core": "0.1.4"
+    "com.bumimobile.core": "0.1.5"
   }
 }
