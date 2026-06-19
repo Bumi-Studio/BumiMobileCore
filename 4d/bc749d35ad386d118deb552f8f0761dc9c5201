@@ -1,0 +1,26 @@
+Packages/com.bumimobile.core/package.json
+  s_546fceb90fa429::t_f54323ca89f8fc 4
+  s_546fceb90fa429::t_79954955f02682 15-16
+Packages/com.bumimobile.core/CHANGELOG.md
+  s_546fceb90fa429::t_2c4af87a675334 11-12,15,19
+Packages/com.bumimobile.build/package.json
+  s_546fceb90fa429::t_2d4c6a21383330 16
+Packages/packages-lock.json
+  s_546fceb90fa429::t_a252412eb35d87 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "4dbc749d35ad386d118deb552f8f0761dc9c5201",
+  "prompts": {},
+  "sessions": {
+    "s_546fceb90fa429": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_121423243ffe0n8uS5wWocIH3h",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
