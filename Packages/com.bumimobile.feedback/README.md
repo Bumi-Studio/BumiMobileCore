@@ -1,5 +1,7 @@
 # Bumi Mobile Feedback
 
+![Version](https://img.shields.io/badge/version-0.1.1-blue)
+
 In-app feedback system for Bumi Mobile projects. Users fill in their email, select an issue category, write a message, and optionally attach a screenshot from the device gallery — all submitted through an encrypted API client to a backend endpoint.
 
 ## Features
@@ -26,7 +28,10 @@ In-app feedback system for Bumi Mobile projects. Users fill in their email, sele
 ### Via Unity Package Manager
 
 1. Open **Window ▸ Package Manager**.
-2. Click **+ ▸ Add package from git URL…** and enter the package repository URL.
+2. Click **+ ▸ Add package from git URL…** and enter:
+   ```
+   https://github.com/Bumi-Studio/BumiMobileCore.git?path=/Packages/com.bumimobile.feedback#0.1.1-feedback
+   ```
 3. Unity resolves dependencies (`core`, `gallery`, `Newtonsoft.Json`) automatically.
 
 ### Via `manifest.json`
@@ -34,7 +39,7 @@ In-app feedback system for Bumi Mobile projects. Users fill in their email, sele
 Add the following under `"dependencies"` in your project's `Packages/manifest.json`:
 
 ```json
-"com.bumimobile.feedback": "https://github.com/Bumi-Studio/BumiMobileCore.git?path=/Packages/com.bumimobile.feedback"
+"com.bumimobile.feedback": "https://github.com/Bumi-Studio/BumiMobileCore.git?path=/Packages/com.bumimobile.feedback#0.1.1-feedback"
 ```
 
 ## Setup

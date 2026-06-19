@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.feedback",
   "displayName": "Bumi Mobile Feedback",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2021.3",
   "description": "In-app feedback form with screenshot attachment, encrypted API key storage, and async HTTP client for Bumi Mobile projects.",
   "keywords": [
