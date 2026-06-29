@@ -6,7 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-- (Add unreleased changes here)
+## [0.1.4] - 2026-06-29
+
+### Added
+
+- Added `saveSlotIndex` field to `SaveInitModule` and `SaveController` to support multiple save slots. When set to `1` or higher, the save file is named `save_1`, `save_2`, etc., allowing separate save files per reset or per device.
 
 ## [0.1.3] - 2026-04-29
 
