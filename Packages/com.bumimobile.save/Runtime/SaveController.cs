@@ -15,7 +15,7 @@ namespace BumiMobile
             OnSaveLoaded?.Invoke();         // backward-compat (dipanggil saat Local & Cloud)
             OnSavePhase?.Invoke(phase);     // fase spesifik
         }
-        private const string SAVE_FILE_NAME = "save";
+        private static string saveFileName = "save";
 
         private static GlobalSave globalSave;
         public static GlobalSave GlobalSave { get => globalSave; set => globalSave = value; }
@@ -31,8 +31,9 @@ namespace BumiMobile
 
         public static event SimpleCallback OnSaveLoaded;
 
-        public static void Init(float autoSaveDelay, GlobalSave initialGlobalSave, bool clearSave = false, float overrideTime = -1f)
+        public static void Init(float autoSaveDelay, GlobalSave initialGlobalSave, bool clearSave = false, float overrideTime = -1f, int saveSlotIndex = 0)
         {
+            saveFileName = saveSlotIndex > 0 ? $"save_{saveSlotIndex}" : "save";
             GlobalSave = initialGlobalSave ?? new GlobalSave();
             Serializer.Init();
 
@@ -96,7 +97,7 @@ namespace BumiMobile
                 return;
 
             // Try to read and deserialize file or create new one
-            globalSave = BaseSaveWrapper.ActiveWrapper.Load(SAVE_FILE_NAME);
+            globalSave = BaseSaveWrapper.ActiveWrapper.Load(saveFileName);
 
             globalSave.Init(time);
 
@@ -117,12 +118,12 @@ namespace BumiMobile
             BaseSaveWrapper saveWrapper = BaseSaveWrapper.ActiveWrapper;
             if (useThreads && saveWrapper.UseThreads())
             {
-                Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.Save(globalSave, SAVE_FILE_NAME));
+                Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName));
                 saveThread.Start();
             }
             else
             {
-                BaseSaveWrapper.ActiveWrapper.Save(globalSave, SAVE_FILE_NAME);
+                BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName);
             }
 
             Debug.Log("[Save Controller]: Game is saved!");
@@ -136,7 +137,7 @@ namespace BumiMobile
             {
                 globalSave.Flush(false);
 
-                BaseSaveWrapper.ActiveWrapper.Save(globalSave, SAVE_FILE_NAME);
+                BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName);
             }
         }
 
@@ -171,12 +172,12 @@ namespace BumiMobile
 
         public static void DeleteSaveFile()
         {
-            BaseSaveWrapper.ActiveWrapper.Delete(SAVE_FILE_NAME);
+            BaseSaveWrapper.ActiveWrapper.Delete(saveFileName);
         }
 
         public static GlobalSave GetGlobalSave()
         {
-            GlobalSave tempGlobalSave = BaseSaveWrapper.ActiveWrapper.Load(SAVE_FILE_NAME);
+            GlobalSave tempGlobalSave = BaseSaveWrapper.ActiveWrapper.Load(saveFileName);
 
             tempGlobalSave.Init(Time.time);
 

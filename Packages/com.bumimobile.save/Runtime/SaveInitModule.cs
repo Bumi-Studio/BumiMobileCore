@@ -14,17 +14,18 @@ namespace BumiMobile
         [SerializeField] bool cleanSaveStart = false;
         [SerializeField] bool devCloudSave = false;
         [SerializeField] float cloudTimeout = 6f;
+        [SerializeField] int saveSlotIndex = 0;
         public override bool IsAsync => true;
 
         public override void CreateComponent()
         {
             ApplyCloudSaveEnvironment();
-            SaveController.Init(autoSaveDelay, new GlobalSave(), clearSave);
+            SaveController.Init(autoSaveDelay, new GlobalSave(), clearSave, saveSlotIndex: saveSlotIndex);
         }
         public override IEnumerator InitializeCoroutine(Initializer initializer)
         {
             ApplyCloudSaveEnvironment();
-            SaveController.Init(autoSaveDelay, new GlobalSave(), clearSave);
+            SaveController.Init(autoSaveDelay, new GlobalSave(), clearSave, saveSlotIndex: saveSlotIndex);
 
             if (PlayerPrefs.GetInt(SKIP_CLOUD_KEY, 0) == 1)
             {
