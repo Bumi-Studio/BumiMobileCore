@@ -4,6 +4,28 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-07-01
+
+### Changed
+
+- **Sign-out leaves the app signed out**: `SignOutAsync` no longer creates a fresh anonymous account after sign-out. `OnFirebaseAuthChanged` now fires only once (with `null`) instead of twice. This reverses the 0.2.2 behavior where the app always had a Firebase user. Code that relied on `User != null` after sign-out must now check `IsSignedIn`.
+- **Sign-in respects explicit sign-out**: `SignInAsync` skips automatic anonymous sign-in when the player has explicitly signed out, preventing unwanted re-authentication on cold start.
+- `AuthService.Initialize` is now idempotent when called with the same WebClientId, avoiding redundant Google Sign-In reconfiguration.
+
+### Added
+
+- `DEFAULT_GOOGLE_WEB_CLIENT_ID` constant on `AuthService` — the default OAuth Web Client ID provided by the framework.
+- `IsExplicitlySignedOut` static property on `AuthService` for checking the sign-out flag.
+- `EnsureGoogleConfigured()` method caches the `GoogleSignInConfiguration` per WebClientId, reducing allocations and configuration errors.
+- `AuthenticatedInitModule.googleWebClientId` — serialized Inspector field for configuring the Google Web Client ID, defaulting to `DEFAULT_GOOGLE_WEB_CLIENT_ID`.
+- `AuthenticatedInitModule.ConfigureAuthService()` — initializes `AuthService` before sign-in begins.
+- Firebase-stub `SignOutAsync` now records the explicit sign-out flag locally instead of logging a warning.
+
+### Fixed
+
+- Google Sign-In configuration no longer throws when called before dependencies are ready; `EnsureGoogleConfigured` returns `false` gracefully.
+- `SignOutAsync` Firebase sign-out now guarded with `EnsureGoogleConfigured()` to avoid errors when Google Sign-In package is not present.
+
 ## [0.2.2] - 2026-05-29
 
 ### Changed
