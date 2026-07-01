@@ -44,9 +44,14 @@ namespace BumiMobile
 
         public override bool SupportsCloud => true;
 
-        // Public-ish internal: ensure everything ready (dependencies + anon auth)
+        // Public-ish internal: ensure everything ready (dependencies + auth state)
         async Task EnsureInitializedAsync()
         {
+            if (AuthService.IsExplicitlySignedOut && !_available)
+            {
+                return;
+            }
+
             if (_available) return;
             if (_initStarted)
             {
@@ -103,11 +108,47 @@ namespace BumiMobile
                     return;
                 }
 
+                if (AuthService.IsExplicitlySignedOut)
+                {
+                    try
+                    {
+                        _auth.SignOut();
+                    }
+                    catch (Exception e)
+                    {
+                        UnityEngine.Debug.LogWarning("[SaveCloud] Explicit sign-out cleanup failed: " + e.Message);
+                    }
+
+                    _available = false;
+                    _initStarted = false;
+                    _initTask = null;
+                    UnityEngine.Debug.Log("[SaveCloud] Explicit sign-out active. Skipping anonymous sign-in.");
+                    return;
+                }
+
                 if (_auth.CurrentUser == null)
                 {
+                    if (AuthService.IsExplicitlySignedOut)
+                    {
+                        _available = false;
+                        _initStarted = false;
+                        _initTask = null;
+                        UnityEngine.Debug.Log("[SaveCloud] Explicit sign-out active. Anonymous sign-in skipped.");
+                        return;
+                    }
+
                     UnityEngine.Debug.Log("[SaveCloud] No user. Trying anonymous sign-in...");
                     try
                     {
+                        if (AuthService.IsExplicitlySignedOut)
+                        {
+                            _available = false;
+                            _initStarted = false;
+                            _initTask = null;
+                            UnityEngine.Debug.Log("[SaveCloud] Explicit sign-out active. Anonymous sign-in skipped.");
+                            return;
+                        }
+
                         await _auth.SignInAnonymouslyAsync();
                         if (_auth.CurrentUser != null)
                             UnityEngine.Debug.Log("[SaveCloud] Anonymous sign-in success (uid=" + _auth.CurrentUser.UserId + ")");
@@ -162,6 +203,11 @@ namespace BumiMobile
         {
             _local.Save(globalSave, fileName);
             QueueUpload(globalSave);
+        }
+
+        public override void SaveLocal(GlobalSave globalSave, string fileName)
+        {
+            _local.Save(globalSave, fileName);
         }
 
         public override void Delete(string fileName)
@@ -235,6 +281,23 @@ namespace BumiMobile
             QueueUpload(globalSave);
         }
 
+        public override void SaveCloudNow(GlobalSave globalSave)
+        {
+            _ = SaveCloudNowAsync(globalSave);
+        }
+
+        public override async Task<bool> SaveCloudNowAsync(GlobalSave globalSave)
+        {
+            if (globalSave == null)
+            {
+                return false;
+            }
+
+            _queuedSave = globalSave;
+            _pendingUpload = false;
+            return await PerformUploadAsync(globalSave);
+        }
+
         void QueueUpload(GlobalSave save)
         {
             _queuedSave = save;
@@ -259,42 +322,54 @@ namespace BumiMobile
                     }
                     _pendingUpload = false;
                     var toSend = _queuedSave;
-                    await EnsureInitializedAsync();
-                    if (!_available || toSend == null) continue;
-                    var user = _auth?.CurrentUser;
-                    if (user == null)
-                    {
-                        UnityEngine.Debug.LogWarning("[SaveCloud] Upload skipped, no user.");
-                        continue;
-                    }
-                    var uid = GetUserId(user);
-                    try
-                    {
-                        var docRef = GetDoc(user);
-
-                        // One player save document only, to keep Firestore write usage low.
-                        string aggregatedJson = Serialize(toSend);
-                        aggregatedJson = EncryptForUser(aggregatedJson, uid, logMissingUid: true);
-
-                        var root = new Dictionary<string, object>
-                        {
-                            {"json", aggregatedJson},
-                            {"updatedAt", Timestamp.GetCurrentTimestamp()},
-                            {"version", 1},
-                            {"clientTime", DateTime.UtcNow.ToString("o")}
-                        };
-                        await docRef.SetAsync(root, SetOptions.MergeAll);
-                        UnityEngine.Debug.Log("[SaveCloud] Upload success.");
-                    }
-                    catch (Exception e)
-                    {
-                        UnityEngine.Debug.LogWarning("[SaveCloud] Upload failed: " + e.Message);
-                    }
+                    await PerformUploadAsync(toSend);
                 }
             }
             finally
             {
                 _uploadLoopRunning = false;
+            }
+        }
+
+        async Task<bool> PerformUploadAsync(GlobalSave toSend)
+        {
+            await EnsureInitializedAsync();
+            if (!_available || toSend == null)
+            {
+                return false;
+            }
+
+            var user = _auth?.CurrentUser;
+            if (user == null)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Upload skipped, no user.");
+                return false;
+            }
+
+            var uid = GetUserId(user);
+            try
+            {
+                var docRef = GetDoc(user);
+
+                // One player save document only, to keep Firestore write usage low.
+                string aggregatedJson = Serialize(toSend);
+                aggregatedJson = EncryptForUser(aggregatedJson, uid, logMissingUid: true);
+
+                var root = new Dictionary<string, object>
+                {
+                    {"json", aggregatedJson},
+                    {"updatedAt", Timestamp.GetCurrentTimestamp()},
+                    {"version", 1},
+                    {"clientTime", DateTime.UtcNow.ToString("o")}
+                };
+                await docRef.SetAsync(root, SetOptions.MergeAll);
+                UnityEngine.Debug.Log("[SaveCloud] Upload success.");
+                return true;
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Upload failed: " + e.Message);
+                return false;
             }
         }
 

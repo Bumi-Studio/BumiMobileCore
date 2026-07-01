@@ -1,5 +1,7 @@
 ﻿using System;
 
+using System.Threading.Tasks;
+
 namespace BumiMobile
 {
     public abstract class BaseSaveWrapper
@@ -24,6 +26,12 @@ namespace BumiMobile
         public abstract void Delete(string fileName);
 
         public virtual bool UseThreads() { return false; }
+
+        public virtual void SaveLocal(GlobalSave globalSave, string fileName)
+        {
+            Save(globalSave, fileName);
+        }
+
         public virtual void BeginCloudLoad(Action<GlobalSave> onLoaded)
         {
             onLoaded?.Invoke(null);
@@ -32,6 +40,17 @@ namespace BumiMobile
         public virtual void SaveCloud(GlobalSave globalSave)
         {
             /* no-op */
+        }
+
+        public virtual void SaveCloudNow(GlobalSave globalSave)
+        {
+            SaveCloud(globalSave);
+        }
+
+        public virtual Task<bool> SaveCloudNowAsync(GlobalSave globalSave)
+        {
+            SaveCloudNow(globalSave);
+            return Task.FromResult(true);
         }
     }
 }

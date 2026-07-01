@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BumiMobile
 {
@@ -108,27 +109,53 @@ namespace BumiMobile
             OnSaveLoaded?.Invoke();
         }
 
-        public static void Save(bool forceSave = false, bool useThreads = true)
+        public static void Save(bool forceSave = false, bool useThreads = true, bool saveCloudImmediately = false, bool saveCloud = true)
         {
             if (!forceSave && !isSaveRequired) return;
             if (globalSave == null) return;
 
             globalSave.Flush(true);
+            if (saveCloudImmediately)
+            {
+                useThreads = false;
+            }
 
             BaseSaveWrapper saveWrapper = BaseSaveWrapper.ActiveWrapper;
             if (useThreads && saveWrapper.UseThreads())
             {
-                Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName));
+                Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.SaveLocal(globalSave, saveFileName));
                 saveThread.Start();
             }
             else
             {
-                BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName);
+                BaseSaveWrapper.ActiveWrapper.SaveLocal(globalSave, saveFileName);
+            }
+
+            if (saveCloud)
+            {
+                if (saveCloudImmediately)
+                {
+                    BaseSaveWrapper.ActiveWrapper.SaveCloudNow(globalSave);
+                }
+                else
+                {
+                    BaseSaveWrapper.ActiveWrapper.SaveCloud(globalSave);
+                }
             }
 
             Debug.Log("[Save Controller]: Game is saved!");
 
             isSaveRequired = false;
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public static async Task<bool> SaveAndWaitForCloudAsync(bool forceSave = false)
+        {
+            if (!forceSave && !isSaveRequired) return true;
+            if (globalSave == null) return false;
+
+            Save(forceSave, useThreads: false, saveCloud: false);
+            return await BaseSaveWrapper.ActiveWrapper.SaveCloudNowAsync(globalSave);
         }
 
         public static void SaveCustom(GlobalSave globalSave)
@@ -201,6 +228,7 @@ namespace BumiMobile
                 return;
             }
 
+            GlobalSave localSave = globalSave;
             BaseSaveWrapper.Active.BeginCloudLoad(cloud =>
             {
                 if (cloud == null)
@@ -210,12 +238,53 @@ namespace BumiMobile
                 }
 
                 cloud.Init(Time.time);
-                globalSave = cloud;
-                isSaveLoaded = true;
 
-                Debug.Log("[Save Controller] Cloud applied.");
-                InvokePhase(SaveLoadPhase.CloudApplied);
+                if (ShouldUseCloudSave(localSave, cloud))
+                {
+                    globalSave = cloud;
+                    isSaveLoaded = true;
+
+                    Debug.Log("[Save Controller] Cloud applied.");
+                    InvokePhase(SaveLoadPhase.CloudApplied);
+                    return;
+                }
+
+                if (localSave != null)
+                {
+                    Debug.Log("[Save Controller] Local save is newer than cloud. Keeping local data and syncing it up.");
+                    BaseSaveWrapper.ActiveWrapper.SaveCloudNow(localSave);
+                }
+
+                OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
             });
+        }
+
+        private static bool ShouldUseCloudSave(GlobalSave localSave, GlobalSave cloudSave)
+        {
+            if (cloudSave == null)
+            {
+                return false;
+            }
+
+            if (localSave == null)
+            {
+                return true;
+            }
+
+            DateTime localExitTime = localSave.LastExitTime;
+            DateTime cloudExitTime = cloudSave.LastExitTime;
+
+            if (cloudExitTime == DateTime.MinValue)
+            {
+                return false;
+            }
+
+            if (localExitTime == DateTime.MinValue)
+            {
+                return true;
+            }
+
+            return cloudExitTime > localExitTime;
         }
 
         private class UnityCallbackReciever : MonoBehaviour
