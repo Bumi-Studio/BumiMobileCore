@@ -26,6 +26,9 @@ namespace BumiMobile
         [SerializeField] private float timeoutSeconds = 25f;
         [SerializeField] private CountryFlagDatabase countryFlags;
 
+        [Header("Google Sign-In")]
+        [SerializeField] private string googleWebClientId = AuthService.DEFAULT_GOOGLE_WEB_CLIENT_ID;
+
         public static bool IsAuthenticated { get; private set; }
 
         private bool initializationStarted;
@@ -77,6 +80,8 @@ namespace BumiMobile
             try
             {
                 Debug.Log("[Auth] Init start");
+
+                ConfigureAuthService();
 
                 var countryInitTask = InitializeCountryAsync();
 
@@ -139,6 +144,16 @@ namespace BumiMobile
                 initializationCompleted = true;
                 initializationCompletionSource?.TrySetResult();
             }
+        }
+
+        private void ConfigureAuthService()
+        {
+            if (string.IsNullOrEmpty(googleWebClientId))
+            {
+                return;
+            }
+
+            AuthService.Initialize(googleWebClientId);
         }
 
 

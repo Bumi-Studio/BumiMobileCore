@@ -20,6 +20,8 @@ namespace BumiMobile
     {
         private const string PREF_PLAYER_ID = "__auth_player_id__";
         private const string PREF_USER_EXPLICITLY_SIGNED_OUT = "__auth_explicitly_signed_out__";
+        public const string DEFAULT_GOOGLE_WEB_CLIENT_ID =
+            "1098096377753-1u3n2oias158bhpg2jpficvh7dt42b5h.apps.googleusercontent.com";
 
         public static string PlayerId { get; private set; } = string.Empty;
 
@@ -36,6 +38,9 @@ namespace BumiMobile
         /// </summary>
         public static string WebClientId { get; private set; }
 
+        public static bool IsExplicitlySignedOut =>
+            PlayerPrefs.GetInt(PREF_USER_EXPLICITLY_SIGNED_OUT, 0) == 1;
+
         static bool _busy;
 
         /// <summary>
@@ -49,6 +54,11 @@ namespace BumiMobile
         /// </param>
         public static void Initialize(string webClientId)
         {
+            if (string.Equals(WebClientId, webClientId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
             WebClientId = webClientId;
             _busy = false;
         }
@@ -57,8 +67,7 @@ namespace BumiMobile
 
         /// <summary>
         /// Fires when the Firebase user changes (sign-in, sign-out, anonymous creation).
-        /// After <see cref="SignOutAsync"/>, subscribers receive <c>null</c> followed by
-        /// the new anonymous <see cref="FirebaseUser"/>.
+        /// After <see cref="SignOutAsync"/>, subscribers receive <c>null</c>.
         /// </summary>
         public static event Action<Firebase.Auth.FirebaseUser> OnFirebaseAuthChanged;
 
@@ -85,7 +94,7 @@ namespace BumiMobile
         /// Auto sign-in on app start.
         /// 1. Try silent Google Sign-In → link/upgrade Firebase (skipped if user explicitly signed out).
         /// 2. Fall back to Firebase persisted session.
-        /// 3. If no session, create anonymous account.
+        /// 3. If no session and the player has not explicitly signed out, create anonymous account.
         /// Returns true when a non-anonymous (Google-linked) Firebase user is signed in.
         /// </summary>
         public static async UniTask<bool> SignInAsync()
@@ -123,14 +132,8 @@ namespace BumiMobile
         }
 
         /// <summary>
-        /// Sign out of Google + Firebase, clear state, then immediately
-        /// create a fresh anonymous account so the app always has a Firebase user.
-        ///
-        /// NOTE: After this call, <see cref="User"/> is NOT null — it is a new
-        /// anonymous <see cref="FirebaseUser"/>. <see cref="OnFirebaseAuthChanged"/>
-        /// fires twice: first with <c>null</c> (sign-out), then with the new
-        /// anonymous user (re-auth). Code that previously checked <c>User == null</c>
-        /// after sign-out should use <see cref="IsSignedIn"/> instead.
+        /// Sign out of Google + Firebase, clear state, and leave the app signed
+        /// out until the player signs in again.
         ///
         /// Sets a PlayerPrefs flag so the NEXT cold start skips silent Google
         /// Sign-In — the user has explicitly chosen to sign out.
@@ -142,7 +145,7 @@ namespace BumiMobile
                 await SignOutAllAsync();
                 PlayerPrefs.SetInt(PREF_USER_EXPLICITLY_SIGNED_OUT, 1);
                 PlayerPrefs.Save();
-                return await CreateAnonymousAsync();
+                return true;
             }
             catch (Exception e)
             {
@@ -154,9 +157,9 @@ namespace BumiMobile
         public static string GetUserLabel()
         {
             if (!string.IsNullOrEmpty(User?.DisplayName)) return User.DisplayName;
-            if (!string.IsNullOrEmpty(User?.Email))       return User.Email;
-            if (!string.IsNullOrEmpty(PlayerId))          return $"Player {PlayerId}";
-            if (!string.IsNullOrEmpty(User?.UserId))      return $"Guest {User.UserId.Substring(0, Math.Min(User.UserId.Length, 6))}";
+            if (!string.IsNullOrEmpty(User?.Email)) return User.Email;
+            if (!string.IsNullOrEmpty(PlayerId)) return $"Player {PlayerId}";
+            if (!string.IsNullOrEmpty(User?.UserId)) return $"Guest {User.UserId.Substring(0, Math.Min(User.UserId.Length, 6))}";
             return string.Empty;
         }
 
@@ -175,7 +178,7 @@ namespace BumiMobile
 
             // If the user explicitly signed out last session, skip silent
             // Google Sign-In to avoid auto-re-authenticating them.
-            bool userExplicitlySignedOut = PlayerPrefs.GetInt(PREF_USER_EXPLICITLY_SIGNED_OUT, 0) == 1;
+            bool userExplicitlySignedOut = IsExplicitlySignedOut;
 
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
             if (!userExplicitlySignedOut && !string.IsNullOrEmpty(WebClientId))
@@ -200,15 +203,29 @@ namespace BumiMobile
                 }
             }
 #else
-            // Clear stale sign-out flag even without Google Sign-In
-            if (userExplicitlySignedOut && PlayerPrefs.HasKey(PREF_USER_EXPLICITLY_SIGNED_OUT))
+            if (userExplicitlySignedOut)
             {
-                PlayerPrefs.DeleteKey(PREF_USER_EXPLICITLY_SIGNED_OUT);
-                PlayerPrefs.Save();
+                Debug.Log("[Auth] Explicit sign-out active. Skipping automatic anonymous sign-in.");
             }
 #endif
 
             var auth = FirebaseAuth.DefaultInstance;
+            if (userExplicitlySignedOut)
+            {
+                try
+                {
+                    auth?.SignOut();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[Auth] Explicit sign-out cleanup failed: " + ex.Message);
+                }
+
+                User = null;
+                OnFirebaseAuthChanged?.Invoke(null);
+                return false;
+            }
+
             if (auth.CurrentUser != null)
             {
                 User = auth.CurrentUser;
@@ -273,7 +290,10 @@ namespace BumiMobile
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
             try
             {
-                GoogleSignIn.DefaultInstance.SignOut();
+                if (EnsureGoogleConfigured())
+                {
+                    GoogleSignIn.DefaultInstance.SignOut();
+                }
             }
             catch (Exception ex)
             {
@@ -303,18 +323,59 @@ namespace BumiMobile
         private static GoogleSignInConfiguration _cachedGoogleConfig;
         private static string _cachedWebClientIdForConfig;
 
+        static bool EnsureGoogleConfigured()
+        {
+            if (string.IsNullOrEmpty(WebClientId))
+            {
+                LastAuthFailureReason = "WebClientId not configured";
+                Debug.LogWarning("[Auth] Google Sign-In skipped because WebClientId is not configured.");
+                return false;
+            }
+
+            if (_cachedGoogleConfig == null || _cachedWebClientIdForConfig != WebClientId)
+            {
+                _cachedGoogleConfig = new GoogleSignInConfiguration
+                {
+                    RequestIdToken = true,
+                    WebClientId = WebClientId,
+                    RequestEmail = true,
+                    RequestAuthCode = false,
+                    UseGameSignIn = false
+                };
+                _cachedWebClientIdForConfig = WebClientId;
+            }
+
+            try
+            {
+                GoogleSignIn.Configuration = _cachedGoogleConfig;
+                return true;
+            }
+            catch (Exception e)
+            {
+                LastAuthFailureReason = "[Auth] Google Sign-In configuration error: " + e.Message;
+                Debug.LogWarning(LastAuthFailureReason);
+                return false;
+            }
+        }
+
         static async UniTask<GoogleSignInUser> GoogleSignInAuthenticateAsync(bool interactive)
         {
+            if (!EnsureGoogleConfigured())
+            {
+                OnPlatformAuthFinished?.Invoke(false);
+                return null;
+            }
+
             // Cache configuration — only rebuild when WebClientId changes
             if (_cachedGoogleConfig == null || _cachedWebClientIdForConfig != WebClientId)
             {
                 _cachedGoogleConfig = new GoogleSignInConfiguration
                 {
-                    RequestIdToken  = true,
-                    WebClientId     = WebClientId,
-                    RequestEmail    = true,
+                    RequestIdToken = true,
+                    WebClientId = WebClientId,
+                    RequestEmail = true,
                     RequestAuthCode = false,
-                    UseGameSignIn   = false
+                    UseGameSignIn = false
                 };
                 _cachedWebClientIdForConfig = WebClientId;
             }
@@ -524,11 +585,15 @@ namespace BumiMobile
 {
     public static class AuthService
     {
+        public const string DEFAULT_GOOGLE_WEB_CLIENT_ID =
+            "1098096377753-1u3n2oias158bhpg2jpficvh7dt42b5h.apps.googleusercontent.com";
+
         public static string PlayerId { get; private set; } = string.Empty;
         public static FirebaseUser User => null;
         public static bool IsFirebaseAnonymous => true;
         public static bool IsAuthenticated => false;
         public static bool IsSignedIn => false;
+        public static bool IsExplicitlySignedOut => PlayerPrefs.GetInt("__auth_explicitly_signed_out__", 0) == 1;
         public static string LastAuthFailureReason { get; private set; } =
             "Firebase SDK missing. Define BUMI_AUTH_HAS_FIREBASE after importing Firebase packages.";
 
@@ -563,8 +628,10 @@ namespace BumiMobile
 
         public static UniTask<bool> SignOutAsync()
         {
-            LogStubWarning();
-            return UniTask.FromResult(false);
+            PlayerPrefs.SetInt("__auth_explicitly_signed_out__", 1);
+            PlayerPrefs.Save();
+            Debug.Log("[Auth] Firebase SDK not detected. Recorded sign-out locally.");
+            return UniTask.FromResult(true);
         }
 
         public static string GetUserLabel() => string.Empty;
