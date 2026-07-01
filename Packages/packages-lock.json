@@ -38,7 +38,8 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.textmeshpro": "3.0.9",
-        "com.unity.inputsystem": "1.7.0"
+        "com.unity.inputsystem": "1.7.0",
+        "com.bumimobile.build": "0.2.2"
       }
     },
     "com.bumimobile.currency": {
