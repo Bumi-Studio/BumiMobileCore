@@ -1,0 +1,18 @@
+Packages/com.bumimobile.save/Runtime/Wrappers/BaseSaveWrapper.cs
+  h_0612cf7e255131 3-4
+Packages/com.bumimobile.save/Runtime/Wrappers/FirebaseSaveWrapper.cs
+  h_0612cf7e255131 47,50-54
+Packages/com.bumimobile.save/Runtime/SaveController.cs
+  h_0612cf7e255131 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.6",
+  "base_commit_sha": "ea4c3edad18f75703991e48f4a7a23635ca091f4",
+  "prompts": {},
+  "humans": {
+    "h_0612cf7e255131": {
+      "author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
