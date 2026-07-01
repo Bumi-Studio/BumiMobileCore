@@ -3,7 +3,8 @@
   "references": [
     "BumiMobile.Core",
     "BumiMobile.Security",
-    "BumiMobile.FullSerializer"
+    "BumiMobile.FullSerializer",
+    "BumiMobile.Auth"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
