@@ -1,0 +1,14 @@
+Packages/com.bumimobile.auth/Runtime/AuthService.cs
+  h_0612cf7e255131 24,42-43,57-61,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.6",
+  "base_commit_sha": "30b3c6b7e76bb49fe242c3d0fcae1f7709eb45b5",
+  "prompts": {},
+  "humans": {
+    "h_0612cf7e255131": {
+      "author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
