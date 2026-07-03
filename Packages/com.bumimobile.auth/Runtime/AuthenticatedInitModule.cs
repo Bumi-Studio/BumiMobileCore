@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -104,34 +105,35 @@ namespace BumiMobile
                 }
 
                 bool signInResult = false;
+                CancellationTokenSource startupAuthCts = null;
 
                 try
                 {
-                    var signInTask = AuthService.SignInAsync();
                     if (timeoutSeconds > 0f)
                     {
-                        var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(Mathf.Max(1f, timeoutSeconds)));
-                        (bool fromSignIn, bool authResult) winner = await UniTask.WhenAny(signInTask, timeoutTask);
-
-                        if (winner.fromSignIn)
-                        {
-                            signInResult = winner.authResult;
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[Auth] Sign-in taking longer than expected; waiting for auth result...");
-                            signInResult = await signInTask;
-                        }
+                        startupAuthCts = new CancellationTokenSource();
+                        startupAuthCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+                        signInResult = await AuthService.SignInAsync(startupAuthCts.Token);
                     }
                     else
                     {
-                        signInResult = await signInTask;
+                        signInResult = await AuthService.SignInAsync();
                     }
+                }
+                catch (OperationCanceledException) when (startupAuthCts != null && startupAuthCts.IsCancellationRequested)
+                {
+                    Debug.LogWarning("[Auth] Startup sign-in timed out; leaving the main menu unblocked.");
+                    AuthService.SyncFromFirebaseCurrentUser();
+                    signInResult = AuthService.IsSignedIn;
                 }
                 catch (Exception e)
                 {
                     signInResult = false;
                     Debug.LogWarning("[Auth] Sign-in encountered an exception: " + e.Message);
+                }
+                finally
+                {
+                    startupAuthCts?.Dispose();
                 }
 
                 await countryInitTask;
