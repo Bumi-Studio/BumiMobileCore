@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 
@@ -42,6 +43,8 @@ namespace BumiMobile
             PlayerPrefs.GetInt(PREF_USER_EXPLICITLY_SIGNED_OUT, 0) == 1;
 
         static bool _busy;
+        static FirebaseAuth _firebaseAuthInstance;
+        static bool _firebaseAuthStateListenerAttached;
 
         /// <summary>
         /// Initializes the auth service with required configuration.
@@ -61,6 +64,75 @@ namespace BumiMobile
 
             WebClientId = webClientId;
             _busy = false;
+        }
+
+        public static bool SyncFromFirebaseCurrentUser()
+        {
+            try
+            {
+                var auth = FirebaseAuth.DefaultInstance;
+                if (auth == null)
+                {
+                    return false;
+                }
+
+                var currentUser = auth.CurrentUser;
+                if (currentUser == null)
+                {
+                    if (User != null)
+                    {
+                        User = null;
+                        OnFirebaseAuthChanged?.Invoke(null);
+                    }
+
+                    return false;
+                }
+
+                bool userChanged = User == null ||
+                    !string.Equals(User.UserId, currentUser.UserId, StringComparison.Ordinal) ||
+                    User.IsAnonymous != currentUser.IsAnonymous;
+
+                User = currentUser;
+
+                if (userChanged)
+                {
+                    OnFirebaseAuthChanged?.Invoke(User);
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Auth] Failed to sync Firebase session: " + e.Message);
+                return false;
+            }
+        }
+
+        static void EnsureFirebaseAuthStateListener(FirebaseAuth auth)
+        {
+            if (auth == null)
+            {
+                return;
+            }
+
+            if (_firebaseAuthStateListenerAttached && ReferenceEquals(_firebaseAuthInstance, auth))
+            {
+                return;
+            }
+
+            if (_firebaseAuthStateListenerAttached && _firebaseAuthInstance != null)
+            {
+                _firebaseAuthInstance.StateChanged -= OnFirebaseAuthStateChanged;
+            }
+
+            _firebaseAuthInstance = auth;
+            _firebaseAuthInstance.StateChanged += OnFirebaseAuthStateChanged;
+            _firebaseAuthStateListenerAttached = true;
+        }
+
+        static void OnFirebaseAuthStateChanged(object sender, EventArgs e)
+        {
+            SyncFromFirebaseCurrentUser();
         }
 
         public static event Action<bool> OnPlatformAuthFinished;
@@ -97,7 +169,7 @@ namespace BumiMobile
         /// 3. If no session and the player has not explicitly signed out, create anonymous account.
         /// Returns true when a non-anonymous (Google-linked) Firebase user is signed in.
         /// </summary>
-        public static async UniTask<bool> SignInAsync()
+        public static async UniTask<bool> SignInAsync(CancellationToken cancellationToken = default)
         {
             if (_busy)
             {
@@ -107,7 +179,7 @@ namespace BumiMobile
             _busy = true;
             try
             {
-                return await SignInAutoAsync();
+                return await SignInAutoAsync(cancellationToken);
             }
             finally { _busy = false; }
         }
@@ -167,9 +239,11 @@ namespace BumiMobile
         // AUTO SIGN-IN
         // ====================================================================
 
-        static async UniTask<bool> SignInAutoAsync()
+        static async UniTask<bool> SignInAutoAsync(CancellationToken cancellationToken = default)
         {
-            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync()
+                .AsUniTask()
+                .AttachExternalCancellation(cancellationToken);
             if (dep != DependencyStatus.Available)
             {
                 Debug.LogWarning($"[Auth] Firebase deps: {dep}");
@@ -179,11 +253,13 @@ namespace BumiMobile
             // If the user explicitly signed out last session, skip silent
             // Google Sign-In to avoid auto-re-authenticating them.
             bool userExplicitlySignedOut = IsExplicitlySignedOut;
+            var auth = FirebaseAuth.DefaultInstance;
+            EnsureFirebaseAuthStateListener(auth);
 
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
             if (!userExplicitlySignedOut && !string.IsNullOrEmpty(WebClientId))
             {
-                var googleUser = await GoogleSignInAuthenticateAsync(interactive: false);
+                var googleUser = await GoogleSignInAuthenticateAsync(interactive: false, cancellationToken);
                 if (googleUser != null)
                 {
                     // Clear explicit-sign-out flag — the user is now authenticated
@@ -193,7 +269,7 @@ namespace BumiMobile
                         PlayerPrefs.Save();
                     }
 
-                    if (await TryAuthFirebaseWithGoogleAsync(googleUser))
+                    if (await TryAuthFirebaseWithGoogleAsync(googleUser, cancellationToken))
                     {
                         PersistPlayerId(googleUser.UserId);
                         return true;
@@ -209,7 +285,6 @@ namespace BumiMobile
             }
 #endif
 
-            var auth = FirebaseAuth.DefaultInstance;
             if (userExplicitlySignedOut)
             {
                 try
@@ -226,14 +301,12 @@ namespace BumiMobile
                 return false;
             }
 
-            if (auth.CurrentUser != null)
+            if (SyncFromFirebaseCurrentUser())
             {
-                User = auth.CurrentUser;
-                OnFirebaseAuthChanged?.Invoke(User);
                 return !User.IsAnonymous;
             }
 
-            return await CreateAnonymousAsync();
+            return await CreateAnonymousAsync(cancellationToken);
         }
 
         // ====================================================================
@@ -256,6 +329,8 @@ namespace BumiMobile
                 Debug.LogWarning($"[Auth] Firebase deps: {dep}");
                 return false;
             }
+
+            EnsureFirebaseAuthStateListener(FirebaseAuth.DefaultInstance);
 
             var googleUser = await GoogleSignInAuthenticateAsync(interactive: true);
             if (googleUser == null)
@@ -358,7 +433,7 @@ namespace BumiMobile
             }
         }
 
-        static async UniTask<GoogleSignInUser> GoogleSignInAuthenticateAsync(bool interactive)
+        static async UniTask<GoogleSignInUser> GoogleSignInAuthenticateAsync(bool interactive, CancellationToken cancellationToken = default)
         {
             if (!EnsureGoogleConfigured())
             {
@@ -386,7 +461,11 @@ namespace BumiMobile
             {
                 var googleUser = interactive
                     ? await GoogleSignIn.DefaultInstance.SignIn()
-                    : await GoogleSignIn.DefaultInstance.SignInSilently();
+                        .AsUniTask()
+                        .AttachExternalCancellation(cancellationToken)
+                    : await GoogleSignIn.DefaultInstance.SignInSilently()
+                        .AsUniTask()
+                        .AttachExternalCancellation(cancellationToken);
 
                 if (googleUser == null)
                 {
@@ -399,6 +478,10 @@ namespace BumiMobile
                 Debug.Log($"[Auth] Google Sign-In OK: {googleUser.UserId} / {googleUser.DisplayName}");
                 OnPlatformAuthFinished?.Invoke(true);
                 return googleUser;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -418,11 +501,13 @@ namespace BumiMobile
         // FIREBASE AUTH WITH GOOGLE CREDENTIAL
         // ====================================================================
 
-        static async UniTask<bool> TryAuthFirebaseWithGoogleAsync(GoogleSignInUser googleUser)
+        static async UniTask<bool> TryAuthFirebaseWithGoogleAsync(GoogleSignInUser googleUser, CancellationToken cancellationToken = default)
         {
             try
             {
-                var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+                var dep = await FirebaseApp.CheckAndFixDependenciesAsync()
+                    .AsUniTask()
+                    .AttachExternalCancellation(cancellationToken);
                 if (dep != DependencyStatus.Available)
                 {
                     Debug.LogWarning($"[Auth] Firebase deps: {dep}");
@@ -452,7 +537,9 @@ namespace BumiMobile
 
                 if (auth.CurrentUser == null)
                 {
-                    User = await auth.SignInWithCredentialAsync(cred);
+                    User = await auth.SignInWithCredentialAsync(cred)
+                        .AsUniTask()
+                        .AttachExternalCancellation(cancellationToken);
                     if (User != null)
                         OnFirebaseAuthChanged?.Invoke(User);
                     return User != null;
@@ -468,8 +555,12 @@ namespace BumiMobile
 
                     try
                     {
-                        await auth.CurrentUser.LinkWithCredentialAsync(cred);
-                        await auth.CurrentUser.ReloadAsync();
+                        await auth.CurrentUser.LinkWithCredentialAsync(cred)
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
+                        await auth.CurrentUser.ReloadAsync()
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
                         User = auth.CurrentUser;
                         OnFirebaseAuthChanged?.Invoke(User);
                         return true;
@@ -479,7 +570,9 @@ namespace BumiMobile
                         // Credential already linked to a different Firebase account.
                         // Sign into that existing account, discarding the anonymous one.
                         Debug.Log("[Auth] Google credential already linked to another account. Signing into that account.");
-                        User = await auth.SignInWithCredentialAsync(cred);
+                        User = await auth.SignInWithCredentialAsync(cred)
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
                         if (User != null)
                         {
                             OnFirebaseAuthChanged?.Invoke(User);
@@ -496,10 +589,16 @@ namespace BumiMobile
                 // Cloud data (Firestore, RTDB) tied to the old UID will be orphaned.
                 // This typically happens when a user switches Google accounts.
                 // Consider prompting the user before this path.
-                User = await auth.SignInWithCredentialAsync(cred);
+                User = await auth.SignInWithCredentialAsync(cred)
+                    .AsUniTask()
+                    .AttachExternalCancellation(cancellationToken);
                 if (User != null)
                     OnFirebaseAuthChanged?.Invoke(User);
                 return User != null;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -514,11 +613,13 @@ namespace BumiMobile
         // ANONYMOUS
         // ====================================================================
 
-        static async UniTask<bool> CreateAnonymousAsync()
+        static async UniTask<bool> CreateAnonymousAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+                var dep = await FirebaseApp.CheckAndFixDependenciesAsync()
+                    .AsUniTask()
+                    .AttachExternalCancellation(cancellationToken);
                 if (dep != DependencyStatus.Available)
                 {
                     Debug.LogWarning($"[Auth] Firebase deps for anonymous: {dep}");
@@ -527,7 +628,9 @@ namespace BumiMobile
                 }
 
                 var auth = FirebaseAuth.DefaultInstance;
-                var res = await auth.SignInAnonymouslyAsync();
+                var res = await auth.SignInAnonymouslyAsync()
+                    .AsUniTask()
+                    .AttachExternalCancellation(cancellationToken);
                 User = res?.User;
                 if (User != null)
                 {
@@ -540,6 +643,10 @@ namespace BumiMobile
                 Debug.LogWarning("[Auth] Anonymous sign-in returned null user.");
                 OnPlatformAuthFinished?.Invoke(false);
                 return false;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -614,10 +721,15 @@ namespace BumiMobile
             remove => OnPlatformAuthFinished -= value;
         }
 
-        public static UniTask<bool> SignInAsync()
+        public static UniTask<bool> SignInAsync(CancellationToken cancellationToken = default)
         {
             LogStubWarning();
             return UniTask.FromResult(false);
+        }
+
+        public static bool SyncFromFirebaseCurrentUser()
+        {
+            return false;
         }
 
         public static UniTask<bool> ManualSignInAsync()
