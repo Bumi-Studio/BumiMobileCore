@@ -4,6 +4,19 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-07-03
+
+### Added
+
+- `SyncFromFirebaseCurrentUser()` — syncs the cached `User` from Firebase's native current user, firing `OnFirebaseAuthChanged` only when user identity actually changes.
+- Persistent Firebase auth state listener — attached once per app session, keeping `AuthService.User` in sync with Firebase's native `AuthStateChanged` events.
+- `CancellationToken` support on all async auth methods (`SignInAsync`, `SignInAutoAsync`, `GoogleSignInAuthenticateAsync`, `TryAuthFirebaseWithGoogleAsync`, `CreateAnonymousAsync`) — accepts an optional token and propagates `OperationCanceledException`.
+
+### Changed
+
+- `AuthenticatedInitModule` startup timeout now uses `CancellationTokenSource.CancelAfter` instead of `UniTask.WhenAny`. On timeout, it calls `SyncFromFirebaseCurrentUser()` to capture any auth state resolved in-flight.
+- All Firebase and Google Sign-In async calls now route through `.AsUniTask().AttachExternalCancellation(cancellationToken)` for proper cancellation integration.
+
 ## [0.3.0] - 2026-07-01
 
 ### Changed
