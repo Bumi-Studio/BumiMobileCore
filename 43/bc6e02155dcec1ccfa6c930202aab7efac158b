@@ -1,0 +1,24 @@
+Packages/com.bumimobile.auth/RELEASE_0.3.1.md
+  s_10e18707496c4c::t_59ee5198603f74 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "43bc6e02155dcec1ccfa6c930202aab7efac158b",
+  "prompts": {},
+  "humans": {
+    "h_0612cf7e255131": {
+      "author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_10e18707496c4c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0d946cc5dffe1AdPVw3kKhrUbd",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
