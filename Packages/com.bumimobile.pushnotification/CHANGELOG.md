@@ -8,6 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.3.1] - 2026-07-09
+
+### Fixed
+
+- Fixed iOS notification authorization to use the Mobile Notifications 2.4.1 `AuthorizationRequest` API.
+- Fixed iOS call-to-action metadata assignment by updating the notification's existing `UserInfo` dictionary.
+- Android permission requests, notification channels, and scheduling behavior remain unchanged.
+
 ## [0.3.0] - 2026-06-03
 
 ### Added

@@ -24,7 +24,7 @@ public class NotificationInitModule : InitModule
 #if UNITY_ANDROID
         Tween.InvokeCoroutine(RequestNotificationPermission());
 #elif UNITY_IOS
-        iOSNotificationCenter.RequestAuthorization(
+        new AuthorizationRequest(
             AuthorizationOption.Alert |
             AuthorizationOption.Badge |
             AuthorizationOption.Sound, true);

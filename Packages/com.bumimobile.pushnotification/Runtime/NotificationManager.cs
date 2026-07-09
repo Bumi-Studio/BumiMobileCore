@@ -801,10 +801,7 @@ public static class NotificationManager
 
         if (!string.IsNullOrEmpty(resolvedCta))
         {
-            notification.UserInfo = new Dictionary<string, string>
-            {
-                { "cta", resolvedCta }
-            };
+            notification.UserInfo["cta"] = resolvedCta;
         }
 
         iOSNotificationCenter.ScheduleNotification(notification);
