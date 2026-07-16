@@ -4,6 +4,12 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-07-16
+
+### Fixed
+
+- `IsCredentialAlreadyInUseError` now recognizes additional Firebase error patterns: "already linked", "already in use", "already exists", "different sign-in credentials", "different user account", and "another account" — preventing false negatives when Google credential reuse is reported with alternative phrasing.
+
 ## [0.3.1] - 2026-07-03
 
 ### Added
