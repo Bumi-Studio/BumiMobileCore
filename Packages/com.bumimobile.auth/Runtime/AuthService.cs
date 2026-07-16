@@ -679,7 +679,21 @@ namespace BumiMobile
         {
             if (e == null) return false;
             var msg = e.Message ?? string.Empty;
-            if (msg.Contains("already associated")) return true;
+            if (!string.IsNullOrEmpty(msg))
+            {
+                var lowered = msg.ToLowerInvariant();
+                if (lowered.Contains("already associated")
+                    || lowered.Contains("already linked")
+                    || lowered.Contains("already in use")
+                    || lowered.Contains("already exists")
+                    || lowered.Contains("different sign-in credentials")
+                    || lowered.Contains("different user account")
+                    || lowered.Contains("another account"))
+                {
+                    return true;
+                }
+            }
+
             return IsCredentialAlreadyInUseError(e.InnerException);
         }
     }
