@@ -194,7 +194,42 @@ namespace BumiMobile
         DocumentReference GetDoc(FirebaseUser user)
         {
             string collection = UseDevCollection ? COL_PLAYERS_SAVES_DEV : COL_PLAYERS_SAVES_PROD;
-            return _fs.Collection(collection).Document(user.UserId);
+            return _fs.Collection(collection).Document(GetDocKey(user));
+        }
+
+        /// <summary>
+        /// Stable key for the player's cloud save document.
+        /// - Google-linked users: Firebase UID (survives uninstall, portable across devices).
+        /// - Anonymous users: device-unique identifier (ANDROID_ID / identifierForVendor), which
+        ///   survives uninstall + reinstall, so cloud saves are not lost when the app is
+        ///   removed and reinstalled (e.g. forced reinstall after a failed Play Store update).
+        /// </summary>
+        static string GetDocKey(FirebaseUser user)
+        {
+            if (user != null && !user.IsAnonymous && !string.IsNullOrEmpty(user.UserId))
+            {
+                return user.UserId;
+            }
+
+            return GetDeviceId();
+        }
+
+        static string GetDeviceId()
+        {
+            try
+            {
+                string deviceId = UnityEngine.SystemInfo.deviceUniqueIdentifier;
+                if (!string.IsNullOrEmpty(deviceId))
+                {
+                    return deviceId;
+                }
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] deviceUniqueIdentifier failed: " + e.Message);
+            }
+
+            return "device-fallback";
         }
 
         public override GlobalSave Load(string fileName) => _local.Load(fileName);
@@ -256,7 +291,7 @@ namespace BumiMobile
                 {
                     try
                     {
-                        string plain = SaveCrypto.DecryptJsonIfNeeded(aggJsonStr, user.UserId);
+                        string plain = SaveCrypto.DecryptJsonIfNeeded(aggJsonStr, GetDocKey(user));
                         onLoaded?.Invoke(Deserialize(plain));
                         return;
                     }
@@ -346,14 +381,14 @@ namespace BumiMobile
                 return false;
             }
 
-            var uid = GetUserId(user);
+            var key = GetDocKey(user);
             try
             {
                 var docRef = GetDoc(user);
 
                 // One player save document only, to keep Firestore write usage low.
                 string aggregatedJson = Serialize(toSend);
-                aggregatedJson = EncryptForUser(aggregatedJson, uid, logMissingUid: true);
+                aggregatedJson = EncryptForUser(aggregatedJson, key, logMissingUid: true);
 
                 var root = new Dictionary<string, object>
                 {
@@ -390,19 +425,7 @@ namespace BumiMobile
             }
         }
 
-        static string GetUserId(FirebaseUser user)
-        {
-            if (user == null) return null;
-            var uid = user.UserId;
-            if (string.IsNullOrEmpty(uid))
-            {
-                UnityEngine.Debug.LogWarning("[SaveCloud] Firebase user missing UserId.");
-                return null;
-            }
-            return uid;
-        }
-
-        static string EncryptForUser(string json, string uid, bool logMissingUid)
+        static string EncryptForUser(string json, string key, bool logMissingUid)
         {
             if (string.IsNullOrEmpty(json))
                 return json ?? string.Empty;

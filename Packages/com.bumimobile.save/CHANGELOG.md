@@ -4,6 +4,12 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-08-14
+
+### Fixed
+
+- **Cloud saves now survive uninstall + reinstall for anonymous players.** The Firestore document key was the Firebase anonymous UID, which is deleted on uninstall — so reinstalling (e.g. forced reinstall after a failed Play Store update) created a new UID and the cloud save was unreachable. Anonymous players are now keyed by a stable device identifier (`SystemInfo.deviceUniqueIdentifier`; ANDROID_ID / identifierForVendor), which persists across uninstall. Google-linked players keep UID keying, so saves remain portable across devices. Encryption salts follow the same key, so existing Google-linked docs stay decryptable.
+
 ## [0.2.0] - 2026-07-01
 
 ### Added
