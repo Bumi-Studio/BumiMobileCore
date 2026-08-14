@@ -4,6 +4,13 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-08-14
+
+### Changed
+
+- Startup (silent) Google Sign-In no longer shows the account picker popup: `GoogleSignInConfiguration.HidePopups` is now enabled so the silent restore path never displays UI.
+- Silent Google Sign-In is only attempted when a Firebase session already exists (`FirebaseAuth.DefaultInstance.CurrentUser != null`). On first launch with no session, startup proceeds immediately without prompting or triggering account re-auth errors. Manual sign-in from the UI remains unchanged and still shows the interactive picker.
+
 ## [0.3.2] - 2026-07-16
 
 ### Fixed

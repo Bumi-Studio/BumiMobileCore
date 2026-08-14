@@ -257,7 +257,7 @@ namespace BumiMobile
             EnsureFirebaseAuthStateListener(auth);
 
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-            if (!userExplicitlySignedOut && !string.IsNullOrEmpty(WebClientId))
+            if (!userExplicitlySignedOut && !string.IsNullOrEmpty(WebClientId) && auth?.CurrentUser != null)
             {
                 var googleUser = await GoogleSignInAuthenticateAsync(interactive: false, cancellationToken);
                 if (googleUser != null)
@@ -415,7 +415,8 @@ namespace BumiMobile
                     WebClientId = WebClientId,
                     RequestEmail = true,
                     RequestAuthCode = false,
-                    UseGameSignIn = false
+                    UseGameSignIn = false,
+                    HidePopups = true
                 };
                 _cachedWebClientIdForConfig = WebClientId;
             }
@@ -450,7 +451,8 @@ namespace BumiMobile
                     WebClientId = WebClientId,
                     RequestEmail = true,
                     RequestAuthCode = false,
-                    UseGameSignIn = false
+                    UseGameSignIn = false,
+                    HidePopups = true
                 };
                 _cachedWebClientIdForConfig = WebClientId;
             }
