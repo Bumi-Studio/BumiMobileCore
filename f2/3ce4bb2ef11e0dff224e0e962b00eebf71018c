@@ -1,0 +1,22 @@
+Packages/com.bumimobile.auth/Runtime/AuthService.cs
+  s_bc111f633b8cad::t_88a367793aa5b4 418-419,454-455
+  s_bc111f633b8cad::t_e9cec5faf3952b 260
+Packages/com.bumimobile.auth/CHANGELOG.md
+  s_bc111f633b8cad::t_a6e39715be5b24 7-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f23ce4bb2ef11e0dff224e0e962b00eebf71018c",
+  "prompts": {},
+  "sessions": {
+    "s_bc111f633b8cad": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_001deeb7fffeek1ZStj1d3FLgD",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
