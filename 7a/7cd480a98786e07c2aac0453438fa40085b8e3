@@ -1,0 +1,26 @@
+Packages/com.bumimobile.save/package.json
+  s_bc111f633b8cad::t_98a6f0287c2aa8 4
+Packages/com.bumimobile.save/Runtime/Wrappers/FirebaseSaveWrapper.cs
+  s_bc111f633b8cad::t_d01473ce527a64 384,391
+  s_bc111f633b8cad::t_64161d2d8950c7 428
+  s_bc111f633b8cad::t_4ac3c48dedd6c9 294
+  s_bc111f633b8cad::t_0965c813253071 197-232
+Packages/com.bumimobile.save/CHANGELOG.md
+  s_bc111f633b8cad::t_f5fc6c2ce6c8f7 7-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7a7cd480a98786e07c2aac0453438fa40085b8e3",
+  "prompts": {},
+  "sessions": {
+    "s_bc111f633b8cad": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_001deeb7fffeek1ZStj1d3FLgD",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
