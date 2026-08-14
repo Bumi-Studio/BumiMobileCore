@@ -430,16 +430,16 @@ namespace BumiMobile
             if (string.IsNullOrEmpty(json))
                 return json ?? string.Empty;
 
-            if (string.IsNullOrEmpty(uid))
+            if (string.IsNullOrEmpty(key))
             {
                 if (logMissingUid)
-                    UnityEngine.Debug.LogWarning("[SaveCloud] Skip encryption: missing UID.");
+                    UnityEngine.Debug.LogWarning("[SaveCloud] Skip encryption: missing key.");
                 return json;
             }
 
             try
             {
-                return SaveCrypto.EncryptJson(json, uid);
+                return SaveCrypto.EncryptJson(json, key);
             }
             catch (Exception e)
             {
