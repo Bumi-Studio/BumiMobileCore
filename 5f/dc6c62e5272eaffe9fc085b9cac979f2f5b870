@@ -1,0 +1,42 @@
+Packages/com.bumimobile.auth/Runtime/CountryService.cs
+  s_9c15eea60a6022::t_ae082d2f49a1ab 77-84
+  s_bc111f633b8cad::t_2a15afe4ac7ab5 10,13,16-17,21,32-34,60-62,96,103,119,125,130,135,148
+Packages/com.bumimobile.auth/package.json
+  s_9c15eea60a6022::t_1f3ebad4aa93e7 4
+  s_bc111f633b8cad::t_82d40d9c6e0f0e 6,18
+Packages/com.bumimobile.auth/CHANGELOG.md
+  s_9c15eea60a6022::t_88099ea7081b8d 7-18,20
+  s_9c15eea60a6022::t_78862977a98ed0 19
+Packages/com.bumimobile.auth/Runtime/AuthService.cs
+  s_bc111f633b8cad::t_77de8a06f98b63 24-25,30,40-41,43-50,52-53,55-72,82,95,100,110,112-113,123,128,130,134-135,137-139,144,146,150-154,165,171-174,183,203-205,219,221-224,226-231,233-234,236-238,241-242,244-245,247-248,251-266,268-273,275,277,282,287,299,302,317,320,324-337,339,344,346,348,353,357,366,402-404,406,416-417,421-424,440-443,446,452-454,458,461,465,467,471-472,477,480-483,485,495,501,508,510,513,516,518,531-533,535,537,540-541,548-552,570-571,574-577,579-581,586
+Packages/com.bumimobile.auth/Runtime/AuthenticatedInitModule.cs
+  s_bc111f633b8cad::t_33d8ec6ee97e2a 24-25,38,43,55,92,96,127,135
+Packages/com.bumimobile.auth/Runtime/CountryFlagDatabase.cs
+  s_bc111f633b8cad::t_b0064c3c09d9c3 27,48
+Packages/com.bumimobile.auth/Runtime/CountryIsoUtil.cs
+  s_bc111f633b8cad::t_3d19379c459ae9 10-17,25-27,44,49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5fdc6c62e5272eaffe9fc085b9cac979f2f5b870",
+  "prompts": {},
+  "sessions": {
+    "s_9c15eea60a6022": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fed09bab1fferUUhgkT4gmojuq",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    },
+    "s_bc111f633b8cad": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_001deeb7fffeek1ZStj1d3FLgD",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
