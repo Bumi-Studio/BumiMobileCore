@@ -4,6 +4,18 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.5] - 2026-08-19
+
+### Added
+
+- `AuthOperationStatus` and `AuthOperationResult` for describing completed authentication operations.
+- `AuthService.OnSignInCompleted` for consumers that need a final sign-in result instead of the intermediate Firebase state-change event.
+
+### Changed
+
+- `OnFirebaseAuthChanged` remains a state-change notification and is not the UI completion signal.
+- Startup and manual sign-in wrappers publish one completion result after their operation finishes, including failure and cancellation states.
+
 ## [0.3.4] - 2026-08-19
 
 ### Added

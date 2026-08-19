@@ -57,6 +57,8 @@ public async void OnSignInWithGoogleClicked()
 }
 ```
 
+Use `AuthService.OnSignInCompleted` for systems that need to react to the completed authentication operation. `OnFirebaseAuthChanged` observes the Firebase state transition and may be raised before the sign-in method returns, so it should not be used as the UI completion signal.
+
 The Web Client ID is created in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) under **Credentials → Create Credentials → OAuth client ID → Web application**.
 
 #### iOS Setup (additional)

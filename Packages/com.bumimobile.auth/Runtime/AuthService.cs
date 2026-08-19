@@ -17,6 +17,28 @@ using Google;
 #if BUMI_AUTH_HAS_FIREBASE
 namespace BumiMobile
 {
+    public enum AuthOperationStatus
+    {
+        Succeeded,
+        Failed,
+        Cancelled
+    }
+
+    public readonly struct AuthOperationResult
+    {
+        public AuthOperationStatus Status { get; }
+        public string UserId { get; }
+        public bool IsSignedIn { get; }
+        public bool Succeeded => Status == AuthOperationStatus.Succeeded;
+
+        public AuthOperationResult(AuthOperationStatus status, string userId, bool isSignedIn)
+        {
+            Status = status;
+            UserId = userId ?? string.Empty;
+            IsSignedIn = isSignedIn;
+        }
+    }
+
     public static class AuthService
     {
         private const string PREF_PLAYER_ID = "__auth_player_id__";
@@ -54,6 +76,7 @@ namespace BumiMobile
 
         public static event Action<bool> OnPlatformAuthFinished;
         public static event Action<FirebaseUser> OnFirebaseAuthChanged;
+        public static event Action<AuthOperationResult> OnSignInCompleted;
 
         [Obsolete("Use OnPlatformAuthFinished instead.")]
         public static event Action<bool> OnPgsAuthFinished
@@ -146,13 +169,24 @@ namespace BumiMobile
             }
 
             _busy = true;
+            AuthOperationStatus operationStatus = AuthOperationStatus.Failed;
             try
             {
-                return await SignInAtStartupInternalAsync(showPickerWhenNoAccount, cancellationToken);
+                bool result = await SignInAtStartupInternalAsync(showPickerWhenNoAccount, cancellationToken);
+                operationStatus = result
+                    ? AuthOperationStatus.Succeeded
+                    : AuthOperationStatus.Failed;
+                return result;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                operationStatus = AuthOperationStatus.Cancelled;
+                throw;
             }
             finally
             {
                 _busy = false;
+                NotifySignInCompleted(operationStatus);
             }
         }
 
@@ -165,13 +199,41 @@ namespace BumiMobile
             }
 
             _busy = true;
+            AuthOperationStatus operationStatus = AuthOperationStatus.Failed;
             try
             {
-                return await SignInManualAsync();
+                bool result = await SignInManualAsync();
+                operationStatus = result
+                    ? AuthOperationStatus.Succeeded
+                    : AuthOperationStatus.Failed;
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                operationStatus = AuthOperationStatus.Cancelled;
+                throw;
             }
             finally
             {
                 _busy = false;
+                NotifySignInCompleted(operationStatus);
+            }
+        }
+
+        private static void NotifySignInCompleted(AuthOperationStatus status)
+        {
+            var result = new AuthOperationResult(
+                status,
+                User?.UserId,
+                IsSignedIn);
+
+            try
+            {
+                OnSignInCompleted?.Invoke(result);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Auth] Sign-in completion listener failed: " + e.Message);
             }
         }
 
@@ -546,6 +608,28 @@ namespace BumiMobile
 #else
 namespace BumiMobile
 {
+    public enum AuthOperationStatus
+    {
+        Succeeded,
+        Failed,
+        Cancelled
+    }
+
+    public readonly struct AuthOperationResult
+    {
+        public AuthOperationStatus Status { get; }
+        public string UserId { get; }
+        public bool IsSignedIn { get; }
+        public bool Succeeded => Status == AuthOperationStatus.Succeeded;
+
+        public AuthOperationResult(AuthOperationStatus status, string userId, bool isSignedIn)
+        {
+            Status = status;
+            UserId = userId ?? string.Empty;
+            IsSignedIn = isSignedIn;
+        }
+    }
+
     public static class AuthService
     {
         public const string DEFAULT_GOOGLE_WEB_CLIENT_ID =
@@ -565,6 +649,7 @@ namespace BumiMobile
         public static bool SyncFromFirebaseCurrentUser() => false;
         public static event System.Action<bool> OnPlatformAuthFinished;
         public static event System.Action<FirebaseUser> OnFirebaseAuthChanged;
+        public static event System.Action<AuthOperationResult> OnSignInCompleted;
 
         public static UniTask<bool> SignInAsync(CancellationToken cancellationToken = default) => UniTask.FromResult(false);
         public static UniTask<bool> SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken cancellationToken = default) => UniTask.FromResult(false);
