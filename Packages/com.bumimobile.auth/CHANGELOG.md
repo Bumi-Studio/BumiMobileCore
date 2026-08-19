@@ -17,7 +17,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - Startup auth flow reordered: the Firebase persisted session is now the authoritative fast path — a restored non-anonymous user never triggers the Google picker.
 - `SignInAsync` now delegates to `SignInAtStartupAsync(false, ...)`.
-- `CountryService.CaptureLocationOnceAsync` is now compiled unconditionally (the `BUMIMOBILE_PROFILE_SAVE` guard was removed).
+
+### Removed
+
+- `CountryService.CaptureLocationOnceAsync` (the `BUMIMOBILE_PROFILE_SAVE` block) — it depended on `ProfileSave` from the save package and did not belong in the auth package.
 
 ## [0.3.3] - 2026-08-14
 

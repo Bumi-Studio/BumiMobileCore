@@ -74,15 +74,6 @@ namespace BumiMobile
             await InitializeAsync();
         }
 
-        public static UniTask CaptureLocationOnceAsync(ProfileSave save, float timeoutSeconds = 6f)
-        {
-            if (save == null) return UniTask.CompletedTask;
-            save.LocationPermissionAsked = true;
-            save.LocationPermissionGranted = false;
-            if (IsValidIso2(CountryISO)) save.LastLocationCountryISO = CountryISO;
-            return UniTask.CompletedTask;
-        }
-
         static bool IsValidIso2(string iso) => !string.IsNullOrEmpty(iso) && iso.Length == 2 && char.IsLetter(iso[0]) && char.IsLetter(iso[1]);
 
         static bool TryLoadCachedIso(out string iso)
