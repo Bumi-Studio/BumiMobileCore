@@ -1,0 +1,19 @@
+Packages/com.bumimobile.auth/CHANGELOG.md
+  s_9c15eea60a6022::t_f18db70ba255f2 20-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9b346dca4b33224697c0e764fce7097828008e2e",
+  "prompts": {},
+  "sessions": {
+    "s_9c15eea60a6022": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fed09bab1fferUUhgkT4gmojuq",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
