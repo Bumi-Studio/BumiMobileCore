@@ -131,8 +131,9 @@ namespace BumiMobile
         }
 
         /// <summary>
-        /// Restores an existing account silently. If no account can be restored,
-        /// the picker is shown only when allowed and not previously suppressed.
+        /// Restores an existing account and limits the Google account flow to
+        /// usable/previously authorized accounts. The full unfiltered account
+        /// picker is never used during automatic startup authentication.
         /// </summary>
         public static async UniTask<bool> SignInAtStartupAsync(
             bool showPickerWhenNoAccount,
@@ -239,37 +240,25 @@ namespace BumiMobile
             }
 
 #if BUMI_AUTH_HAS_GOOGLE_SIGNIN
-            if (!string.IsNullOrEmpty(WebClientId))
+            if (showPickerWhenNoAccount &&
+                !string.IsNullOrEmpty(WebClientId) &&
+                !_startupPickerAttempted)
             {
-                var googleUser = await GoogleSignInAuthenticateAsync(false, cancellationToken);
+                // Use the filtered Google Credential Manager route once. Do
+                // not fall back to SignIn(), which displays every device
+                // account after the usable-account selector.
+                _startupPickerAttempted = true;
+                var googleUser = await SignInUsableGoogleAccountAsync(cancellationToken);
                 if (googleUser != null && await TryAuthFirebaseWithGoogleAsync(googleUser, cancellationToken))
                 {
                     PersistPlayerId(googleUser.UserId);
                     return true;
                 }
 
-                if (showPickerWhenNoAccount &&
-                    !IsExplicitlySignedOut &&
-                    !IsGooglePickerSuppressed &&
-                    !_startupPickerAttempted)
+                if (_lastGoogleInteractionCancelled)
                 {
-                    // Initialization can be requested by more than one startup
-                    // path. Keep the automatic Google picker single-use for the
-                    // current app session so a cancellation cannot be followed
-                    // by another system dialog from a retry.
-                    _startupPickerAttempted = true;
-                    googleUser = await GoogleSignInAuthenticateAsync(true, cancellationToken);
-                    if (googleUser != null && await TryAuthFirebaseWithGoogleAsync(googleUser, cancellationToken))
-                    {
-                        PersistPlayerId(googleUser.UserId);
-                        return true;
-                    }
-
-                    if (_lastGoogleInteractionCancelled)
-                    {
-                        SuppressAutomaticPicker();
-                        Debug.Log("[Auth] Google picker cancelled; suppressing future automatic prompts.");
-                    }
+                    SuppressAutomaticPicker();
+                    Debug.Log("[Auth] Google usable-account picker cancelled; suppressing future automatic prompts.");
                 }
             }
 #endif
@@ -296,7 +285,10 @@ namespace BumiMobile
             }
 
             EnsureFirebaseAuthStateListener(FirebaseAuth.DefaultInstance);
-            var googleUser = await GoogleSignInAuthenticateAsync(true);
+            // Settings sign-in uses the same filtered account route as init.
+            // This prevents the Settings button from opening the all-accounts
+            // picker after init only showed usable accounts.
+            var googleUser = await SignInUsableGoogleAccountAsync();
             if (googleUser == null)
             {
                 if (_lastGoogleInteractionCancelled) SuppressAutomaticPicker();
@@ -399,8 +391,7 @@ namespace BumiMobile
             }
         }
 
-        private static async UniTask<GoogleSignInUser> GoogleSignInAuthenticateAsync(
-            bool interactive,
+        private static async UniTask<GoogleSignInUser> SignInUsableGoogleAccountAsync(
             CancellationToken cancellationToken = default)
         {
             _lastGoogleInteractionCancelled = false;
@@ -412,16 +403,15 @@ namespace BumiMobile
 
             try
             {
-                var googleUser = interactive
-                    ? await GoogleSignIn.DefaultInstance.SignIn().AsUniTask().AttachExternalCancellation(cancellationToken)
-                    : await GoogleSignIn.DefaultInstance.SignInSilently().AsUniTask().AttachExternalCancellation(cancellationToken);
+                Debug.Log("[Auth] Requesting usable Google accounts only.");
+                var googleUser = await GoogleSignIn.DefaultInstance.SignInSilently()
+                    .AsUniTask()
+                    .AttachExternalCancellation(cancellationToken);
 
                 if (googleUser == null)
                 {
-                    _lastGoogleInteractionCancelled = interactive;
-                    LastAuthFailureReason = interactive
-                        ? "User cancelled Google Sign-In"
-                        : "[Auth] Google Sign-In returned null user";
+                    _lastGoogleInteractionCancelled = false;
+                    LastAuthFailureReason = "[Auth] No usable Google account was selected.";
                     Debug.LogWarning(LastAuthFailureReason);
                     OnPlatformAuthFinished?.Invoke(false);
                     return null;
@@ -439,7 +429,7 @@ namespace BumiMobile
             {
                 bool cancelled = e is OperationCanceledException ||
                     e.Message?.Contains("cancel", StringComparison.OrdinalIgnoreCase) == true;
-                _lastGoogleInteractionCancelled = interactive && cancelled;
+                _lastGoogleInteractionCancelled = cancelled;
                 LastAuthFailureReason = cancelled
                     ? "User cancelled Google Sign-In"
                     : "[Auth] Google Sign-In error: " + e.Message;

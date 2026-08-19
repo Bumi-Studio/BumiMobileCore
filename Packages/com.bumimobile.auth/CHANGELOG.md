@@ -8,9 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
-- `SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken)` — restores an existing account silently; when no account can be restored and `showPickerWhenNoAccount` is true, shows the Google account picker once per app session.
+- `SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken)` — restores an existing account silently; when no account can be restored and `showPickerWhenNoAccount` is true, shows the Google account flow once per app session.
 - Google account picker suppression: cancelling the interactive picker (or signing out) sets a persistent flag so future automatic prompts are suppressed (`PREF_GOOGLE_PICKER_SUPPRESSED` / `IsGooglePickerSuppressed`).
 - `AuthenticatedInitModule.showPickerWhenNoAccount` serialized field to control the startup picker behavior.
+- `SignInUsableGoogleAccountAsync` — filtered Google Credential Manager route that only surfaces usable/previously authorized accounts; used by both startup and Settings sign-in instead of the full unfiltered account picker.
 
 ### Changed
 
