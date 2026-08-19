@@ -1,12 +1,4 @@
 // Scripts/Auth/AuthenticatedInitModule.cs
-// ------------------------------------------------------------
-// AuthenticatedInitModule
-// - ORDER = 0 (paling awal)
-// - Async coroutine dengan timeout
-// - Country bootstrap simplified (only flag database sprite assignment). Locale removed.
-// - Jalankan AuthService.SignInAsync()
-// - Expose status IsAuthenticated / PlayerName / PlayerId
-// ------------------------------------------------------------
 
 using System;
 using System.Collections;
@@ -29,6 +21,8 @@ namespace BumiMobile
 
         [Header("Google Sign-In")]
         [SerializeField] private string googleWebClientId = AuthService.DEFAULT_GOOGLE_WEB_CLIENT_ID;
+        [Tooltip("Show the Google account picker once when no account can be restored. A cancellation suppresses future automatic prompts.")]
+        [SerializeField] private bool showPickerWhenNoAccount = true;
 
         public static bool IsAuthenticated { get; private set; }
 
@@ -41,22 +35,12 @@ namespace BumiMobile
 
         public override void CreateComponent()
         {
-            if (!Application.isPlaying)
-            {
-                return;
-            }
-
-            EnsureInitializationAsync().Forget();
+            if (Application.isPlaying) EnsureInitializationAsync().Forget();
         }
 
         public override IEnumerator InitializeCoroutine(Initializer initializer)
         {
-            if (!Application.isPlaying)
-            {
-                yield break;
-            }
-
-            yield return EnsureInitializationAsync().ToCoroutine();
+            if (Application.isPlaying) yield return EnsureInitializationAsync().ToCoroutine();
         }
 
         private UniTask EnsureInitializationAsync()
@@ -68,12 +52,7 @@ namespace BumiMobile
                 InitializeAsync().Forget();
             }
 
-            if (initializationCompleted)
-            {
-                return UniTask.CompletedTask;
-            }
-
-            return initializationCompletionSource.Task;
+            return initializationCompleted ? UniTask.CompletedTask : initializationCompletionSource.Task;
         }
 
         private async UniTask InitializeAsync()
@@ -81,9 +60,7 @@ namespace BumiMobile
             try
             {
                 Debug.Log("[Auth] Init start");
-
                 ConfigureAuthService();
-
                 var countryInitTask = InitializeCountryAsync();
 
                 if (PlayerPrefs.GetInt(AuthDisabledKey, 0) == 1)
@@ -106,18 +83,17 @@ namespace BumiMobile
 
                 bool signInResult = false;
                 CancellationTokenSource startupAuthCts = null;
-
                 try
                 {
                     if (timeoutSeconds > 0f)
                     {
                         startupAuthCts = new CancellationTokenSource();
                         startupAuthCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
-                        signInResult = await AuthService.SignInAsync(startupAuthCts.Token);
+                        signInResult = await AuthService.SignInAtStartupAsync(showPickerWhenNoAccount, startupAuthCts.Token);
                     }
                     else
                     {
-                        signInResult = await AuthService.SignInAsync();
+                        signInResult = await AuthService.SignInAtStartupAsync(showPickerWhenNoAccount);
                     }
                 }
                 catch (OperationCanceledException) when (startupAuthCts != null && startupAuthCts.IsCancellationRequested)
@@ -128,7 +104,6 @@ namespace BumiMobile
                 }
                 catch (Exception e)
                 {
-                    signInResult = false;
                     Debug.LogWarning("[Auth] Sign-in encountered an exception: " + e.Message);
                 }
                 finally
@@ -137,7 +112,6 @@ namespace BumiMobile
                 }
 
                 await countryInitTask;
-
                 IsAuthenticated = signInResult;
                 Debug.Log($"[Auth] Init done | ok={IsAuthenticated} | id={AuthService.PlayerId} | country={CountryService.CountryISO}");
             }
@@ -150,25 +124,15 @@ namespace BumiMobile
 
         private void ConfigureAuthService()
         {
-            if (string.IsNullOrEmpty(googleWebClientId))
-            {
-                return;
-            }
-
-            AuthService.Initialize(googleWebClientId);
+            if (!string.IsNullOrEmpty(googleWebClientId)) AuthService.Initialize(googleWebClientId);
         }
-
 
         private UniTask InitializeCountryAsync()
         {
             var task = CountryService.InitializeAsync();
             return task.ContinueWith(() =>
             {
-                if (countryFlags != null)
-                {
-                    CountryService.SetFlagDatabase(countryFlags);
-                }
-
+                if (countryFlags != null) CountryService.SetFlagDatabase(countryFlags);
                 Debug.Log($"[Auth] Country resolved ISO={CountryService.CountryISO} Name={CountryService.CountryName}");
             });
         }

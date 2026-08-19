@@ -24,7 +24,7 @@ namespace BumiMobile
 
         void OnEnable() => BuildMap();
 #if UNITY_EDITOR
-        void OnValidate() => BuildMap(); // ✅ keep map fresh when editing in Inspector
+        void OnValidate() => BuildMap();
 #endif
 
         void BuildMap()
@@ -45,10 +45,7 @@ namespace BumiMobile
             return map.TryGetValue(iso2.Trim().ToUpperInvariant(), out entry);
         }
 
-        public Sprite GetSprite(string iso2)
-        {
-            return TryGet(iso2, out var e) ? e.flag : null;
-        }
+        public Sprite GetSprite(string iso2) => TryGet(iso2, out var e) ? e.flag : null;
 
         public string GetDisplayName(string iso2)
         {

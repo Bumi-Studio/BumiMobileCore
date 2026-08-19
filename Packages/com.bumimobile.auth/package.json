@@ -1,16 +1,14 @@
 {
   "name": "com.bumimobile.auth",
   "displayName": "Bumi Mobile Auth",
-  "version": "0.3.2",
+  "version": "0.3.4",
   "unity": "2021.3",
-  "description": "Anonymous-first authentication for the Bumi Mobile framework. Auto-initialises Firebase (restore/anonymous), upgrades to Google-linked on manual sign-in.",
+  "description": "Anonymous-first authentication for the Bumi Mobile framework.",
   "keywords": [
     "bumi",
     "auth",
     "login",
-    "session",
     "google-signin",
-    "anonymous",
     "firebase"
   ],
   "category": "Framework",

@@ -4,6 +4,20 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.4] - 2026-08-19
+
+### Added
+
+- `SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken)` — restores an existing account silently; when no account can be restored and `showPickerWhenNoAccount` is true, shows the Google account picker once per app session.
+- Google account picker suppression: cancelling the interactive picker (or signing out) sets a persistent flag so future automatic prompts are suppressed (`PREF_GOOGLE_PICKER_SUPPRESSED` / `IsGooglePickerSuppressed`).
+- `AuthenticatedInitModule.showPickerWhenNoAccount` serialized field to control the startup picker behavior.
+
+### Changed
+
+- Startup auth flow reordered: the Firebase persisted session is now the authoritative fast path — a restored non-anonymous user never triggers the Google picker.
+- `SignInAsync` now delegates to `SignInAtStartupAsync(false, ...)`.
+- `CountryService.CaptureLocationOnceAsync` is now compiled unconditionally (the `BUMIMOBILE_PROFILE_SAVE` guard was removed).
+
 ## [0.3.3] - 2026-08-14
 
 ### Changed
