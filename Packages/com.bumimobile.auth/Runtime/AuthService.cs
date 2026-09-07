@@ -14,6 +14,16 @@ using FirebaseUser = System.Object;
 using Google;
 #endif
 
+#if BUMI_AUTH_HAS_APPLE_SIGNIN
+using System.Security.Cryptography;
+using System.Text;
+using AppleAuth;
+using AppleAuth.Enums;
+using AppleAuth.Extensions;
+using AppleAuth.Interfaces;
+using AppleAuth.Native;
+#endif
+
 #if BUMI_AUTH_HAS_FIREBASE
 namespace BumiMobile
 {
@@ -203,6 +213,55 @@ namespace BumiMobile
             try
             {
                 bool result = await SignInManualAsync();
+                operationStatus = result
+                    ? AuthOperationStatus.Succeeded
+                    : AuthOperationStatus.Failed;
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                operationStatus = AuthOperationStatus.Cancelled;
+                throw;
+            }
+            finally
+            {
+                _busy = false;
+                NotifySignInCompleted(operationStatus);
+            }
+        }
+
+        /// <summary>
+        /// True when Sign in with Apple is available on the current device/OS
+        /// (iOS 13+, macOS 10.15+) and the Apple Sign-In plugin is installed.
+        /// Always false on other platforms — hide/disable the button accordingly.
+        /// </summary>
+        public static bool IsAppleSignInSupported
+        {
+#if BUMI_AUTH_HAS_APPLE_SIGNIN
+            get => AppleAuthManager.IsCurrentPlatformSupported;
+#else
+            get => false;
+#endif
+        }
+
+        /// <summary>
+        /// Manual "Sign in with Apple" button. Runs the native Apple ID flow, then
+        /// links/upgrades the Firebase account (anonymous → Apple-linked), or signs
+        /// into the existing Apple account when the credential already belongs to one.
+        /// </summary>
+        public static async UniTask<bool> ManualSignInWithAppleAsync()
+        {
+            if (_busy)
+            {
+                Debug.LogWarning("[Auth] Manual sign-in already running");
+                return false;
+            }
+
+            _busy = true;
+            AuthOperationStatus operationStatus = AuthOperationStatus.Failed;
+            try
+            {
+                bool result = await SignInWithAppleManualAsync();
                 operationStatus = result
                     ? AuthOperationStatus.Succeeded
                     : AuthOperationStatus.Failed;
@@ -505,11 +564,25 @@ namespace BumiMobile
             GoogleSignInUser googleUser,
             CancellationToken cancellationToken = default)
         {
+            if (googleUser == null || string.IsNullOrEmpty(googleUser.IdToken)) return false;
+            var cred = GoogleAuthProvider.GetCredential(googleUser.IdToken, null);
+            return await TryAuthFirebaseWithCredentialAsync(cred, "Google", cancellationToken);
+        }
+#endif
+
+        /// <summary>
+        /// Shared federated-credential path (Google, Apple, …): links the credential
+        /// to the current anonymous user (keeping its UID and game data), or signs in
+        /// directly when there is no user / the credential already belongs elsewhere.
+        /// </summary>
+        private static async UniTask<bool> TryAuthFirebaseWithCredentialAsync(
+            Credential cred,
+            string providerLabel,
+            CancellationToken cancellationToken = default)
+        {
             try
             {
-                if (googleUser == null || string.IsNullOrEmpty(googleUser.IdToken)) return false;
                 var auth = FirebaseAuth.DefaultInstance;
-                var cred = GoogleAuthProvider.GetCredential(googleUser.IdToken, null);
                 if (cred == null || auth == null) return false;
 
                 if (auth.CurrentUser == null)
@@ -544,9 +617,156 @@ namespace BumiMobile
             catch (Exception e)
             {
                 LastAuthFailureReason = e.Message;
-                Debug.LogWarning("[Auth] Firebase Google step failed: " + e.Message);
+                Debug.LogWarning($"[Auth] Firebase {providerLabel} step failed: " + e.Message);
                 return false;
             }
+        }
+
+        // ====================================================================
+        // APPLE SIGN-IN (platform)
+        // ====================================================================
+
+#if BUMI_AUTH_HAS_APPLE_SIGNIN
+        private static async UniTask<bool> SignInWithAppleManualAsync()
+        {
+            if (!AppleAuthManager.IsCurrentPlatformSupported)
+            {
+                LastAuthFailureReason = "[Auth] Sign in with Apple is not supported on this platform.";
+                Debug.LogWarning(LastAuthFailureReason);
+                return false;
+            }
+
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (dep != DependencyStatus.Available)
+            {
+                Debug.LogWarning($"[Auth] Firebase deps: {dep}");
+                return false;
+            }
+
+            EnsureFirebaseAuthStateListener(FirebaseAuth.DefaultInstance);
+
+            var (appleCredential, rawNonce) = await AppleAuthenticateAsync();
+            if (appleCredential == null)
+            {
+                Debug.LogWarning("[Auth] Apple Sign-In failed – keeping existing session.");
+                return false;
+            }
+
+            string idToken = Encoding.UTF8.GetString(appleCredential.IdentityToken);
+            string authCode = appleCredential.AuthorizationCode != null && appleCredential.AuthorizationCode.Length > 0
+                ? Encoding.UTF8.GetString(appleCredential.AuthorizationCode)
+                : null;
+
+            var firebaseCred = OAuthProvider.GetCredential("apple.com", idToken, rawNonce, authCode);
+            if (await TryAuthFirebaseWithCredentialAsync(firebaseCred, "Apple"))
+            {
+                PersistPlayerId(appleCredential.User);
+                return true;
+            }
+
+            Debug.LogWarning("[Auth] Firebase Apple auth failed – keeping existing session.");
+            return false;
+        }
+
+        private static async UniTask<(IAppleIDCredential credential, string rawNonce)> AppleAuthenticateAsync()
+        {
+            // Apple wants the SHA-256 hash of the nonce; Firebase wants the raw value.
+            var rawNonce = GenerateNonce();
+            var hashedNonce = Sha256(rawNonce);
+
+            var manager = new AppleAuthManager(new PayloadDeserializer());
+            var tcs = new UniTaskCompletionSource<ICredential>();
+
+            var loginArgs = new AppleAuthLoginArgs(
+                LoginOptions.IncludeEmail | LoginOptions.IncludeFullName,
+                hashedNonce);
+
+            manager.LoginWithAppleId(
+                loginArgs,
+                credential => tcs.TrySetResult(credential),
+                error =>
+                {
+                    bool cancelled = error != null &&
+                                     error.GetAuthorizationErrorCode() == AuthorizationErrorCode.Canceled;
+                    LastAuthFailureReason = cancelled
+                        ? "User cancelled Apple Sign-In"
+                        : "[Auth] Apple Sign-In error: " + (error != null ? error.LocalizedDescription : "unknown");
+                    Debug.LogWarning(LastAuthFailureReason);
+                    OnPlatformAuthFinished?.Invoke(false);
+                    tcs.TrySetResult(null);
+                });
+
+            // The plugin only dispatches its native callbacks while Update() is pumped.
+            var pumpCts = new CancellationTokenSource();
+            var pump = PumpAppleAuthManagerAsync(manager, pumpCts.Token);
+
+            ICredential credential;
+            try
+            {
+                credential = await tcs.Task;
+            }
+            finally
+            {
+                pumpCts.Cancel();
+                await pump;
+                pumpCts.Dispose();
+            }
+
+            if (credential is IAppleIDCredential appleIdCredential && appleIdCredential.IdentityToken != null)
+            {
+                Debug.Log($"[Auth] Apple Sign-In OK: {appleIdCredential.User}");
+                OnPlatformAuthFinished?.Invoke(true);
+                return (appleIdCredential, rawNonce);
+            }
+
+            if (credential != null)
+            {
+                LastAuthFailureReason = "[Auth] Apple Sign-In returned no identity token.";
+                Debug.LogWarning(LastAuthFailureReason);
+                OnPlatformAuthFinished?.Invoke(false);
+            }
+
+            return (null, rawNonce);
+        }
+
+        private static async UniTask PumpAppleAuthManagerAsync(IAppleAuthManager manager, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                manager.Update();
+                await UniTask.Yield();
+            }
+        }
+
+        private static string GenerateNonce(int length = 32)
+        {
+            const string charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._";
+            var bytes = new byte[length];
+            using (var rng = RandomNumberGenerator.Create())
+                rng.GetBytes(bytes);
+
+            var result = new char[length];
+            for (int i = 0; i < length; i++)
+                result[i] = charset[bytes[i] % charset.Length];
+            return new string(result);
+        }
+
+        private static string Sha256(string value)
+        {
+            using (var sha = SHA256.Create())
+            {
+                var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(value));
+                var sb = new StringBuilder(hash.Length * 2);
+                foreach (var b in hash)
+                    sb.Append(b.ToString("x2"));
+                return sb.ToString();
+            }
+        }
+#else
+        private static UniTask<bool> SignInWithAppleManualAsync()
+        {
+            Debug.Log("[Auth] Apple Sign-In SDK not available.");
+            return UniTask.FromResult(false);
         }
 #endif
 
@@ -651,9 +871,12 @@ namespace BumiMobile
         public static event System.Action<FirebaseUser> OnFirebaseAuthChanged;
         public static event System.Action<AuthOperationResult> OnSignInCompleted;
 
+        public static bool IsAppleSignInSupported => false;
+
         public static UniTask<bool> SignInAsync(CancellationToken cancellationToken = default) => UniTask.FromResult(false);
         public static UniTask<bool> SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken cancellationToken = default) => UniTask.FromResult(false);
         public static UniTask<bool> ManualSignInAsync() => UniTask.FromResult(false);
+        public static UniTask<bool> ManualSignInWithAppleAsync() => UniTask.FromResult(false);
 
         public static UniTask<bool> SignOutAsync()
         {

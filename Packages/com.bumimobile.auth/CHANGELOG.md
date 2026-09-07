@@ -4,6 +4,25 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.6] - 2026-09-07
+
+### Added
+
+- **Sign in with Apple** — `AuthService.ManualSignInWithAppleAsync()` runs the native Apple ID flow (`com.lupidan.apple-signin-unity`) and links/upgrades the Firebase account exactly like the Google path: an anonymous account is linked (Firebase UID + game data preserved), or the existing Apple-linked account is signed into when the credential already belongs to one. Publishes an `OnSignInCompleted` result and honours `_busy` / cancellation like `ManualSignInAsync`.
+- `AuthService.IsAppleSignInSupported` — `true` only on iOS 13+/macOS 10.15+ with the plugin present; use it to show/hide the button.
+- Assembly version define `BUMI_AUTH_HAS_APPLE_SIGNIN`, auto-set when `com.lupidan.apple-signin-unity` is installed. The package compiles and runs without it (the Apple entry point becomes a no-op returning `false`).
+- Nonce handling for Apple: a random raw nonce is sent to Apple as its SHA-256 hash and to Firebase in the clear, per Firebase's OAuth requirement.
+
+### Changed
+
+- Extracted the shared Firebase credential handling into `TryAuthFirebaseWithCredentialAsync(Credential, providerLabel, CancellationToken)`. `TryAuthFirebaseWithGoogleAsync` is now a thin wrapper over it, so Google and Apple share the link / already-in-use / account-switch logic and cancellation behaviour.
+
+### Notes
+
+- Apple has no programmatic sign-out; `SignOutAsync()` clearing the Firebase session is sufficient — the next Apple sign-in re-prompts.
+- Auto sign-in is unchanged: a returning Apple user is restored through the existing Firebase persisted-session fast path, so no Apple-specific startup step was added.
+- iOS builds still need the "Sign in with Apple" capability + entitlement on the Xcode target (handled by the consuming project's build post-processor).
+
 ## [0.3.5] - 2026-08-19
 
 ### Added
