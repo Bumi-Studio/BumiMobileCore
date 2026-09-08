@@ -652,13 +652,8 @@ namespace BumiMobile
                 return false;
             }
 
-            string idToken = Encoding.UTF8.GetString(appleCredential.IdentityToken);
-            string authCode = appleCredential.AuthorizationCode != null && appleCredential.AuthorizationCode.Length > 0
-                ? Encoding.UTF8.GetString(appleCredential.AuthorizationCode)
-                : null;
-
-            var firebaseCred = OAuthProvider.GetCredential("apple.com", idToken, rawNonce, authCode);
-            if (await TryAuthFirebaseWithCredentialAsync(firebaseCred, "Apple"))
+            var firebaseCred = CreateFirebaseAppleCredential(appleCredential, rawNonce);
+            if (await TryAuthFirebaseWithAppleCredentialAsync(firebaseCred))
             {
                 PersistPlayerId(appleCredential.User);
                 return true;
@@ -692,13 +687,16 @@ namespace BumiMobile
                         ? "User cancelled Apple Sign-In"
                         : "[Auth] Apple Sign-In error: " + (error != null ? error.LocalizedDescription : "unknown");
                     Debug.LogWarning(LastAuthFailureReason);
-                    OnPlatformAuthFinished?.Invoke(false);
-                    tcs.TrySetResult(null);
+                    if (cancelled)
+                        tcs.TrySetException(new OperationCanceledException("User cancelled Apple Sign-In"));
+                    else
+                        tcs.TrySetResult(null);
+                    NotifyAppleAuthFinished(false);
                 });
 
             // The plugin only dispatches its native callbacks while Update() is pumped.
             var pumpCts = new CancellationTokenSource();
-            var pump = PumpAppleAuthManagerAsync(manager, pumpCts.Token);
+            var pump = PumpAppleAuthManagerAsync(manager, pumpCts.Token, tcs);
 
             ICredential credential;
             try
@@ -707,15 +705,41 @@ namespace BumiMobile
             }
             finally
             {
-                pumpCts.Cancel();
-                await pump;
-                pumpCts.Dispose();
+                try
+                {
+                    pumpCts.Cancel();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[Auth] Apple Sign-In pump cancellation failed: " + e.Message);
+                }
+
+                try
+                {
+                    await pump;
+                }
+                catch (OperationCanceledException) when (pumpCts.IsCancellationRequested)
+                {
+                    // Cancellation is expected once the Apple callback has completed.
+                }
+                catch (Exception e)
+                {
+                    // The callback/TCS result is primary; never replace it with a
+                    // cleanup/pump observation error.
+                    Debug.LogWarning("[Auth] Apple Sign-In pump failed: " + e.Message);
+                }
+                finally
+                {
+                    pumpCts.Dispose();
+                }
             }
 
-            if (credential is IAppleIDCredential appleIdCredential && appleIdCredential.IdentityToken != null)
+            if (credential is IAppleIDCredential appleIdCredential &&
+                appleIdCredential.IdentityToken != null &&
+                appleIdCredential.IdentityToken.Length > 0)
             {
                 Debug.Log($"[Auth] Apple Sign-In OK: {appleIdCredential.User}");
-                OnPlatformAuthFinished?.Invoke(true);
+                NotifyAppleAuthFinished(true);
                 return (appleIdCredential, rawNonce);
             }
 
@@ -723,18 +747,142 @@ namespace BumiMobile
             {
                 LastAuthFailureReason = "[Auth] Apple Sign-In returned no identity token.";
                 Debug.LogWarning(LastAuthFailureReason);
-                OnPlatformAuthFinished?.Invoke(false);
+                NotifyAppleAuthFinished(false);
             }
 
             return (null, rawNonce);
         }
 
-        private static async UniTask PumpAppleAuthManagerAsync(IAppleAuthManager manager, CancellationToken token)
+        private static void NotifyAppleAuthFinished(bool succeeded)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                manager.Update();
-                await UniTask.Yield();
+                OnPlatformAuthFinished?.Invoke(succeeded);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Auth] Apple auth listener failed: " + e.Message);
+            }
+        }
+
+        private static Credential CreateFirebaseAppleCredential(
+            IAppleIDCredential appleCredential,
+            string rawNonce)
+        {
+            if (appleCredential == null ||
+                appleCredential.IdentityToken == null ||
+                appleCredential.IdentityToken.Length == 0 ||
+                string.IsNullOrEmpty(rawNonce))
+            {
+                return null;
+            }
+
+            string idToken = Encoding.UTF8.GetString(appleCredential.IdentityToken);
+            string authCode = appleCredential.AuthorizationCode != null && appleCredential.AuthorizationCode.Length > 0
+                ? Encoding.UTF8.GetString(appleCredential.AuthorizationCode)
+                : null;
+
+            return OAuthProvider.GetCredential("apple.com", idToken, rawNonce, authCode);
+        }
+
+        private static async UniTask<bool> TryAuthFirebaseWithAppleCredentialAsync(
+            Credential cred,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var auth = FirebaseAuth.DefaultInstance;
+                if (cred == null || auth == null) return false;
+
+                if (auth.CurrentUser == null || !auth.CurrentUser.IsAnonymous)
+                {
+                    User = await auth.SignInWithCredentialAsync(cred)
+                        .AsUniTask()
+                        .AttachExternalCancellation(cancellationToken);
+                }
+                else
+                {
+                    try
+                    {
+                        await auth.CurrentUser.LinkWithCredentialAsync(cred)
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
+                        await auth.CurrentUser.ReloadAsync()
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
+                        User = auth.CurrentUser;
+                    }
+                    catch (Exception e) when (
+                        !(e is OperationCanceledException) &&
+                        (IsCredentialAlreadyInUseError(e) ||
+                         FindFirebaseAccountLinkException(e) != null))
+                    {
+                        var linkException = FindFirebaseAccountLinkException(e);
+                        Credential signInCredential = linkException != null && linkException.UserInfo != null
+                            ? linkException.UserInfo.UpdatedCredential
+                            : null;
+
+                        if (!IsValidFirebaseCredential(signInCredential))
+                        {
+                            // The original Apple credential must not be retried. Apple
+                            // issues a new nonce/token pair for the replacement attempt.
+                            var (freshAppleCredential, freshRawNonce) = await AppleAuthenticateAsync();
+                            signInCredential = CreateFirebaseAppleCredential(
+                                freshAppleCredential,
+                                freshRawNonce);
+                        }
+
+                        if (!IsValidFirebaseCredential(signInCredential))
+                        {
+                            LastAuthFailureReason = "[Auth] Apple account-link collision did not provide a usable credential.";
+                            Debug.LogWarning(LastAuthFailureReason);
+                            return false;
+                        }
+
+                        User = await auth.SignInWithCredentialAsync(signInCredential)
+                            .AsUniTask()
+                            .AttachExternalCancellation(cancellationToken);
+                    }
+                }
+
+                if (User != null) OnFirebaseAuthChanged?.Invoke(User);
+                return User != null;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                LastAuthFailureReason = e.Message;
+                Debug.LogWarning("[Auth] Firebase Apple step failed: " + e.Message);
+                return false;
+            }
+        }
+
+        private static async UniTask PumpAppleAuthManagerAsync(
+            IAppleAuthManager manager,
+            CancellationToken token,
+            UniTaskCompletionSource<ICredential> completionSource)
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    manager.Update();
+                    await UniTask.Yield(token);
+                }
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // Pump cancellation is expected during Apple flow cleanup.
+            }
+            catch (Exception e)
+            {
+                LastAuthFailureReason = "[Auth] Apple Sign-In pump error: " + e.Message;
+                Debug.LogWarning(LastAuthFailureReason);
+                completionSource.TrySetException(e);
+                throw;
             }
         }
 
@@ -822,6 +970,35 @@ namespace BumiMobile
                 msg.Contains("already in use") || msg.Contains("already exists") ||
                 msg.Contains("different sign-in credentials") || msg.Contains("another account") ||
                 IsCredentialAlreadyInUseError(e.InnerException);
+        }
+
+        private static FirebaseAccountLinkException FindFirebaseAccountLinkException(Exception e)
+        {
+            if (e == null) return null;
+            if (e is FirebaseAccountLinkException linkException) return linkException;
+
+            if (e is AggregateException aggregateException)
+            {
+                foreach (var innerException in aggregateException.InnerExceptions)
+                {
+                    var result = FindFirebaseAccountLinkException(innerException);
+                    if (result != null) return result;
+                }
+            }
+
+            return FindFirebaseAccountLinkException(e.InnerException);
+        }
+
+        private static bool IsValidFirebaseCredential(Credential credential)
+        {
+            try
+            {
+                return credential != null && credential.IsValid();
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
