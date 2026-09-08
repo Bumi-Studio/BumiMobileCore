@@ -1,0 +1,24 @@
+Packages/com.bumimobile.localization/CHANGELOG.md
+  s_f7ac0f0a34f12b::t_179b442dade2c4 11-16
+  s_f7ac0f0a34f12b::t_29badcbd895f96 17
+Packages/com.bumimobile.localization/package.json
+  s_f7ac0f0a34f12b::t_179b442dade2c4 4
+Packages/com.bumimobile.localization/Runtime/LocalizationController.cs
+  s_f7ac0f0a34f12b::t_52b4c3aae52fed 166-168,210-213,215-218,220-225,227-228,260
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "ae49fa701ff2272835d215417ff37f5f3c992e93",
+  "prompts": {},
+  "sessions": {
+    "s_f7ac0f0a34f12b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f80333ffdffeTbf1Fvu96k9vzm",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
