@@ -1,0 +1,35 @@
+Packages/com.bumimobile.auth/Runtime/AuthService.cs
+  s_3a45a053081684::t_3fae64012ce33b 756-815,819-824,826-834,836-862
+  s_3a45a053081684::t_59bad097c217aa 737-739
+  s_3a45a053081684::t_20a274e1c3a07d 655-656,699,708-734,742,750,863-866,868-872,874-876,878-885
+  s_3a45a053081684::t_66cb7fe77dfbe3 825,835,990-995,997-1001
+  s_3a45a053081684::t_f0862f23abbbc3 816-818
+  s_3a45a053081684::t_c94c67f670c339 873
+  s_56dcd9c0a0876b::t_7417e4f5b6f920 996
+  s_3a45a053081684::t_390a46cfd0680b 690-694
+  s_3a45a053081684::t_46147beed41163 974-989,1002
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "fad742fbfce5f7e87a9e6967080dc6d38a27209f",
+  "prompts": {},
+  "sessions": {
+    "s_3a45a053081684": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f806de6d6ffeM3pzbpFEZWQKB7",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    },
+    "s_56dcd9c0a0876b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8077bc2affeyC0ADw76uy1ggu",
+        "model": "unknown"
+      },
+      "human_author": "RizukiKano <33799315+rizukikano@users.noreply.github.com>"
+    }
+  }
+}
