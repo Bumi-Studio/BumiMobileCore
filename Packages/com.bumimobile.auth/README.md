@@ -5,7 +5,8 @@ Google Sign-In-first authentication for Bumi Mobile projects. This package attem
 ## Features
 
 - **Google Sign-In-first** — `SignInAsync()` tries silent Google Sign-In before anything else. Returning Google users restore their session with no UI interaction. If silent sign-in fails, it falls back to a persisted Firebase session or creates an anonymous account.
-- **Upgrade on demand** — `ManualSignInAsync()` shows the Google account picker. When the player signs in with Google, their existing anonymous account is **linked** (upgraded) — all game data associated with that Firebase UID is preserved.
+- **Upgrade on demand** — `ManualSignInAsync()` (Google) and `ManualSignInWithAppleAsync()` (Apple) show the provider account flow. When the player signs in, their existing anonymous account is **linked** (upgraded) — all game data associated with that Firebase UID is preserved.
+- **Sign in with Apple** — `ManualSignInWithAppleAsync()` runs the native Apple ID flow on iOS/macOS and links/upgrades Firebase the same way as Google. `IsAppleSignInSupported` reports whether the platform can offer it.
 - **Always authenticated** — `SignOutAsync()` signs out of Google and Firebase, clears state, then immediately creates a fresh anonymous account. The app never goes userless — analytics, cloud save, and leaderboards always have a Firebase user.
 - `AuthenticatedInitModule` — an init module that bootstraps the session during the initializer pipeline, with timeout handling and skip/disable flags.
 - `CountryService` — resolves the player country via IP lookup, caches the result, and optionally provides flag sprites via `CountryFlagDatabase` ScriptableObject.
@@ -18,6 +19,7 @@ Google Sign-In-first authentication for Bumi Mobile projects. This package attem
 - [UniTask](https://github.com/Cysharp/UniTask) (`com.cysharp.unitask`)
 - [Firebase Core & Auth](https://firebase.google.com/docs/unity/setup) (`com.google.firebase.app`, `com.google.firebase.auth`)
 - [Google Sign-In Unity plugin](https://github.com/googlesamples/google-signin-unity) (`com.google.signin.google-signin-unity`) — needed only for the manual "Sign in with Google" button
+- [Sign in with Apple Unity plugin](https://github.com/lupidan/apple-signin-unity) (`com.lupidan.apple-signin-unity`) — needed only for the manual "Sign in with Apple" button
 
 ### 2. Bootstrap (auto)
 
@@ -83,6 +85,33 @@ Google Sign-In on iOS requires additional native integration beyond Android:
 
 For detailed iOS steps, refer to the [Google Sign-In Unity plugin docs](https://github.com/googlesamples/google-signin-unity).
 
+### 3b. Add "Sign in with Apple" (manual)
+
+Install `com.lupidan.apple-signin-unity`, then wire a button to `ManualSignInWithAppleAsync`:
+
+```csharp
+// Show/hide the button based on platform support
+appleButton.gameObject.SetActive(AuthService.IsAppleSignInSupported);
+
+public async void OnSignInWithAppleClicked()
+{
+    bool ok = await AuthService.ManualSignInWithAppleAsync();
+    // ok == true  → account is now Apple-linked
+    // ok == false → user cancelled or error — still has anonymous session
+}
+```
+
+No `WebClientId` is needed for Apple. The service generates the nonce, drives the
+native flow, and exchanges the Apple identity token for a Firebase credential
+(`apple.com` OAuth provider). `OnSignInCompleted` fires with the result, same as the
+Google path.
+
+**iOS/Xcode:** enable the **Sign in with Apple** capability and entitlement on the
+Unity target. In Bumi Mobile projects the app's build post-processor adds this
+automatically; otherwise use `AppleAuth.Editor.ProjectCapabilityManager` or add it by
+hand in Xcode. Enable the provider in the Firebase console (**Authentication →
+Sign-in method → Apple**).
+
 ### 4. Enable scripting define symbols
 
 The assembly automatically adds:
@@ -91,6 +120,7 @@ The assembly automatically adds:
 |--------|-----------|
 | `BUMI_AUTH_HAS_FIREBASE` | When `com.google.firebase.app` is present |
 | `BUMI_AUTH_HAS_GOOGLE_SIGNIN` | When `com.google.signin.google-signin-unity` is present |
+| `BUMI_AUTH_HAS_APPLE_SIGNIN` | When `com.lupidan.apple-signin-unity` is present |
 
 If using custom package layouts, add the symbols manually via _Project Settings → Player → Scripting Define Symbols_.
 
@@ -128,14 +158,17 @@ App Start
             └─ No session? → SignInAnonymouslyAsync() → new anonymous account
             └─ Returns true ONLY if a linked (non-anonymous) account exists
 
-Manual "Sign in with Google" button
-  └─ AuthService.ManualSignInAsync()
-       ├─ GoogleSignIn.DefaultInstance.SignIn()  // show account picker
-       ├─ GoogleAuthProvider.GetCredential(idToken)  // Firebase credential
-       └─ auth.CurrentUser.IsAnonymous?
-            ├─ Yes → LinkWithCredentialAsync()  // upgrade anonymous → linked
-            └─ No  → SignInWithCredentialAsync()  // direct sign-in
-            └─ All game data tied to the Firebase UID is preserved!
+Manual "Sign in with Google" button          Manual "Sign in with Apple" button
+  └─ AuthService.ManualSignInAsync()            └─ AuthService.ManualSignInWithAppleAsync()
+       ├─ Google account flow                        ├─ AppleAuthManager.LoginWithAppleId()  // native, hashed nonce
+       ├─ GoogleAuthProvider.GetCredential()         ├─ OAuthProvider.GetCredential("apple.com", idToken, rawNonce)
+       └─ TryAuthFirebaseWithCredentialAsync() ──┬── └─ TryAuthFirebaseWithCredentialAsync()
+                                                 │
+                          shared Firebase step:  ├─ auth.CurrentUser.IsAnonymous?
+                                                 │    ├─ Yes → LinkWithCredentialAsync()   // upgrade anonymous → linked
+                                                 │    │        └─ already in use? → SignInWithCredentialAsync() into that account
+                                                 │    └─ No  → SignInWithCredentialAsync() // direct sign-in
+                                                 └─ All game data tied to the Firebase UID is preserved!
 
 Sign Out
   └─ AuthService.SignOutAsync()
@@ -152,6 +185,7 @@ Sign Out
 | First launch (after `SignInAsync`) | ✓ | ✗ | ✓ | Anonymous |
 | Restart with linked account | ✓ | ✓ | ✗ | Linked |
 | After tapping "Sign in with Google" | ✓ | ✓ | ✗ | Linked |
+| After tapping "Sign in with Apple" | ✓ | ✓ | ✗ | Linked |
 | After `SignOutAsync()` | ✓ | ✗ | ✓ | **Anonymous** (not `null`!) |
 
 ## Folder Layout

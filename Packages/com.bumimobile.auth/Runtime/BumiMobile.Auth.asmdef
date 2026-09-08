@@ -4,7 +4,8 @@
   "references": [
     "BumiMobile.Core",
     "UniTask",
-    "GoogleSignin"
+    "GoogleSignin",
+    "AppleAuth"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -23,6 +24,11 @@
       "name": "com.google.signin",
       "expression": "0.0.0",
       "define": "BUMI_AUTH_HAS_GOOGLE_SIGNIN"
+    },
+    {
+      "name": "com.lupidan.apple-signin-unity",
+      "expression": "0.0.0",
+      "define": "BUMI_AUTH_HAS_APPLE_SIGNIN"
     }
   ],
   "noEngineReferences": false
