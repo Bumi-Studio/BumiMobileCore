@@ -163,7 +163,9 @@ namespace BumiMobile
                         }
                         else
                         {
-                            Dictionary[language].Add(key, columns[j]);
+                            // Rows may omit trailing cells. Treat those cells as blank so
+                            // lookup can fall back to English instead of throwing.
+                            Dictionary[language].Add(key, j < columns.Count ? columns[j] : "");
                         }
                     }
                 }
@@ -205,19 +207,25 @@ namespace BumiMobile
 
         private static string LocalizeRaw(string localizationKey)
         {
-            if (!Dictionary.ContainsKey(Language))
-                throw new KeyNotFoundException("Language not found: " + Language);
-
-            bool missed = !Dictionary[Language].ContainsKey(localizationKey) || Dictionary[Language][localizationKey] == "";
-            if (missed)
+            if (Dictionary.TryGetValue(Language, out var languageDictionary) &&
+                languageDictionary != null &&
+                languageDictionary.TryGetValue(localizationKey, out var translation) &&
+                !string.IsNullOrWhiteSpace(translation))
             {
-                Debug.LogWarning($"Translation not found: {localizationKey} ({Language}).");
-                if (Dictionary.ContainsKey(LanguageType.English) && Dictionary[LanguageType.English].ContainsKey(localizationKey))
-                    return Dictionary[LanguageType.English][localizationKey];
-
-                return localizationKey;
+                return translation;
             }
-            return Dictionary[Language][localizationKey];
+
+            Debug.LogWarning($"Translation not found: {localizationKey} ({Language}).");
+
+            if (Dictionary.TryGetValue(LanguageType.English, out var englishDictionary) &&
+                englishDictionary != null &&
+                englishDictionary.TryGetValue(localizationKey, out var englishTranslation) &&
+                !string.IsNullOrWhiteSpace(englishTranslation))
+            {
+                return englishTranslation;
+            }
+
+            return localizationKey;
         }
 
         public static string FixIfArabic(string s)

@@ -1,7 +1,7 @@
 {
   "name": "com.bumimobile.localization",
   "displayName": "Bumi Mobile Localization",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "unity": "2021.3",
   "description": "Localization controller, settings, and editor utilities for Bumi Mobile projects.",
   "keywords": [
