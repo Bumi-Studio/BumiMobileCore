@@ -83,6 +83,7 @@ namespace BumiMobile
         private static FirebaseAuth _firebaseAuthInstance;
         private static bool _firebaseAuthStateListenerAttached;
         private static bool _lastGoogleInteractionCancelled;
+        private static string _pendingAccountSwitchNewUserId = string.Empty;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStartupPickerState()
@@ -226,7 +227,9 @@ namespace BumiMobile
                 bool result = await SignInManualAsync();
                 operationStatus = result
                     ? AuthOperationStatus.Succeeded
-                    : AuthOperationStatus.Failed;
+                    : (_lastGoogleInteractionCancelled
+                        ? AuthOperationStatus.Cancelled
+                        : AuthOperationStatus.Failed);
                 return result;
             }
             catch (OperationCanceledException)
@@ -503,7 +506,9 @@ namespace BumiMobile
             var googleUser = await SignInInteractiveGoogleAccountAsync();
             if (googleUser == null)
             {
-                if (_lastGoogleInteractionCancelled) SuppressAutomaticPicker();
+                // Cancelling the explicit interactive picker does not suppress
+                // automatic pickers; suppression is only set by the automatic
+                // (silent/usable-accounts) routes.
                 Debug.LogWarning("[Auth] Google account picker sign-in failed – keeping existing session.");
                 return false;
             }
@@ -539,12 +544,12 @@ namespace BumiMobile
 
         // A user-initiated sign-in clears the automatic-picker suppression so
         // future startup sessions may prompt again; only the automatic route
-        // should remain suppressed after a cancel.
+        // should remain suppressed after a cancel. Per-session startup state is
+        // left untouched (the startup-picker field is session-scoped).
         private static void ResetAutomaticPickerSuppression()
         {
             PlayerPrefs.DeleteKey(PREF_GOOGLE_PICKER_SUPPRESSED);
             PlayerPrefs.Save();
-            _startupPickerAttempted = false;
             _lastGoogleInteractionCancelled = false;
         }
 
@@ -554,6 +559,8 @@ namespace BumiMobile
             catch (Exception e) { Debug.LogWarning("[Auth] Automatic sign-out cleanup failed: " + e.Message); }
 
             User = null;
+            LastSwitchedFromUserId = string.Empty;
+            _pendingAccountSwitchNewUserId = string.Empty;
             OnFirebaseAuthChanged?.Invoke(null);
         }
 
@@ -575,6 +582,8 @@ namespace BumiMobile
 
             PlayerId = string.Empty;
             User = null;
+            LastSwitchedFromUserId = string.Empty;
+            _pendingAccountSwitchNewUserId = string.Empty;
             if (PlayerPrefs.HasKey(PREF_PLAYER_ID)) PlayerPrefs.DeleteKey(PREF_PLAYER_ID);
             PlayerPrefs.Save();
             OnFirebaseAuthChanged?.Invoke(null);
@@ -768,15 +777,11 @@ namespace BumiMobile
                         !string.IsNullOrEmpty(previousUserId) &&
                         !string.Equals(previousUserId, User.UserId, StringComparison.Ordinal))
                     {
+                        // Record the switch, but defer the event until the
+                        // caller persists PlayerId (see PersistPlayerId) so
+                        // listeners observe the updated PlayerId.
                         LastSwitchedFromUserId = previousUserId;
-                        try
-                        {
-                            OnAccountSwitched?.Invoke(previousUserId, User.UserId);
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogError("[Auth] Account-switch listener failed: " + e.Message);
-                        }
+                        _pendingAccountSwitchNewUserId = User.UserId;
                     }
                 }
 
@@ -985,6 +990,25 @@ namespace BumiMobile
             PlayerPrefs.DeleteKey(PREF_USER_EXPLICITLY_SIGNED_OUT);
             PlayerPrefs.DeleteKey(PREF_GOOGLE_PICKER_SUPPRESSED);
             PlayerPrefs.Save();
+
+            // PersistPlayerId is the single choke point every successful
+            // federated route calls, so the account-switch event fires here
+            // (after PlayerId is updated) rather than inside the credential step.
+            if (!string.IsNullOrEmpty(LastSwitchedFromUserId) &&
+                !string.IsNullOrEmpty(_pendingAccountSwitchNewUserId))
+            {
+                string previousUserId = LastSwitchedFromUserId;
+                string newUserId = _pendingAccountSwitchNewUserId;
+                _pendingAccountSwitchNewUserId = string.Empty;
+                try
+                {
+                    OnAccountSwitched?.Invoke(previousUserId, newUserId);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Auth] Account-switch listener failed: " + e.Message);
+                }
+            }
         }
 
         private static bool IsCredentialAlreadyInUseError(Exception e)

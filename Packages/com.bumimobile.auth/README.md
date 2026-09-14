@@ -73,15 +73,19 @@ public async void OnChooseGoogleAccountClicked()
 ```
 
 Both manual methods are user-initiated: each attempt clears the automatic-picker
-suppression flag and re-enables future automatic startup prompts. A cancel during
-the attempt re-suppresses automatic prompts.
+suppression flag so future automatic startup prompts are re-enabled. Cancelling
+the filtered `ManualSignInAsync` route re-suppresses automatic prompts; cancelling
+the explicit interactive picker does **not** — startup auth remains free to prompt
+again.
 
 ##### Switching accounts
 
 Signing in with a credential while the current Firebase user is non-anonymous
 creates a **new Firebase UID** and orphans data tied to the old one. Observe
 `AuthService.OnAccountSwitched` (parameters: `previousUserId`, `newUserId`) and/or
-read `AuthService.LastSwitchedFromUserId` to detect this and migrate/react:
+read `AuthService.LastSwitchedFromUserId` to detect this and migrate/react. The
+event fires after the sign-in completes and `PlayerId` has been updated, so
+listeners observe the new persisted player id rather than a stale one:
 
 ```csharp
 AuthService.OnAccountSwitched += (previousUserId, newUserId) =>
@@ -203,8 +207,9 @@ Manual "Sign in with Google" button          Manual "Sign in with Apple" button
                                                   │    ├─ Yes → LinkWithCredentialAsync()   // upgrade anonymous → linked
                                                   │    │        └─ already in use? → SignInWithCredentialAsync() into that account
                                                   │    └─ No  → SignInWithCredentialAsync() // direct sign-in
-                                                  │             └─ UID changed? → OnAccountSwitched(prev, new)
-                                                  └─ All game data tied to the Firebase UID is preserved!
+                                                  │             └─ UID changed? → record prev (event deferred)
+                                                  └─ PersistPlayerId() → OnAccountSwitched(prev, new)
+                                                     (all game data tied to the Firebase UID is preserved)
 
 Sign Out
   └─ AuthService.SignOutAsync()
