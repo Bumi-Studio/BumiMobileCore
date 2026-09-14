@@ -4,6 +4,17 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-09-14
+
+### Fixed
+
+- Cancelling the explicit interactive account picker (`ManualSignInWithAccountPickerAsync`) no longer suppresses automatic startup pickers. The interactive route is user-initiated, so a cancel now leaves startup auth free to prompt again; suppression is only set by the automatic (silent/usable-accounts) routes.
+- `OnAccountSwitched` now fires *after* `PlayerId` is persisted. The account-switch UID is recorded during the credential step and the event is raised from `PersistPlayerId` (the choke point every successful Google/Apple route calls), so listeners observe the updated `PlayerId` instead of a stale one. The pending UID is cleared on sign-out so it can never fire late.
+
+### Changed
+
+- `ManualSignInAsync` now reports `AuthOperationStatus.Cancelled` (via `OnSignInCompleted`) when the Google interaction was cancelled, matching `ManualSignInWithAccountPickerAsync`.
+
 ## [0.4.0] - 2026-09-14
 
 ### Added
