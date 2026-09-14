@@ -1,0 +1,211 @@
+# Changelog
+
+All notable changes to this package are documented in this file.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
+
+## [0.4.0] - 2026-09-14
+
+### Added
+
+- `AuthService.ManualSignInWithAccountPickerAsync()` — user-initiated Google sign-in that runs the full interactive account chooser (`GoogleSignIn.DefaultInstance.SignIn()`) instead of the filtered usable-accounts-only route. This lets an account that has never authorized the app be selected. It reuses the existing Firebase credential path (link / already-in-use / account-switch) and `PersistPlayerId`, and honours the `_busy` guard, cancellation, and `OnSignInCompleted` like `ManualSignInAsync`.
+- `AuthService.OnAccountSwitched` (`Action<string, string>` with `previousUserId`, `newUserId`) and `AuthService.LastSwitchedFromUserId` — raised when a credential sign-in replaces an existing non-anonymous Firebase user with a different UID, making the orphaned-data account switch observable and migratable.
+
+### Changed
+
+- Any manual sign-in attempt (`ManualSignInAsync` and `ManualSignInWithAccountPickerAsync`) now clears the automatic Google picker suppression (`PREF_GOOGLE_PICKER_SUPPRESSED`), resets `_startupPickerAttempted`, and clears `_lastGoogleInteractionCancelled`. Suppression only gates the automatic startup picker, so a user-initiated attempt re-enables future automatic prompts. A cancel during the same attempt still re-suppresses via the existing `SuppressAutomaticPicker()`.
+- Clarified the automatic-route comment: silent/usable-accounts-only behaviour applies only to automatic routes; the full interactive picker is reserved for the explicit, user-initiated `ManualSignInWithAccountPickerAsync()`.
+
+### Fixed
+
+- README sign-out documentation was stale: `SignOutAsync()` leaves the app signed out (`User == null`) and does **not** create a replacement anonymous account; automatic startup auth is skipped while `__auth_explicitly_signed_out__` is set.
+
+## [0.3.6] - 2026-09-07
+
+### Added
+
+- **Sign in with Apple** — `AuthService.ManualSignInWithAppleAsync()` runs the native Apple ID flow (`com.lupidan.apple-signin-unity`) and links/upgrades the Firebase account exactly like the Google path: an anonymous account is linked (Firebase UID + game data preserved), or the existing Apple-linked account is signed into when the credential already belongs to one. Publishes an `OnSignInCompleted` result and honours `_busy` / cancellation like `ManualSignInAsync`.
+- `AuthService.IsAppleSignInSupported` — `true` only on iOS 13+/macOS 10.15+ with the plugin present; use it to show/hide the button.
+- Assembly version define `BUMI_AUTH_HAS_APPLE_SIGNIN`, auto-set when `com.lupidan.apple-signin-unity` is installed. The package compiles and runs without it (the Apple entry point becomes a no-op returning `false`).
+- Nonce handling for Apple: a random raw nonce is sent to Apple as its SHA-256 hash and to Firebase in the clear, per Firebase's OAuth requirement.
+
+### Changed
+
+- Extracted the shared Firebase credential handling into `TryAuthFirebaseWithCredentialAsync(Credential, providerLabel, CancellationToken)`. `TryAuthFirebaseWithGoogleAsync` is now a thin wrapper over it, so Google and Apple share the link / already-in-use / account-switch logic and cancellation behaviour.
+
+### Notes
+
+- Apple has no programmatic sign-out; `SignOutAsync()` clearing the Firebase session is sufficient — the next Apple sign-in re-prompts.
+- Auto sign-in is unchanged: a returning Apple user is restored through the existing Firebase persisted-session fast path, so no Apple-specific startup step was added.
+- iOS builds still need the "Sign in with Apple" capability + entitlement on the Xcode target (handled by the consuming project's build post-processor).
+
+## [0.3.5] - 2026-08-19
+
+### Added
+
+- `AuthOperationStatus` and `AuthOperationResult` for describing completed authentication operations.
+- `AuthService.OnSignInCompleted` for consumers that need a final sign-in result instead of the intermediate Firebase state-change event.
+
+### Changed
+
+- `OnFirebaseAuthChanged` remains a state-change notification and is not the UI completion signal.
+- Startup and manual sign-in wrappers publish one completion result after their operation finishes, including failure and cancellation states.
+
+## [0.3.4] - 2026-08-19
+
+### Added
+
+- `SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken)` — restores an existing account silently; when no account can be restored and `showPickerWhenNoAccount` is true, shows the Google account flow once per app session.
+- Google account picker suppression: cancelling the interactive picker (or signing out) sets a persistent flag so future automatic prompts are suppressed (`PREF_GOOGLE_PICKER_SUPPRESSED` / `IsGooglePickerSuppressed`).
+- `AuthenticatedInitModule.showPickerWhenNoAccount` serialized field to control the startup picker behavior.
+- `SignInUsableGoogleAccountAsync` — filtered Google Credential Manager route that only surfaces usable/previously authorized accounts; used by both startup and Settings sign-in instead of the full unfiltered account picker.
+
+### Changed
+
+- Startup auth flow reordered: the Firebase persisted session is now the authoritative fast path — a restored non-anonymous user never triggers the Google picker.
+- `SignInAsync` now delegates to `SignInAtStartupAsync(false, ...)`.
+
+### Removed
+
+- `CountryService.CaptureLocationOnceAsync` (the `BUMIMOBILE_PROFILE_SAVE` block) — it depended on `ProfileSave` from the save package and did not belong in the auth package.
+
+## [0.3.3] - 2026-08-14
+
+### Changed
+
+- Startup (silent) Google Sign-In no longer shows the account picker popup: `GoogleSignInConfiguration.HidePopups` is now enabled so the silent restore path never displays UI.
+- Silent Google Sign-In is only attempted when a Firebase session already exists (`FirebaseAuth.DefaultInstance.CurrentUser != null`). On first launch with no session, startup proceeds immediately without prompting or triggering account re-auth errors. Manual sign-in from the UI remains unchanged and still shows the interactive picker.
+
+## [0.3.2] - 2026-07-16
+
+### Fixed
+
+- `IsCredentialAlreadyInUseError` now recognizes additional Firebase error patterns: "already linked", "already in use", "already exists", "different sign-in credentials", "different user account", and "another account" — preventing false negatives when Google credential reuse is reported with alternative phrasing.
+
+## [0.3.1] - 2026-07-03
+
+### Added
+
+- `SyncFromFirebaseCurrentUser()` — syncs the cached `User` from Firebase's native current user, firing `OnFirebaseAuthChanged` only when user identity actually changes.
+- Persistent Firebase auth state listener — attached once per app session, keeping `AuthService.User` in sync with Firebase's native `AuthStateChanged` events.
+- `CancellationToken` support on all async auth methods (`SignInAsync`, `SignInAutoAsync`, `GoogleSignInAuthenticateAsync`, `TryAuthFirebaseWithGoogleAsync`, `CreateAnonymousAsync`) — accepts an optional token and propagates `OperationCanceledException`.
+
+### Changed
+
+- `AuthenticatedInitModule` startup timeout now uses `CancellationTokenSource.CancelAfter` instead of `UniTask.WhenAny`. On timeout, it calls `SyncFromFirebaseCurrentUser()` to capture any auth state resolved in-flight.
+- All Firebase and Google Sign-In async calls now route through `.AsUniTask().AttachExternalCancellation(cancellationToken)` for proper cancellation integration.
+
+## [0.3.0] - 2026-07-01
+
+### Changed
+
+- **Sign-out leaves the app signed out**: `SignOutAsync` no longer creates a fresh anonymous account after sign-out. `OnFirebaseAuthChanged` now fires only once (with `null`) instead of twice. This reverses the 0.2.2 behavior where the app always had a Firebase user. Code that relied on `User != null` after sign-out must now check `IsSignedIn`.
+- **Sign-in respects explicit sign-out**: `SignInAsync` skips automatic anonymous sign-in when the player has explicitly signed out, preventing unwanted re-authentication on cold start.
+- `AuthService.Initialize` is now idempotent when called with the same WebClientId, avoiding redundant Google Sign-In reconfiguration.
+
+### Added
+
+- `DEFAULT_GOOGLE_WEB_CLIENT_ID` constant on `AuthService` — the default OAuth Web Client ID provided by the framework.
+- `IsExplicitlySignedOut` static property on `AuthService` for checking the sign-out flag.
+- `EnsureGoogleConfigured()` method caches the `GoogleSignInConfiguration` per WebClientId, reducing allocations and configuration errors.
+- `AuthenticatedInitModule.googleWebClientId` — serialized Inspector field for configuring the Google Web Client ID, defaulting to `DEFAULT_GOOGLE_WEB_CLIENT_ID`.
+- `AuthenticatedInitModule.ConfigureAuthService()` — initializes `AuthService` before sign-in begins.
+- Firebase-stub `SignOutAsync` now records the explicit sign-out flag locally instead of logging a warning.
+
+### Fixed
+
+- Google Sign-In configuration no longer throws when called before dependencies are ready; `EnsureGoogleConfigured` returns `false` gracefully.
+- `SignOutAsync` Firebase sign-out now guarded with `EnsureGoogleConfigured()` to avoid errors when Google Sign-In package is not present.
+
+## [0.2.2] - 2026-05-29
+
+### Changed
+
+- **Google Sign-In-first**: `SignInAsync` (auto-start) now attempts silent Google Sign-In before falling back to Firebase restore or anonymous. Previously it skipped Google entirely on auto-start.
+- `SignOutAsync` now recreates an anonymous Firebase account immediately after sign-out, so the app always has a Firebase user (analytics, cloud save, etc. expect one).
+- Removed `AuthType` enum and `CurrentAuthType` property — derive auth type from `User.IsAnonymous` instead.
+- Removed `PREF_AUTH_TYPE` PlayerPrefs key — Firebase SDK persists the auth session natively.
+- Removed `_googleUser` field — Firebase `User.DisplayName`/`Email` mirrors the Google profile after linking.
+- `GetUserLabel()` simplified to use Firebase `User` directly.
+- Reduced PlayerPrefs persistence to only `PREF_PLAYER_ID` (Google Sign-In user ID, not cached by Firebase).
+
+### Fixed
+
+- Handle "credential already in use" error during `ManualSignInAsync`: when signing in with Google and the credential belongs to a different Firebase account, sign into that existing account instead of failing. Added `IsCredentialAlreadyInUseError` helper that recurses into `InnerException`.
+- `GetUserLabel()` now returns `"Guest {uid_prefix}"` for anonymous users instead of an empty string.
+- `CreateAnonymousAsync` now fires `OnPlatformAuthFinished(false)` to signal platform auth was skipped.
+- Added explicit-sign-out gate: if the user signs out via `SignOutAsync`, the next cold start skips silent Google Sign-In to prevent unwanted auto-re-authentication.
+- `WebClientId` setter is now `private`; use `AuthService.Initialize(webClientId)` to set it once.
+- `OnPgsAuthFinished` is now marked `[Obsolete]` with an auto-forwarding wrapper to `OnPlatformAuthFinished`.
+
+### Breaking
+
+- **`SignInAsync` no longer accepts `forceRefreshToken`** — the parameter was unused and has been removed.
+- **`SignOutAsync` behavior change**: After sign-out, `User` is no longer `null` — a fresh anonymous `FirebaseUser` is created immediately. `OnFirebaseAuthChanged` fires with `null` (sign-out) then with the new anonymous user (re-auth). Code checking `User == null` after sign-out should use `IsSignedIn` instead.
+- **`SignInWithCredentialAsync` on existing non-anonymous users**: If `auth.CurrentUser` is non-null and non-anonymous, calling `SignInWithCredentialAsync` creates a **new Firebase user with a different UID**, orphaning cloud data tied to the old UID. This occurs when a user switches Google accounts. Consider prompting the user before this path.
+- **`WebClientId` is now `private set`** — must be set via `AuthService.Initialize(webClientId)`.
+
+### Added
+
+- `AuthService.Initialize(string webClientId)` — sets the OAuth Web Client ID once before any sign-in call.
+- Silent Google Sign-In is now gated behind a `PlayerPrefs` flag (`__auth_explicitly_signed_out__`) that is set by `SignOutAsync` and cleared on successful sign-in.
+
+## [0.2.1] - 2026-05-13
+
+### Changed
+
+- **Anonymous-first**: `SignInAsync` (auto-start) no longer attempts Google Sign-In at all. It goes straight to Firebase — restoring any persisted session (linked or anonymous), or creating a new anonymous account. Google Sign-In is now **only** triggered by `ManualSignInAsync` (the "Sign in with Google" button).
+- `InternalSignInAsync` split into two distinct paths:
+  - `manual=false` → `EnsureFirebaseAnonIfPossibleAsync` (restore / anonymous).
+  - `manual=true` → Google Sign-In → `LinkWithCredentialAsync` (upgrade anonymous to linked).
+- Updated XML doc comments on `SignInAsync` and `InternalSignInAsync` to accurately describe the anonymous-first flow.
+- `AuthenticatedInitModule` log message updated (no longer mentions Play Games).
+
+## [0.2.0] - 2026-05-13
+
+### Changed
+
+- **BREAKING**: Replaced Google Play Games (GPGS) platform sign-in with **Google Sign-In** Unity package (`com.google.signin.google-signin-unity`).
+  - `AuthService` now uses `GoogleSignIn` / `GoogleAuthProvider` instead of `PlayGamesPlatform` / `PlayGamesAuthProvider`.
+  - Google Sign-In uses **ID tokens** (not server auth codes), so the `forceRefreshToken` parameter on `SignInAsync` is no longer consumed (kept for API compatibility).
+  - Platform sign-in is now cross-platform (Android + iOS), not Android-only.
+  - `AuthService.WebClientId` must be configured before calling `ManualSignInAsync`.
+  - `OnPgsAuthFinished` renamed to `OnPlatformAuthFinished`.
+  - Assembly definition: version define `BUMI_AUTH_HAS_GPGS` replaced with `BUMI_AUTH_HAS_GOOGLE_SIGNIN`.
+- `GetUserLabel()` now prefers Google Sign-In display name/email over Firebase.
+- `SignOutAsync` now calls `GoogleSignIn.DefaultInstance.SignOut()` in addition to Firebase sign-out.
+
+### Removed
+
+- All Google Play Games (GPGS) code paths: `EnsurePgsActivated`, `PgsAuthenticateAsync`, `RequestPgsServerAuthCodeAsync`, `TryLoginOrLinkFirebaseWithPgsAsync`.
+- Assembly reference `Google.Play.Games`.
+
+## [0.1.4] - 2025-12-08
+
+### Changed
+
+- `AuthenticatedInitModule` now participates in the core async initialization pipeline, preventing duplicate sign-in attempts and guaranteeing the initializer waits for a definitive Play Games success/failure (falling back to anonymous when needed).
+- Sign-in no longer aborts immediately when the optional timeout elapses; instead it logs the delay and keeps waiting for the actual Play Games result to avoid false negatives.
+
+## [0.1.2] - 2025-11-21
+
+### Added
+
+- Optional `BUMI_AUTH_HAS_FIREBASE` compile flag so the package can compile in stub mode when Firebase SDK is not yet installed.
+- Automatic version-defined scripting symbols for Firebase (`BUMI_AUTH_HAS_FIREBASE`) and Google Play Games (`BUMI_AUTH_HAS_GPGS`) when their Unity packages are present.
+- Documented the `BUMI_AUTH_HAS_GPGS` guard for Google Play Games integration.
+
+## [0.1.1] - 2025-11-20
+
+### Fixed
+
+- Declared Firebase Auth/App and Google Play Games v2 dependencies in the package manifest to avoid missing reference errors.
+
+## [0.1.0] - 2025-11-20
+
+### Added
+
+- `AuthenticatedInitModule` integrating Auth bootstrap into the core initializer with timeout, skip, and disable flows.
+- `AuthService` wrapping Google Play Games v2 + Firebase Auth sign-in, with anonymous fallback.
+- `CountryService` and `CountryFlagDatabase` for resolving and displaying player country information.
+- Assembly definition and package documentation.

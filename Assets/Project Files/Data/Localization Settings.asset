@@ -12,15 +12,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63817d93022759543b57e795c78efe11, type: 3}
   m_Name: Localization Settings
   m_EditorClassIdentifier: 
-  TableId: 1RvKY3VE_y5FPhEECCa5dv4F7REJ7rBtGzQg9Z_B_DE4
+  TableId: 1nyjn74sYem9xi9R17ZybGs89DuO8wBnYTXL_BgU3JwA
   Sheets:
+  - Name: InitLoading
+    Id: 731270622
+    TextAsset: {fileID: 4900000, guid: 6af330a39fe511a47ba282814045a1cb, type: 3}
+  - Name: Panel
+    Id: 1123022720
+    TextAsset: {fileID: 4900000, guid: c64a3faa766af9144b22fec044f1d895, type: 3}
+  - Name: Shop
+    Id: 759660699
+    TextAsset: {fileID: 4900000, guid: a9fa3990751baf24688be73fdea0dd9f, type: 3}
   - Name: Menu
     Id: 0
     TextAsset: {fileID: 4900000, guid: 4a63fbe929e0a41aca7e87aa4438009d, type: 3}
+  - Name: Skills
+    Id: 1119802231
+    TextAsset: {fileID: 4900000, guid: b1dfd98e926d7c3439b749949c64a773, type: 3}
+  - Name: Skin
+    Id: 515766076
+    TextAsset: {fileID: 4900000, guid: 7d7f88edeee99b94ba43408fb81b4f73, type: 3}
   - Name: Settings
-    Id: 331980525
+    Id: 286050660
     TextAsset: {fileID: 4900000, guid: 1004b370bfe5d4b1d81f9027d8f51c20, type: 3}
-  - Name: Tests
-    Id: 1674352817
-    TextAsset: {fileID: 4900000, guid: cba4bf6c6c29e4669a7d64cd87f4f031, type: 3}
+  - Name: BattlePass
+    Id: 302325891
+    TextAsset: {fileID: 4900000, guid: b9ebeb1138af49c4788c834df0b8b6be, type: 3}
+  - Name: DailyQuest
+    Id: 163729936
+    TextAsset: {fileID: 4900000, guid: c64c886b70800ee4e9031c9a28517015, type: 3}
+  - Name: Profile
+    Id: 45471150
+    TextAsset: {fileID: 4900000, guid: 6bf5163691063ff41b0ce7c915209005, type: 3}
+  - Name: Game
+    Id: 1895281872
+    TextAsset: {fileID: 4900000, guid: ea90219f6ef020740ab1771c723f43d3, type: 3}
+  - Name: Leaderboard
+    Id: 1999849046
+    TextAsset: {fileID: 4900000, guid: e6128f98511c3bb41930af957ab678d2, type: 3}
+  - Name: Tutorial
+    Id: 755330987
+    TextAsset: {fileID: 4900000, guid: 0c2420fc019fb7e44b6bfe2c8386730a, type: 3}
+  - Name: Daily
+    Id: 1180752439
+    TextAsset: {fileID: 4900000, guid: 867aa7c684338d64e8aee8c6edd76786, type: 3}
+  - Name: Weekly
+    Id: 759122480
+    TextAsset: {fileID: 4900000, guid: a1541b5f53cdd0048b99fc02af4a1c36, type: 3}
   SaveFolder: {fileID: 102900000, guid: a43145685d34a4a2ab015d089cffbe64, type: 3}

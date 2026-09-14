@@ -4,21 +4,13 @@ namespace BumiMobile
 {
     public static class Core
     {
-        private static Func<bool> monetizationStatusResolver;
+        [Obsolete("Monetization package has been removed. This method is a no-op.")]
+        public static bool IsMonetizationActive() => false;
 
-        public static bool IsMonetizationActive()
-        {
-            return monetizationStatusResolver?.Invoke() ?? false;
-        }
+        [Obsolete("Monetization package has been removed. This method is a no-op.")]
+        public static void RegisterMonetizationStatus(Func<bool> resolver) { }
 
-        public static void RegisterMonetizationStatus(Func<bool> resolver)
-        {
-            monetizationStatusResolver = resolver;
-        }
-
-        public static void ClearMonetizationStatus()
-        {
-            monetizationStatusResolver = null;
-        }
+        [Obsolete("Monetization package has been removed. This method is a no-op.")]
+        public static void ClearMonetizationStatus() { }
     }
 }

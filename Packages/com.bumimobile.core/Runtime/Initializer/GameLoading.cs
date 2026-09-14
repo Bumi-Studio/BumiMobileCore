@@ -14,6 +14,7 @@ namespace BumiMobile
         private static bool isReadyToHide;
         private static bool manualControlMode;
         private static string loadingMessage;
+        private static float manualProgress = -1f;
         private static readonly List<LoadingTask> loadingTasks = new List<LoadingTask>();
 
         public static event LoadingCallback OnLoading;
@@ -24,7 +25,21 @@ namespace BumiMobile
             loadingMessage = message;
 
             float progress = loadingOperation != null ? loadingOperation.progress : 0.0f;
-            OnLoading?.Invoke(progress, message);
+            OnLoading?.Invoke(ResolveProgress(progress), message);
+        }
+
+        public static void SetLoadingStatus(float progress, string message)
+        {
+            manualProgress = Mathf.Clamp01(progress);
+            loadingMessage = message;
+
+            float fallback = loadingOperation != null ? loadingOperation.progress : 0.0f;
+            OnLoading?.Invoke(ResolveProgress(fallback), message);
+        }
+
+        public static void ClearManualProgressOverride()
+        {
+            manualProgress = -1f;
         }
 
         public static void AddTask(LoadingTask loadingTask)
@@ -61,6 +76,8 @@ namespace BumiMobile
 
             float minimumFinishTime = realtimeSinceStartup + MinimumLoadingTime;
 
+            ClearManualProgressOverride();
+
             loadingOperation = SceneManager.LoadSceneAsync(sceneIndex);
             loadingOperation.allowSceneActivation = false;
 
@@ -70,7 +87,8 @@ namespace BumiMobile
 
                 realtimeSinceStartup = Time.realtimeSinceStartup;
 
-                OnLoading?.Invoke(1.0f, loadingMessage);
+                float currentProgress = loadingOperation != null ? loadingOperation.progress : 1.0f;
+                OnLoading?.Invoke(ResolveProgress(currentProgress), loadingMessage);
 
                 if (loadingOperation.progress >= 0.9f)
                 {
@@ -95,7 +113,7 @@ namespace BumiMobile
                 }
             }
 
-            OnLoading?.Invoke(1.0f, "Done");
+            OnLoading?.Invoke(ResolveProgress(1.0f), "Done");
 
             yield return null;
 
@@ -103,6 +121,7 @@ namespace BumiMobile
             OnLoadingFinished?.Invoke();
 
             loadingOperation = null;
+            ClearManualProgressOverride();
         }
 
         private static IEnumerator SimpleLoadCoroutine(SimpleCallback onSceneLoaded = null)
@@ -148,5 +167,10 @@ namespace BumiMobile
         }
 
         public delegate void LoadingCallback(float state, string message);
+
+        private static float ResolveProgress(float fallback)
+        {
+            return manualProgress >= 0f ? manualProgress : fallback;
+        }
     }
 }

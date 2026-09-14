@@ -1,0 +1,307 @@
+using System;
+using System.Collections;
+using UnityEngine;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace BumiMobile
+{
+    [StaticUnload]
+    public static class SaveController
+    {
+        public enum SaveLoadPhase { LocalLoaded, CloudApplied, CloudSkipped }
+        public static event System.Action<SaveLoadPhase> OnSavePhase;
+        private static void InvokePhase(SaveLoadPhase phase)
+        {
+            OnSaveLoaded?.Invoke();         // backward-compat (dipanggil saat Local & Cloud)
+            OnSavePhase?.Invoke(phase);     // fase spesifik
+        }
+        private static string saveFileName = "save";
+
+        private static GlobalSave globalSave;
+        public static GlobalSave GlobalSave { get => globalSave; set => globalSave = value; }
+
+        private static bool isSaveLoaded;
+        public static bool IsSaveLoaded => isSaveLoaded;
+
+        private static bool isSaveRequired;
+
+        public static float GameTime => globalSave.GameTime;
+
+        public static DateTime LastExitTime => globalSave.LastExitTime;
+
+        public static event SimpleCallback OnSaveLoaded;
+
+        public static void Init(float autoSaveDelay, GlobalSave initialGlobalSave, bool clearSave = false, float overrideTime = -1f, int saveSlotIndex = 0)
+        {
+            saveFileName = saveSlotIndex > 0 ? $"save_{saveSlotIndex}" : "save";
+            GlobalSave = initialGlobalSave ?? new GlobalSave();
+            Serializer.Init();
+
+            GameObject saveCallbackReciever = new GameObject("[SAVE CALLBACK RECIEVER]");
+            saveCallbackReciever.hideFlags = HideFlags.HideInHierarchy;
+
+            GameObject.DontDestroyOnLoad(saveCallbackReciever);
+
+            UnityCallbackReciever unityCallbackReciever = saveCallbackReciever.AddComponent<UnityCallbackReciever>();
+
+            if (clearSave)
+            {
+                InitClear(overrideTime != -1f ? overrideTime : Time.time);
+            }
+            else
+            {
+                Load(overrideTime != -1f ? overrideTime : Time.time);
+            }
+
+            if (autoSaveDelay > 0)
+            {
+                // Enable auto-save coroutine
+                unityCallbackReciever.StartCoroutine(AutoSaveCoroutine(autoSaveDelay));
+            }
+        }
+
+        public static void UpdateTime(float time)
+        {
+            globalSave.Time = time;
+        }
+
+        public static T GetSaveObject<T>(int hash) where T : ISaveObject, new()
+        {
+            if (!isSaveLoaded)
+            {
+                Debug.LogError("Save controller has not been initialized");
+                return default;
+            }
+
+            return globalSave.GetSaveObject<T>(hash);
+        }
+
+        public static T GetSaveObject<T>(string uniqueName) where T : ISaveObject, new()
+        {
+            return GetSaveObject<T>(uniqueName.GetHashCode());
+        }
+
+        private static void InitClear(float time)
+        {
+            globalSave = new GlobalSave();
+            globalSave.Init(time);
+
+            Debug.Log("[Save Controller]: Created clear save!");
+
+            isSaveLoaded = true;
+        }
+
+        private static void Load(float time)
+        {
+            if (isSaveLoaded)
+                return;
+
+            // Try to read and deserialize file or create new one
+            globalSave = BaseSaveWrapper.ActiveWrapper.Load(saveFileName);
+
+            globalSave.Init(time);
+
+            Debug.Log("[Save Controller]: Save is loaded!");
+
+            isSaveLoaded = true;
+
+            OnSaveLoaded?.Invoke();
+        }
+
+        public static void Save(bool forceSave = false, bool useThreads = true, bool saveCloudImmediately = false, bool saveCloud = true)
+        {
+            if (!forceSave && !isSaveRequired) return;
+            if (globalSave == null) return;
+
+            globalSave.Flush(true);
+            if (saveCloudImmediately)
+            {
+                useThreads = false;
+            }
+
+            BaseSaveWrapper saveWrapper = BaseSaveWrapper.ActiveWrapper;
+            if (useThreads && saveWrapper.UseThreads())
+            {
+                Thread saveThread = new Thread(() => BaseSaveWrapper.ActiveWrapper.SaveLocal(globalSave, saveFileName));
+                saveThread.Start();
+            }
+            else
+            {
+                BaseSaveWrapper.ActiveWrapper.SaveLocal(globalSave, saveFileName);
+            }
+
+            if (saveCloud)
+            {
+                if (saveCloudImmediately)
+                {
+                    BaseSaveWrapper.ActiveWrapper.SaveCloudNow(globalSave);
+                }
+                else
+                {
+                    BaseSaveWrapper.ActiveWrapper.SaveCloud(globalSave);
+                }
+            }
+
+            Debug.Log("[Save Controller]: Game is saved!");
+
+            isSaveRequired = false;
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public static async Task<bool> SaveAndWaitForCloudAsync(bool forceSave = false)
+        {
+            if (!forceSave && !isSaveRequired) return true;
+            if (globalSave == null) return false;
+
+            Save(forceSave, useThreads: false, saveCloud: false);
+            return await BaseSaveWrapper.ActiveWrapper.SaveCloudNowAsync(globalSave);
+        }
+
+        public static void SaveCustom(GlobalSave globalSave)
+        {
+            if (globalSave != null)
+            {
+                globalSave.Flush(false);
+
+                BaseSaveWrapper.ActiveWrapper.Save(globalSave, saveFileName);
+            }
+        }
+
+        public static void MarkAsSaveIsRequired()
+        {
+            isSaveRequired = true;
+        }
+
+        private static IEnumerator AutoSaveCoroutine(float saveDelay)
+        {
+            WaitForSeconds waitForSeconds = new WaitForSeconds(saveDelay);
+
+            while (true)
+            {
+                yield return waitForSeconds;
+
+                Save();
+            }
+        }
+
+        public static void PresetsSave(string fullFileName)
+        {
+            globalSave.Flush(false);
+
+            BaseSaveWrapper.ActiveWrapper.Save(globalSave, fullFileName);
+        }
+
+        public static void Info()
+        {
+            globalSave.Info();
+        }
+
+        public static void DeleteSaveFile()
+        {
+            BaseSaveWrapper.ActiveWrapper.Delete(saveFileName);
+        }
+
+        public static GlobalSave GetGlobalSave()
+        {
+            GlobalSave tempGlobalSave = BaseSaveWrapper.ActiveWrapper.Load(saveFileName);
+
+            tempGlobalSave.Init(Time.time);
+
+            return tempGlobalSave;
+        }
+
+        private static void UnloadStatic()
+        {
+            globalSave = null;
+
+            isSaveLoaded = false;
+            isSaveRequired = false;
+
+            OnSaveLoaded = null;
+        }
+        public static void BeginCloudLoadAndReplace()
+        {
+            if (!BaseSaveWrapper.Active.SupportsCloud)
+            {
+                OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
+                return;
+            }
+
+            GlobalSave localSave = globalSave;
+            BaseSaveWrapper.Active.BeginCloudLoad(cloud =>
+            {
+                if (cloud == null)
+                {
+                    OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
+                    return;
+                }
+
+                cloud.Init(Time.time);
+
+                if (ShouldUseCloudSave(localSave, cloud))
+                {
+                    globalSave = cloud;
+                    isSaveLoaded = true;
+
+                    Debug.Log("[Save Controller] Cloud applied.");
+                    InvokePhase(SaveLoadPhase.CloudApplied);
+                    return;
+                }
+
+                if (localSave != null)
+                {
+                    Debug.Log("[Save Controller] Local save is newer than cloud. Keeping local data and syncing it up.");
+                    BaseSaveWrapper.ActiveWrapper.SaveCloudNow(localSave);
+                }
+
+                OnSavePhase?.Invoke(SaveLoadPhase.CloudSkipped);
+            });
+        }
+
+        private static bool ShouldUseCloudSave(GlobalSave localSave, GlobalSave cloudSave)
+        {
+            if (cloudSave == null)
+            {
+                return false;
+            }
+
+            if (localSave == null)
+            {
+                return true;
+            }
+
+            DateTime localExitTime = localSave.LastExitTime;
+            DateTime cloudExitTime = cloudSave.LastExitTime;
+
+            if (cloudExitTime == DateTime.MinValue)
+            {
+                return false;
+            }
+
+            if (localExitTime == DateTime.MinValue)
+            {
+                return true;
+            }
+
+            return cloudExitTime > localExitTime;
+        }
+
+        private class UnityCallbackReciever : MonoBehaviour
+        {
+            private void OnDestroy()
+            {
+#if UNITY_EDITOR
+                SaveController.Save(true);
+#endif
+            }
+
+            private void OnApplicationFocus(bool focus)
+            {
+#if !UNITY_EDITOR
+                if(!focus) SaveController.Save();
+#endif
+            }
+        }
+    }
+}

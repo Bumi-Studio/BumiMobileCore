@@ -1,0 +1,19 @@
+{
+  "name": "com.bumimobile.auth",
+  "displayName": "Bumi Mobile Auth",
+  "version": "0.4.0",
+  "unity": "2021.3",
+  "description": "Anonymous-first authentication for the Bumi Mobile framework.",
+  "keywords": [
+    "bumi",
+    "auth",
+    "login",
+    "google-signin",
+    "apple-signin",
+    "firebase"
+  ],
+  "category": "Framework",
+  "dependencies": {
+    "com.bumimobile.core": "0.1.3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "BumiMobile.PushNotification.Editor",
+  "references": [
+    "BumiMobile.PushNotification"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

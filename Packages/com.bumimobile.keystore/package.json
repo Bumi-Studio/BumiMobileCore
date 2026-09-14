@@ -1,0 +1,13 @@
+{
+  "name": "com.bumimobile.keystore",
+  "displayName": "Bumi Mobile Keystore",
+  "version": "0.0.1",
+  "unity": "2019.4",
+  "description": "Simple encrypted keystore for storing secrets and API keys. Includes an Editor window (Tools/🔐 Secret Keystore) and runtime helper for loading secrets from Resources.",
+  "keywords": ["keystore", "secrets", "encryption", "bumi"],
+  "category": "Tools",
+  "author": {
+    "name": "Bumi Mobile"
+  },
+  "dependencies": {}
+}

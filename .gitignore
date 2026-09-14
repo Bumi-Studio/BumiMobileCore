@@ -71,6 +71,9 @@ mono_crash.*
 *.aab
 *.unitypackage
 *.unitypackage.meta
+# Allow .unitypackage files shipped as UPM samples (Samples~/)
+!**/Samples~/**/*.unitypackage
+!**/Samples~/**/*.unitypackage.meta
 *.app
 
 # Crashlytics generated file

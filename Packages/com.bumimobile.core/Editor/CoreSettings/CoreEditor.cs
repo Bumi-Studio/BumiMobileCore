@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -7,6 +8,10 @@ namespace BumiMobile
     [InitializeOnLoad]
     public static class CoreEditor
     {
+        private const string CoreFolderName = "BumiMobile";
+        private const string DefaultCoreFolder = "Assets/Project Files/Data";
+        private const string DefaultCoreSettingsPath = DefaultCoreFolder + "/Core Settings.asset";
+
         public static string FolderCore { get; private set; }
         public static string FolderCoreModules => Path.Combine(FolderCore, "Modules");
         public static string FolderData { get; private set; }
@@ -21,7 +26,7 @@ namespace BumiMobile
         public static Color AdsDummyBackgroundColor { get; private set; } = new Color(0.2f, 0.2f, 0.3f);
         public static Color AdsDummyMainColor { get; private set; } = new Color(0.2f, 0.3f, 0.7f);
 
-        public static bool ShowWatermelonPromotions { get; private set; } = true;
+        public static bool ShowBumiMobilePromotions { get; private set; } = true;
 
         static CoreEditor()
         {
@@ -43,23 +48,56 @@ namespace BumiMobile
 
                 coreSettings = ScriptableObject.CreateInstance<CoreSettings>();
 
-                FolderCore = Path.Combine("Assets", "Bumi Mobile Core");
+                EnsureDefaultCoreFolder();
 
-                if (!AssetDatabase.IsValidFolder(FolderCore))
-                {
-                    AssetDatabase.CreateFolder("Assets", "Bumi Mobile Core");
-                }
-
-                AssetDatabase.CreateAsset(coreSettings, Path.Combine(FolderCore, "Core Settings.asset"));
+                AssetDatabase.CreateAsset(coreSettings, DefaultCoreSettingsPath);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
             else
             {
-                FolderCore = AssetDatabase.GetAssetPath(coreSettings).Replace(coreSettings.name + ".asset", "");
+                coreSettings = EnsureProjectOwnedSettings(coreSettings);
             }
 
+            FolderCore = AssetDatabase.GetAssetPath(coreSettings).Replace(coreSettings.name + ".asset", "");
             ApplySettings(coreSettings);
+        }
+
+        private static void EnsureDefaultCoreFolder()
+        {
+            if (!AssetDatabase.IsValidFolder(DefaultCoreFolder))
+            {
+                AssetDatabase.CreateFolder("Assets", CoreFolderName);
+            }
+        }
+
+        private static CoreSettings EnsureProjectOwnedSettings(CoreSettings settings)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(settings);
+            if (!assetPath.StartsWith("Packages/", StringComparison.OrdinalIgnoreCase))
+            {
+                return settings;
+            }
+
+            CoreSettings existingProjectAsset = AssetDatabase.LoadAssetAtPath<CoreSettings>(DefaultCoreSettingsPath);
+            if (existingProjectAsset != null)
+            {
+                return existingProjectAsset;
+            }
+
+            EnsureDefaultCoreFolder();
+
+            if (!AssetDatabase.CopyAsset(assetPath, DefaultCoreSettingsPath))
+            {
+                CoreSettings clone = ScriptableObject.CreateInstance<CoreSettings>();
+                EditorUtility.CopySerialized(settings, clone);
+                AssetDatabase.CreateAsset(clone, DefaultCoreSettingsPath);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[Bumi Mobile Core]: Core Settings asset has been copied into Assets for easier editing.");
+            return AssetDatabase.LoadAssetAtPath<CoreSettings>(DefaultCoreSettingsPath);
         }
 
         public static void ApplySettings(CoreSettings settings)

@@ -25,7 +25,6 @@ namespace BumiMobile
             new RegisteredDefine("MODULE_IDFA", "Unity.Advertisement.IosSupport.ATTrackingStatusBinding"),
 
             // Core
-            new RegisteredDefine("MODULE_MONETIZATION", "Bumi.Monetization"),
             new RegisteredDefine("MODULE_IAP", "UnityEngine.Purchasing.UnityPurchasing"),
             new RegisteredDefine("MODULE_POWERUPS", "Bumi.PUController"),
             new RegisteredDefine("MODULE_HAPTIC", "Bumi.Haptic"),

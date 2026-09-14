@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a79c5edd3ba644e2995f75de8b142c1, type: 3}
+  m_Name: Event_ramadhan_321ae06f3226
+  m_EditorClassIdentifier: 
+  eventId: ramadhan_321ae06f3226
+  displayName: Ramadhan
+  spriteLibrary: {fileID: 11400000, guid: 0da22b9b50ba1bb4a905edc0628d9da0, type: 2}
+  schedule:
+    useSchedule: 1
+    startUtc: 2026-04-20T00:00:00Z
+    endUtc: 2026-05-31T23:59:59Z

@@ -1,6 +1,33 @@
-Key,English,German,Russian
-Menu.Example.Title,Menu,Menü,Меню
-Menu.Example.NewGame,New game,Neues Spiel,Новая игра
-Menu.Example.Continue,Continue,Fortsetzen,Продолжить
-Menu.Example.Settings,Settings,Einstellungen,Настройки
-Menu.Example.Review,Write a review,Eine Rezension schreiben,Написать отзыв
+Key,English,Indonesian,MandarinSimplified,MandarinTraditional,Japanese,Korean,Italian,Spanish,French,German,Vietnamese,Portuguese,Filipino,Arab,Tamil,Russian,Thai,Dutch,Hindi,Turkish
+Menu.Start,Start,Mulai,开始,開始,スタート,스타트,Inizia,Iniciar,Commencer,Starten,Bắt đầu,Iniciar,Simula,ابدأ,தொடங்கு,Начинать,เริ่ม,Start,शुरू करें,Başlangıç
+Menu.Shop,Shop,Toko,商店,商店,ショップ,상점,Negozio,Tienda,Boutique,Laden,Cửa hàng,Loja,Tindahan,متجر,கடை,Магазин,ร้านค้า,Winkel,खरीदारी करें।,Mağaza
+Menu.Theme,Theme,Tema,主题,主題,テーマ,테마,Tema,Tema,Thème,Thema,Chủ đề,Tema,Tema,السِمة,தீம்,Тема,ธีม,Theme,खरीदारी करें।,Tema
+Menu.Leaderboard,Leaderboard,Papan Peringkat,排行榜,排行榜,リーダーボード,리더보드,Classifica,Clasificación,Tableau des leaders,Rangliste,Bảng xếp hạng,Classificação,Talaan ng Pinuno,لوحة المتصدرين,லீடர்போர்டு,Таблица лидеров,กระดานผู้นำ,Klassement,लीडरबोर्ड,Lider Tablosu
+Menu.Ads,Ads,Iklan,广告,廣告,広告,광고,Annunci,Anuncios,Publicités,Werbung,Quảng cáo,Anúncios,Mga Ad,إعلانات,விளம்பரம்,Реклама,โฆษณา,Ads,विज्ञापन,Reklamlar
+Menu.Rank,Rank Level,Peringkat,排名,排名,ランクレベル,랭크 레벨,Livello di Rango,Nivel de Rango,Niveau de rang,Rangstufe,Cấp Bậc Xếp Hạng,Nível de Ranking,Antas ng Ranggo,مستوى الترتيب,தர நிலை,Уровень ранга,ระดับคะแนน,Rank Level,रैंक स्तर,Rang Seviyesi
+Menu.Score,Score,Skor,分数,分數,スコア,점수,Punteggio,Puntuación,Score,Punktzahl,Điểm số,Pontuação,Iskor,النقاط,மதிப்பெண்,Очки,คะแนน,Score,स्कोर,Puan
+Menu.RemoveAds,Remove Ads,Hapus Iklan,删除广告,刪除廣告,広告を削除する,광고 제거,Rimuovi Annunci,Eliminar Anuncios,Supprimer les publicités,Werbung Entfernen,Xóa Quảng Cáo,Remover Anúncios,Alisin ang Mga Ad,إزالة الإعلانات,விளம்பரங்களை அகற்று,Удалить рекламу,ลบโฆษณา,Geen ads,विज्ञापन हटाएँ,Reklamları Kaldır
+Menu.DailyReward,Daily Reward,Hadiah Harian,每日奖励,每日獎勵,デイリーリワード,데일리 보상,Ricompensa Giornaliera,Recompensa Diaria,Récompense quotidienne,Tägliche Belohnung,Phần thưởng hằng ngày,Recompensa Diária,Araw-araw na Gantimpala,المكافأة اليومية,தினசரி வெகுமதிகள்,Ежедневная награда,ทุกวัน รางวัล,Dagelijkse Beloning,दैनिक पुरस्कार,Günlük Ödül
+Menu.Quest,Quest,Misi,任务,任務,クエスト,퀘스트,Missione,Misión,Quête,Quest,Nhiệm vụ,Missão,Misyon,البحث,பணி,Задание,ภารกิจ,Quest,क्वेस्ट,Görev
+Menu.Battlepass,Battle Pass,Tiket Pertarungan,战斗通行证,戰鬥通行證,バトルパス,배틀 패스,Pass Battaglia,Pase de Batalla,Pass de combat,Battle Pass,Thẻ chiến đấu,Passe de Batalha,Battle Pass,بطاقة المعركة,சண்டை டிக்கெட்,Боевой пропуск,Battle Pass,Battle Pass,बैटल पास,Savaş Geçişi
+Menu.Skin,Skin,Kostum,皮肤,皮膚,スキン,스킨,Skin,Skin,Peau,Kostüm,Trang phục,Skin,Skin,الجلد,ஆடை,Кожа,สกิน,Skin,त्वचा.,Derisi
+Menu.LockBP,Unlock Battle Pass at level 20,Buka Tiket Pertarungan pada level 20,在第20关解锁战斗通行证,在第20關解鎖戰鬥通行證,レベル20でバトルパス解放！,레벨 20에 배틀 패스 해금,Sblocca il Battle Pass al livello 20,Desbloquea el pase de batalla en el nivel 20.,Débloquer le pass de combat au niveau 20,Schalte den Battle Pass auf Stufe 20 frei.,Mở khóa Battle Pass ở cấp 20,Desbloqueie o Passe de Batalha no nível 20.,I-unlock ang Battle Pass sa level 20,فتح تذكرة المعركة عند المستوى 20,"நிலை 20-ல் பேட்டில் பாஸ் 
+திறக்கவும்",Разблокировать боевой пропуск на уровне 20,ปลดล็อก Battle Pass ที่เลเวล 20,Ontgrendel Battle Pass op niveau 20,लेवल 20 पर बैटल पास को अनलॉक करें,Savaş Geçişini 20. seviyede aç
+Menu.LockDailyReward,Unlock Daily Reward at level 6,Buka Hadiah Harian pada level 6,在第6关解锁每日奖励,在第6關解鎖每日獎勵,レベル6でデイリー報酬解放！,레벨 6에 일일 보상 해금,Sblocca la Ricompensa Giornaliera al livello 6,Desbloquea la recompensa diaria en el nivel 6.,Débloquer la récompense quotidienne au niveau 6,"Schalte die tägliche Belohnung auf Stufe 
+6 frei.",Mở khóa Phần Thưởng Hằng Ngày ở cấp 6,Desbloqueie a Recompensa Diária no nível 6.,"I-unlock ang Pang-araw-araw naGantimpala 
+sa antas 6",فتح المكافأة اليومية عند المستوى 6,"நிலை 6-ல் தினசரி பரிசு 
+திறக்கவும்",Разблокировать ежедневную награду на уровне 6,ปลดล็อกรางวัลรายวันเมื่อถึงเลเวล 6,Ontgrendel de dagelijkse beloning op niveau 6,स्तर 6 पर दैनिक पुरस्कार को अनलॉक करें,Günlük Ödülü 6. seviyede aç
+Menu.LockQuest,Unlock Quest at level 10,Buka Misi pada level 10,在第10关解锁任务,在第10關解鎖任務,レベル10でクエスト解放！,레벨 10에 퀘스트 해금,Sblocca le Missioni al livello 10,Desbloquea la misión en el nivel 10.,Débloquer la quête au niveau 10,Schalte die Quest auf Stufe 10 frei.,Mở khóa Nhiệm Vụ ở cấp 10,Desbloqueie a Missão no nível 10.,I-unlock ang Quest sa level 10,فتح المهمة عند المستوى 10,நிலை 10-ல் கேள்வி திறக்கவும்,Разблокировать задание на уровне 10,ปลดล็อกเควสต์เมื่อถึงเลเวล 10,Ontgrendel Quest op niveau 10,स्तर 10 पर क्वेस्ट को अनलॉक करें,Görevi 10. seviyede aç
+Menu.LockSkinShop,Unlock Skin Shop at level 7,Buka Toko Kostum pada level 7,在第7关解锁皮肤商店,在第7關解鎖皮膚商店,レベル7でスキンショップ解放！,레벨 7에 스킨 상점 해금,Sblocca il Negozio Skins al livello 7,Desbloquea la tienda de aspectos en el nivel 7.,Débloquer la boutique de peau au niveau 7,Schalte den Skin-Shop auf Stufe 7 frei.,Mở khóa Cửa Hàng Trang Phục ở cấp 7,Desbloqueie a Loja de Skins no nível 7.,I-unlock ang Skin Shop sa level 7,فتح متجر المظهر عند المستوى 7,"நிலை 7-ல் ஸ்கின் கடை 
+திறக்கவும்",Разблокировать магазин кожи на уровне 7,ปลดล็อกร้านขายสกินเมื่อถึงเลเวล 7,Ontgrendel Skin Shop op niveau 7,स्तर 7 पर स्किन शॉप को अनलॉक करें,Derisi Mağazasını 7. seviyede aç
+Menu.LockShop,Unlock Shop at level 5,Buka Toko pada level 5,在第5关解锁商店,在第5關解鎖商店,レベル5でショップ解放！,레벨 5에 상점 해금,Sblocca il Negozio al livello 5,Desbloquea la tienda en el nivel 5.,Débloquer la boutique au niveau 5,Schalte den Shop auf Stufe 5 frei.,Mở khóa Cửa Hàng ở cấp 5,Desbloqueie a Loja no nível 5.,I-unlock ang Shop sa level 5,فتح المتجر عند المستوى 5,நிலை 5-ல் கடை திறக்கவும்,Разблокировать магазин на уровне 5,ปลดล็อกร้านค้าเมื่อถึงเลเวล 5,Ontgrendel Shop op niveau 5,स्तर 5 पर दुकान खोलें,Mağazayı 5. seviyede aç
+Menu.LockLeaderboard,Unlock Leaderboard at level 20 ,Buka Papan Peringkat pada level 20,在第20关解锁排行榜,在第20關解鎖排行榜,レベル20でリーダーボード解放！,레벨 20에 리더보드 해금,Sblocca la Classifica al livello 20,Desbloquea la tabla de clasificación en el nivel 20.,Débloquer le tableau des leaders au niveau 20,Schalte die Rangliste auf Stufe 20 frei.,Mở khóa Bảng Xếp Hạng ở cấp 20,Desbloqueie a Tabela de Classificação no nível 20.,I-unlock ang Leaderboard sa level20,فتح لوحة المتصدرين عند المستوى 20,"நிலை 20-ல் முன்னணி 
+பட்டியல் திறக்கவும்",Разблокировать таблицу лидеров на уровне 20,ปลดล็อกกระดานผู้นำเมื่อถึงเลเวล 20,Ontgrendel het klassement op niveau 20 ,स्तर 2 पर लीडरबोर्ड अनलॉक करें,Lider Tablosunu 20. seviyede aç
+Menu.QuitTitle,QUIT ,KELUAR,退出游戏,退出遊戲,終了,종료,ESCI ,SALIR,QUITTER,BEENDEN ,THOÁT,SAIR,Lumabas,توقف,வெளியேறு,ВЫЙТИ,ออกจากเกม,AFSLUITEN,बाहर निकलें,ÇIK
+Menu.QuitDescription,Are you want to quit ?,Apakah Anda ingin keluar?,你确定要退出游戏吗？,你確定要退出遊戲嗎？,終了しますか？,종료하시겠습니까?,Vuoi smettere?,¿Desea salir?,Voulez-vous quitter ?,Möchten Sie beenden?,Bạn có muốn thoát không?,Quer sair?,Gusto mo bang lumabas?,هل تريد التوقف؟,நீங்கள் வெளியேற விரும்புகிறீர்களா?,Вы хотите выйти?,คุณต้องการออกจากเกมหรือไม่?,Wil je het spel afsluiten?,क्या आप बाहर निकलना चाहते हैं?,Çıkmak istiyor musunuz?
+Menu.QuitYes,YES,YA,是的,是的,はい,예,SÌ,SÍ,OUI,JA,CÓ,SIM,Oo,نعم,ஆம்,ДА,ใช่,JA,हाँ,EVET
+Menu.QuitNo,NO,Tidak,不是,不是,いいえ,아니오,NO,NO,NON,Nein,KHÔNG,NÃO,Hindi,لا,இல்லை,НЕТ,ไม่,NEE,नहीं,HAYIR
+,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,
+,, ,,,,,,,,,,,,,,,,,,
