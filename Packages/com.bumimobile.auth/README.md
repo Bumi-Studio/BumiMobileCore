@@ -5,9 +5,9 @@ Google Sign-In-first authentication for Bumi Mobile projects. This package attem
 ## Features
 
 - **Google Sign-In-first** — `SignInAsync()` tries silent Google Sign-In before anything else. Returning Google users restore their session with no UI interaction. If silent sign-in fails, it falls back to a persisted Firebase session or creates an anonymous account.
-- **Upgrade on demand** — `ManualSignInAsync()` (Google) and `ManualSignInWithAppleAsync()` (Apple) show the provider account flow. When the player signs in, their existing anonymous account is **linked** (upgraded) — all game data associated with that Firebase UID is preserved.
+- **Upgrade on demand** — `ManualSignInAsync()` (Google, usable accounts) and `ManualSignInWithAccountPickerAsync()` (Google, full interactive account chooser) and `ManualSignInWithAppleAsync()` (Apple) show the provider account flow. When the player signs in, their existing anonymous account is **linked** (upgraded) — all game data associated with that Firebase UID is preserved.
 - **Sign in with Apple** — `ManualSignInWithAppleAsync()` runs the native Apple ID flow on iOS/macOS and links/upgrades Firebase the same way as Google. `IsAppleSignInSupported` reports whether the platform can offer it.
-- **Always authenticated** — `SignOutAsync()` signs out of Google and Firebase, clears state, then immediately creates a fresh anonymous account. The app never goes userless — analytics, cloud save, and leaderboards always have a Firebase user.
+- **Explicit sign-out is respected** — `SignOutAsync()` signs out of Google and Firebase and leaves the app signed out (`AuthService.User == null`). It does **not** create a replacement anonymous account; automatic startup auth is skipped while the `__auth_explicitly_signed_out__` flag is set, and it is cleared by the next successful sign-in.
 - `AuthenticatedInitModule` — an init module that bootstraps the session during the initializer pipeline, with timeout handling and skip/disable flags.
 - `CountryService` — resolves the player country via IP lookup, caches the result, and optionally provides flag sprites via `CountryFlagDatabase` ScriptableObject.
 - `CountryFlagDatabase` — editable asset mapping ISO country codes to flag sprites and localized names.
@@ -60,6 +60,35 @@ public async void OnSignInWithGoogleClicked()
 ```
 
 Use `AuthService.OnSignInCompleted` for systems that need to react to the completed authentication operation. `OnFirebaseAuthChanged` observes the Firebase state transition and may be raised before the sign-in method returns, so it should not be used as the UI completion signal.
+
+`ManualSignInAsync` only surfaces accounts that are already usable/previously authorized on the device. To let the player pick **any** Google account (including one that has never authorized this app), call the explicit interactive picker instead:
+
+```csharp
+public async void OnChooseGoogleAccountClicked()
+{
+    bool ok = await AuthService.ManualSignInWithAccountPickerAsync();
+    // ok == true  → account is now Google-linked
+    // ok == false → user cancelled or error — still has the previous session
+}
+```
+
+Both manual methods are user-initiated: each attempt clears the automatic-picker
+suppression flag and re-enables future automatic startup prompts. A cancel during
+the attempt re-suppresses automatic prompts.
+
+##### Switching accounts
+
+Signing in with a credential while the current Firebase user is non-anonymous
+creates a **new Firebase UID** and orphans data tied to the old one. Observe
+`AuthService.OnAccountSwitched` (parameters: `previousUserId`, `newUserId`) and/or
+read `AuthService.LastSwitchedFromUserId` to detect this and migrate/react:
+
+```csharp
+AuthService.OnAccountSwitched += (previousUserId, newUserId) =>
+{
+    // previousUserId != newUserId: data tied to the old UID is now orphaned
+};
+```
 
 The Web Client ID is created in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) under **Credentials → Create Credentials → OAuth client ID → Web application**.
 
@@ -160,22 +189,30 @@ App Start
 
 Manual "Sign in with Google" button          Manual "Sign in with Apple" button
   └─ AuthService.ManualSignInAsync()            └─ AuthService.ManualSignInWithAppleAsync()
-       ├─ Google account flow                        ├─ AppleAuthManager.LoginWithAppleId()  // native, hashed nonce
-       ├─ GoogleAuthProvider.GetCredential()         ├─ OAuthProvider.GetCredential("apple.com", idToken, rawNonce)
-       └─ TryAuthFirebaseWithCredentialAsync() ──┬── └─ TryAuthFirebaseWithCredentialAsync()
-                                                 │
+     │  (usable accounts only)                       ├─ AppleAuthManager.LoginWithAppleId()  // native, hashed nonce
+     │                                               ├─ OAuthProvider.GetCredential("apple.com", idToken, rawNonce)
+     │                                               └─ TryAuthFirebaseWithCredentialAsync()
+     │  ── or ──
+     └─ AuthService.ManualSignInWithAccountPickerAsync()
+        │  (full interactive account chooser)
+        ├─ GoogleSignIn.DefaultInstance.SignIn()
+        ├─ GoogleAuthProvider.GetCredential()
+        └─ TryAuthFirebaseWithCredentialAsync() ──┬──
+                                                  │
                           shared Firebase step:  ├─ auth.CurrentUser.IsAnonymous?
-                                                 │    ├─ Yes → LinkWithCredentialAsync()   // upgrade anonymous → linked
-                                                 │    │        └─ already in use? → SignInWithCredentialAsync() into that account
-                                                 │    └─ No  → SignInWithCredentialAsync() // direct sign-in
-                                                 └─ All game data tied to the Firebase UID is preserved!
+                                                  │    ├─ Yes → LinkWithCredentialAsync()   // upgrade anonymous → linked
+                                                  │    │        └─ already in use? → SignInWithCredentialAsync() into that account
+                                                  │    └─ No  → SignInWithCredentialAsync() // direct sign-in
+                                                  │             └─ UID changed? → OnAccountSwitched(prev, new)
+                                                  └─ All game data tied to the Firebase UID is preserved!
 
 Sign Out
   └─ AuthService.SignOutAsync()
        ├─ GoogleSignIn.DefaultInstance.SignOut()
        ├─ FirebaseAuth.SignOut()
        ├─ Clear PlayerId cache
-       └─ SignInAnonymouslyAsync() → new anonymous account (app stays "logged in")
+       ├─ Set __auth_explicitly_signed_out__ (+ suppress automatic picker)
+       └─ Leaves the app signed out (User == null); no anonymous replacement account
 ```
 
 ### State flags after each scenario
@@ -185,8 +222,9 @@ Sign Out
 | First launch (after `SignInAsync`) | ✓ | ✗ | ✓ | Anonymous |
 | Restart with linked account | ✓ | ✓ | ✗ | Linked |
 | After tapping "Sign in with Google" | ✓ | ✓ | ✗ | Linked |
+| After tapping "Sign in with account picker" | ✓ | ✓ | ✗ | Linked |
 | After tapping "Sign in with Apple" | ✓ | ✓ | ✗ | Linked |
-| After `SignOutAsync()` | ✓ | ✗ | ✓ | **Anonymous** (not `null`!) |
+| After `SignOutAsync()` | ✗ | ✗ | ✗ | **`null`** (app stays signed out) |
 
 ## Folder Layout
 

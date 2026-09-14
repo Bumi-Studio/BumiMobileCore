@@ -66,6 +66,12 @@ namespace BumiMobile
         public static string LastAuthFailureReason { get; private set; } = string.Empty;
         public static string WebClientId { get; private set; }
 
+        /// <summary>
+        /// Firebase UID that was replaced by the most recent account switch
+        /// (switching between two non-anonymous accounts). Empty otherwise.
+        /// </summary>
+        public static string LastSwitchedFromUserId { get; private set; } = string.Empty;
+
         public static bool IsExplicitlySignedOut =>
             PlayerPrefs.GetInt(PREF_USER_EXPLICITLY_SIGNED_OUT, 0) == 1;
 
@@ -87,6 +93,7 @@ namespace BumiMobile
         public static event Action<bool> OnPlatformAuthFinished;
         public static event Action<FirebaseUser> OnFirebaseAuthChanged;
         public static event Action<AuthOperationResult> OnSignInCompleted;
+        public static event Action<string, string> OnAccountSwitched;
 
         [Obsolete("Use OnPlatformAuthFinished instead.")]
         public static event Action<bool> OnPgsAuthFinished
@@ -208,6 +215,10 @@ namespace BumiMobile
                 return false;
             }
 
+            // A user-initiated sign-in re-enables future automatic pickers;
+            // suppression must only gate the automatic startup route.
+            ResetAutomaticPickerSuppression();
+
             _busy = true;
             AuthOperationStatus operationStatus = AuthOperationStatus.Failed;
             try
@@ -216,6 +227,48 @@ namespace BumiMobile
                 operationStatus = result
                     ? AuthOperationStatus.Succeeded
                     : AuthOperationStatus.Failed;
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                operationStatus = AuthOperationStatus.Cancelled;
+                throw;
+            }
+            finally
+            {
+                _busy = false;
+                NotifySignInCompleted(operationStatus);
+            }
+        }
+
+        /// <summary>
+        /// Manual "Sign in with Google" button variant that always shows the full
+        /// interactive Google account chooser — including accounts that have never
+        /// authorized this app. Use this for explicit user-initiated sign-in; the
+        /// automatic startup routes keep using the filtered usable-accounts-only flow.
+        /// </summary>
+        public static async UniTask<bool> ManualSignInWithAccountPickerAsync()
+        {
+            if (_busy)
+            {
+                Debug.LogWarning("[Auth] Manual sign-in already running");
+                return false;
+            }
+
+            // A user-initiated sign-in re-enables future automatic pickers;
+            // suppression must only gate the automatic startup route.
+            ResetAutomaticPickerSuppression();
+
+            _busy = true;
+            AuthOperationStatus operationStatus = AuthOperationStatus.Failed;
+            try
+            {
+                bool result = await SignInManualWithAccountPickerAsync();
+                operationStatus = result
+                    ? AuthOperationStatus.Succeeded
+                    : (_lastGoogleInteractionCancelled
+                        ? AuthOperationStatus.Cancelled
+                        : AuthOperationStatus.Failed);
                 return result;
             }
             catch (OperationCanceledException)
@@ -365,9 +418,10 @@ namespace BumiMobile
                 !string.IsNullOrEmpty(WebClientId) &&
                 !_startupPickerAttempted)
             {
-                // Use the filtered Google Credential Manager route once. Do
-                // not fall back to SignIn(), which displays every device
-                // account after the usable-account selector.
+                // Automatic routes only use the filtered Google Credential
+                // Manager route and never fall back to SignIn(). The full
+                // interactive account chooser is reserved for the explicit,
+                // user-initiated ManualSignInWithAccountPickerAsync().
                 _startupPickerAttempted = true;
                 var googleUser = await SignInUsableGoogleAccountAsync(cancellationToken);
                 if (googleUser != null && await TryAuthFirebaseWithGoogleAsync(googleUser, cancellationToken))
@@ -426,8 +480,51 @@ namespace BumiMobile
             Debug.LogWarning("[Auth] Firebase Google auth failed – keeping existing session.");
             return false;
         }
+
+        private static async UniTask<bool> SignInManualWithAccountPickerAsync()
+        {
+            if (string.IsNullOrEmpty(WebClientId))
+            {
+                LastAuthFailureReason = "WebClientId not configured";
+                Debug.LogError("[Auth] WebClientId not configured.");
+                return false;
+            }
+
+            var dep = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (dep != DependencyStatus.Available)
+            {
+                Debug.LogWarning($"[Auth] Firebase deps: {dep}");
+                return false;
+            }
+
+            EnsureFirebaseAuthStateListener(FirebaseAuth.DefaultInstance);
+            // Explicit user action: always show the full account chooser so an
+            // account that never authorized this app can still be selected.
+            var googleUser = await SignInInteractiveGoogleAccountAsync();
+            if (googleUser == null)
+            {
+                if (_lastGoogleInteractionCancelled) SuppressAutomaticPicker();
+                Debug.LogWarning("[Auth] Google account picker sign-in failed – keeping existing session.");
+                return false;
+            }
+
+            if (await TryAuthFirebaseWithGoogleAsync(googleUser))
+            {
+                PersistPlayerId(googleUser.UserId);
+                return true;
+            }
+
+            Debug.LogWarning("[Auth] Firebase Google auth failed – keeping existing session.");
+            return false;
+        }
 #else
         private static UniTask<bool> SignInManualAsync()
+        {
+            Debug.Log("[Auth] Google Sign-In SDK not available.");
+            return UniTask.FromResult(false);
+        }
+
+        private static UniTask<bool> SignInManualWithAccountPickerAsync()
         {
             Debug.Log("[Auth] Google Sign-In SDK not available.");
             return UniTask.FromResult(false);
@@ -438,6 +535,17 @@ namespace BumiMobile
         {
             PlayerPrefs.SetInt(PREF_GOOGLE_PICKER_SUPPRESSED, 1);
             PlayerPrefs.Save();
+        }
+
+        // A user-initiated sign-in clears the automatic-picker suppression so
+        // future startup sessions may prompt again; only the automatic route
+        // should remain suppressed after a cancel.
+        private static void ResetAutomaticPickerSuppression()
+        {
+            PlayerPrefs.DeleteKey(PREF_GOOGLE_PICKER_SUPPRESSED);
+            PlayerPrefs.Save();
+            _startupPickerAttempted = false;
+            _lastGoogleInteractionCancelled = false;
         }
 
         private static void SignOutFirebaseOnly(FirebaseAuth auth)
@@ -560,6 +668,55 @@ namespace BumiMobile
             }
         }
 
+        private static async UniTask<GoogleSignInUser> SignInInteractiveGoogleAccountAsync()
+        {
+            _lastGoogleInteractionCancelled = false;
+            if (!EnsureGoogleConfigured())
+            {
+                OnPlatformAuthFinished?.Invoke(false);
+                return null;
+            }
+
+            try
+            {
+                Debug.Log("[Auth] Requesting interactive Google account picker.");
+                var googleUser = await GoogleSignIn.DefaultInstance.SignIn().AsUniTask();
+
+                if (googleUser == null)
+                {
+                    _lastGoogleInteractionCancelled = true;
+                    LastAuthFailureReason = "No Google account was selected.";
+                    Debug.LogWarning("[Auth] " + LastAuthFailureReason);
+                    OnPlatformAuthFinished?.Invoke(false);
+                    return null;
+                }
+
+                Debug.Log($"[Auth] Google Sign-In OK: {googleUser.UserId} / {googleUser.DisplayName}");
+                OnPlatformAuthFinished?.Invoke(true);
+                return googleUser;
+            }
+            catch (OperationCanceledException)
+            {
+                _lastGoogleInteractionCancelled = true;
+                LastAuthFailureReason = "User cancelled Google Sign-In";
+                Debug.LogWarning("[Auth] " + LastAuthFailureReason);
+                OnPlatformAuthFinished?.Invoke(false);
+                return null;
+            }
+            catch (Exception e)
+            {
+                bool cancelled = e is OperationCanceledException ||
+                    e.Message?.Contains("cancel", StringComparison.OrdinalIgnoreCase) == true;
+                _lastGoogleInteractionCancelled = cancelled;
+                LastAuthFailureReason = cancelled
+                    ? "User cancelled Google Sign-In"
+                    : "[Auth] Google Sign-In error: " + e.Message;
+                Debug.LogWarning(LastAuthFailureReason);
+                OnPlatformAuthFinished?.Invoke(false);
+                return null;
+            }
+        }
+
         private static async UniTask<bool> TryAuthFirebaseWithGoogleAsync(
             GoogleSignInUser googleUser,
             CancellationToken cancellationToken = default)
@@ -604,7 +761,23 @@ namespace BumiMobile
                 }
                 else
                 {
+                    string previousUserId = auth.CurrentUser.UserId;
                     User = await auth.SignInWithCredentialAsync(cred).AsUniTask().AttachExternalCancellation(cancellationToken);
+
+                    if (User != null &&
+                        !string.IsNullOrEmpty(previousUserId) &&
+                        !string.Equals(previousUserId, User.UserId, StringComparison.Ordinal))
+                    {
+                        LastSwitchedFromUserId = previousUserId;
+                        try
+                        {
+                            OnAccountSwitched?.Invoke(previousUserId, User.UserId);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogError("[Auth] Account-switch listener failed: " + e.Message);
+                        }
+                    }
                 }
 
                 if (User != null) OnFirebaseAuthChanged?.Invoke(User);
@@ -864,18 +1037,21 @@ namespace BumiMobile
         public static bool IsGooglePickerSuppressed => PlayerPrefs.GetInt("__google_picker_suppressed__", 0) == 1;
         public static string LastAuthFailureReason { get; private set; } = "Firebase SDK missing.";
         public static string WebClientId { get; private set; }
+        public static string LastSwitchedFromUserId { get; private set; } = string.Empty;
 
         public static void Initialize(string webClientId) => WebClientId = webClientId;
         public static bool SyncFromFirebaseCurrentUser() => false;
         public static event System.Action<bool> OnPlatformAuthFinished;
         public static event System.Action<FirebaseUser> OnFirebaseAuthChanged;
         public static event System.Action<AuthOperationResult> OnSignInCompleted;
+        public static event System.Action<string, string> OnAccountSwitched;
 
         public static bool IsAppleSignInSupported => false;
 
         public static UniTask<bool> SignInAsync(CancellationToken cancellationToken = default) => UniTask.FromResult(false);
         public static UniTask<bool> SignInAtStartupAsync(bool showPickerWhenNoAccount, CancellationToken cancellationToken = default) => UniTask.FromResult(false);
         public static UniTask<bool> ManualSignInAsync() => UniTask.FromResult(false);
+        public static UniTask<bool> ManualSignInWithAccountPickerAsync() => UniTask.FromResult(false);
         public static UniTask<bool> ManualSignInWithAppleAsync() => UniTask.FromResult(false);
 
         public static UniTask<bool> SignOutAsync()

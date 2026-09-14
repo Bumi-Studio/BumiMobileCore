@@ -4,6 +4,22 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-09-14
+
+### Added
+
+- `AuthService.ManualSignInWithAccountPickerAsync()` — user-initiated Google sign-in that runs the full interactive account chooser (`GoogleSignIn.DefaultInstance.SignIn()`) instead of the filtered usable-accounts-only route. This lets an account that has never authorized the app be selected. It reuses the existing Firebase credential path (link / already-in-use / account-switch) and `PersistPlayerId`, and honours the `_busy` guard, cancellation, and `OnSignInCompleted` like `ManualSignInAsync`.
+- `AuthService.OnAccountSwitched` (`Action<string, string>` with `previousUserId`, `newUserId`) and `AuthService.LastSwitchedFromUserId` — raised when a credential sign-in replaces an existing non-anonymous Firebase user with a different UID, making the orphaned-data account switch observable and migratable.
+
+### Changed
+
+- Any manual sign-in attempt (`ManualSignInAsync` and `ManualSignInWithAccountPickerAsync`) now clears the automatic Google picker suppression (`PREF_GOOGLE_PICKER_SUPPRESSED`), resets `_startupPickerAttempted`, and clears `_lastGoogleInteractionCancelled`. Suppression only gates the automatic startup picker, so a user-initiated attempt re-enables future automatic prompts. A cancel during the same attempt still re-suppresses via the existing `SuppressAutomaticPicker()`.
+- Clarified the automatic-route comment: silent/usable-accounts-only behaviour applies only to automatic routes; the full interactive picker is reserved for the explicit, user-initiated `ManualSignInWithAccountPickerAsync()`.
+
+### Fixed
+
+- README sign-out documentation was stale: `SignOutAsync()` leaves the app signed out (`User == null`) and does **not** create a replacement anonymous account; automatic startup auth is skipped while `__auth_explicitly_signed_out__` is set.
+
 ## [0.3.6] - 2026-09-07
 
 ### Added
