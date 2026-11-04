@@ -4,6 +4,12 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `BaseSaveWrapper.DeleteCloudSavesAsync()` for account deletion. `FirebaseSaveWrapper` deletes the current account's cloud save and this device's guest cloud save in one atomic batch and drops any queued upload; it never deletes the shared `device-fallback` document. Other wrappers return `false` because they cannot reach the cloud.
+
 ## [0.2.1] - 2026-08-14
 
 ### Fixed

@@ -24,6 +24,9 @@ namespace BumiMobile
     {
         const string COL_PLAYERS_SAVES_DEV = "players_saves_dev";
         const string COL_PLAYERS_SAVES_PROD = "players_saves_prod";
+        // Shared by every device that has no readable ID, so it never belongs to one player.
+        const string DEVICE_FALLBACK_KEY = "device-fallback";
+        const double CLOUD_DELETE_TIMEOUT = 15d; // seconds
 
         readonly DefaultSaveWrapper _local = new DefaultSaveWrapper();
         static FirebaseAuth _auth;
@@ -229,7 +232,7 @@ namespace BumiMobile
                 UnityEngine.Debug.LogWarning("[SaveCloud] deviceUniqueIdentifier failed: " + e.Message);
             }
 
-            return "device-fallback";
+            return DEVICE_FALLBACK_KEY;
         }
 
         public override GlobalSave Load(string fileName) => _local.Load(fileName);
@@ -422,6 +425,81 @@ namespace BumiMobile
             catch (Exception e)
             {
                 UnityEngine.Debug.LogWarning("[SaveCloud] Remote delete failed: " + e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Deletes the current account's cloud save and this device's guest cloud save in one
+        /// atomic batch, after dropping any queued upload. Local files are left alone.
+        /// Uploads already sent to Firestore are applied before this delete, because Firestore
+        /// applies one client's writes in order; callers must block new uploads first.
+        /// </summary>
+        public override async Task<bool> DeleteCloudSavesAsync()
+        {
+            // SystemInfo must be read on the main thread, so take the device key before awaiting.
+            string deviceKey = GetDeviceId();
+            _pendingUpload = false;
+            _queuedSave = null;
+
+            await EnsureInitializedAsync();
+            if (!_available)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Cloud delete skipped, cloud save unavailable.");
+                return false;
+            }
+
+            var user = _auth?.CurrentUser;
+            if (user == null)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Cloud delete skipped, no user.");
+                return false;
+            }
+
+            var keys = new List<string>();
+            foreach (string key in new[] { GetDocKey(user), deviceKey })
+            {
+                if (!string.IsNullOrEmpty(key) && key != DEVICE_FALLBACK_KEY && !keys.Contains(key))
+                {
+                    keys.Add(key);
+                }
+            }
+
+            if (keys.Count == 0)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Cloud delete skipped, no player-owned document key.");
+                return false;
+            }
+
+            try
+            {
+                string collection = UseDevCollection ? COL_PLAYERS_SAVES_DEV : COL_PLAYERS_SAVES_PROD;
+                WriteBatch batch = _fs.StartBatch();
+                foreach (string key in keys)
+                {
+                    batch.Delete(_fs.Collection(collection).Document(key));
+                }
+
+                // An offline commit never completes; it stays queued and is sent when the device reconnects.
+                Task commitTask = batch.CommitAsync();
+                Task finished = await Task.WhenAny(commitTask, Task.Delay(TimeSpan.FromSeconds(CLOUD_DELETE_TIMEOUT)));
+                if (finished != commitTask)
+                {
+                    // Observe a later failure so it is not reported as an unobserved task exception.
+                    _ = commitTask.ContinueWith(task => _ = task.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                    UnityEngine.Debug.LogWarning("[SaveCloud] Cloud delete timed out.");
+                    return false;
+                }
+
+                await commitTask;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                UnityEngine.Debug.Log("[SaveCloud] Cloud delete success (" + keys.Count + " document(s)).");
+#endif
+                return true;
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogWarning("[SaveCloud] Cloud delete failed: " + e.Message);
+                return false;
             }
         }
 

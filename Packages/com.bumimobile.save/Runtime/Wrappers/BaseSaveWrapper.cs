@@ -52,5 +52,15 @@ namespace BumiMobile
             SaveCloudNow(globalSave);
             return Task.FromResult(true);
         }
+
+        /// <summary>
+        /// Deletes every cloud save this device can reach for the current account (for account
+        /// deletion). True only when the documents are confirmed gone. Wrappers that cannot reach
+        /// the cloud return false, so callers never treat "not attempted" as "deleted".
+        /// </summary>
+        public virtual Task<bool> DeleteCloudSavesAsync()
+        {
+            return Task.FromResult(false);
+        }
     }
 }
