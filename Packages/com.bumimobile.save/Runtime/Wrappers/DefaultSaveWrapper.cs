@@ -2,6 +2,8 @@
 {
     public sealed class DefaultSaveWrapper : BaseSaveWrapper
     {
+        public override bool SupportsDurableLocalSave => true;
+
         public override GlobalSave Load(string fileName)
         {
             return Serializer.Deserialize<GlobalSave>(fileName, logIfFileNotExists: false);

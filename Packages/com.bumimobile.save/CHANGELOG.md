@@ -4,6 +4,24 @@ All notable changes to this package are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `SaveController.TrySaveLocal(out error)` saves every module to the local file synchronously and never uploads. It returns `true` only after a wrapper that supports durable writes has written a detached snapshot of the save. Call it on the Unity thread.
+- `SaveController.TrySaveLocalAndQueueCloud(out error)` makes the same local save and queues that snapshot for cloud upload, which stays best effort.
+- `BaseSaveWrapper.SupportsDurableLocalSave` and `BaseSaveWrapper.TrySaveLocal(...)`. The default, Firebase, disabled-Firebase and Android wrappers support durable writes. WebGL still saves normally but reports no durable checkpoint.
+- `BaseSaveWrapper.BeginCloudLoadChecked(onLoaded)` reports whether the cloud read succeeded, so a failed read is not mistaken for "no cloud save". `FirebaseSaveWrapper` implements it.
+- `AtomicFile.Write(path, contents, createOnly)`, `GlobalSave.CreateSnapshot(updateLastExitTime)`, `SaveInitModule.UseDevCloudSave` and `WebGLSaveWrapper.LastLoadFailed`.
+
+### Changed
+
+- Local saves are written to a temporary file, flushed, then swapped in for the old file. Where `File.Replace` is unavailable, the swap goes through a backup that is put back if the move fails. A failed write never deletes the last good save, and errors are reported instead of swallowed. The binary save format is unchanged.
+- Autosaves capture each module's data on the Unity thread. Local writes run in order and stale ones are dropped, so a delayed autosave cannot overwrite a newer save. Replacing, resetting or deleting the save cancels queued writes. Cloud uploads send the snapshot that was saved locally.
+- `SaveController.SaveAndWaitForCloudAsync` always saves locally before uploading.
+- `AndroidSaveWrapper.SaveLocal` no longer also uploads to the cloud.
+- A save file that cannot be read is moved aside as `<file>.corrupt-…` and a new save starts. If it cannot be moved aside, loading throws instead of overwriting it. A missing file still starts a new save.
+
 ## [0.2.2] - 2026-11-04
 
 ### Added

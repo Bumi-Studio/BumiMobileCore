@@ -21,6 +21,27 @@ namespace BumiMobile
             new DefaultSaveWrapper();
 #endif
         public virtual bool SupportsCloud => false;
+        public virtual bool SupportsDurableLocalSave => false;
+
+        public virtual bool TrySaveLocal(GlobalSave snapshot, string fileName, out string error)
+        {
+            error = null;
+            if (!SupportsDurableLocalSave)
+            {
+                error = "This save wrapper cannot verify durable local writes.";
+                return false;
+            }
+            try
+            {
+                SaveLocal(snapshot, fileName);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                error = exception.Message;
+                return false;
+            }
+        }
         public abstract GlobalSave Load(string fileName);
         public abstract void Save(GlobalSave globalSave, string fileName);
         public abstract void Delete(string fileName);
@@ -35,6 +56,12 @@ namespace BumiMobile
         public virtual void BeginCloudLoad(Action<GlobalSave> onLoaded)
         {
             onLoaded?.Invoke(null);
+        }
+
+        /// <summary>True means a successful read, including confirmed absence. Null alone is not proof.</summary>
+        public virtual void BeginCloudLoadChecked(Action<GlobalSave, bool> onLoaded)
+        {
+            BeginCloudLoad(save => onLoaded?.Invoke(save, save != null));
         }
 
         public virtual void SaveCloud(GlobalSave globalSave)

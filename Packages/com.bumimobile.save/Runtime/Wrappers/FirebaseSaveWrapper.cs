@@ -36,6 +36,7 @@ namespace BumiMobile
         static GlobalSave _queuedSave;       // Last save waiting to upload
         static double _nextUploadAt;         // Stopwatch seconds when push should occur
         const double UPLOAD_DEBOUNCE = 1.5d; // seconds
+        const double OFFLINE_RETRY_DELAY = 5d; // seconds
         static readonly Stopwatch _watch = Stopwatch.StartNew();
 
         public static bool UseDevCollection { get; set; }
@@ -235,6 +236,8 @@ namespace BumiMobile
             return DEVICE_FALLBACK_KEY;
         }
 
+        public override bool SupportsDurableLocalSave => _local.SupportsDurableLocalSave;
+
         public override GlobalSave Load(string fileName) => _local.Load(fileName);
 
         public override void Save(GlobalSave globalSave, string fileName)
@@ -262,31 +265,36 @@ namespace BumiMobile
 
         public override void BeginCloudLoad(Action<GlobalSave> onLoaded)
         {
+            BeginCloudLoadChecked((save, succeeded) => onLoaded?.Invoke(save));
+        }
+
+        public override void BeginCloudLoadChecked(Action<GlobalSave, bool> onLoaded)
+        {
             _ = BeginCloudLoadAsync(onLoaded);
         }
 
-        async Task BeginCloudLoadAsync(Action<GlobalSave> onLoaded)
+        async Task BeginCloudLoadAsync(Action<GlobalSave, bool> onLoaded)
         {
             await EnsureInitializedAsync();
             if (!_available)
             {
-                onLoaded?.Invoke(null);
+                onLoaded?.Invoke(null, false);
                 return;
             }
             var user = await GetUserAsync();
             if (user == null)
             {
-                onLoaded?.Invoke(null);
+                onLoaded?.Invoke(null, false);
                 return;
             }
             try
             {
                 var docRef = GetDoc(user);
-                var snap = await docRef.GetSnapshotAsync();
+                var snap = await docRef.GetSnapshotAsync(Source.Server);
                 if (!snap.Exists)
                 {
                     UnityEngine.Debug.Log("[SaveCloud] No remote player save doc, keeping local.");
-                    onLoaded?.Invoke(null);
+                    onLoaded?.Invoke(null, true);
                     return;
                 }
 
@@ -295,7 +303,8 @@ namespace BumiMobile
                     try
                     {
                         string plain = SaveCrypto.DecryptJsonIfNeeded(aggJsonStr, GetDocKey(user));
-                        onLoaded?.Invoke(Deserialize(plain));
+                        GlobalSave save = Deserialize(plain);
+                        onLoaded?.Invoke(save, save != null);
                         return;
                     }
                     catch (Exception decEx)
@@ -305,12 +314,12 @@ namespace BumiMobile
                 }
 
                 // No usable remote data
-                onLoaded?.Invoke(null);
+                onLoaded?.Invoke(null, false);
             }
             catch (Exception e)
             {
                 UnityEngine.Debug.LogWarning("[SaveCloud] Cloud load failed: " + e.Message);
-                onLoaded?.Invoke(null);
+                onLoaded?.Invoke(null, false);
             }
         }
 
@@ -353,6 +362,12 @@ namespace BumiMobile
             {
                 while (_pendingUpload)
                 {
+                    if (UnityEngine.Application.internetReachability == NetworkReachability.NotReachable)
+                    {
+                        await Task.Delay(1000);
+                        continue;
+                    }
+
                     if (_watch.Elapsed.TotalSeconds < _nextUploadAt)
                     {
                         await Task.Delay(200);
@@ -360,7 +375,14 @@ namespace BumiMobile
                     }
                     _pendingUpload = false;
                     var toSend = _queuedSave;
-                    await PerformUploadAsync(toSend);
+                    bool uploadSucceeded = await PerformUploadAsync(toSend);
+                    if (!uploadSucceeded &&
+                        ReferenceEquals(toSend, _queuedSave) &&
+                        UnityEngine.Application.internetReachability == NetworkReachability.NotReachable)
+                    {
+                        _pendingUpload = true;
+                        _nextUploadAt = _watch.Elapsed.TotalSeconds + OFFLINE_RETRY_DELAY;
+                    }
                 }
             }
             finally

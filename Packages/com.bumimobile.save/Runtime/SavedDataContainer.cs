@@ -21,6 +21,11 @@ namespace BumiMobile
             Restored = true;
         }
 
+        internal SavedDataContainer CreateSnapshot()
+        {
+            return new SavedDataContainer(hash, null) { json = json, Restored = false };
+        }
+
         public void Flush()
         {
             if (saveObject != null) saveObject.Flush();

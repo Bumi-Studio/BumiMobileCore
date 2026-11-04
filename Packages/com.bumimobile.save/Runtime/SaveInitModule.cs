@@ -8,6 +8,7 @@ namespace BumiMobile
     {
         const string SKIP_CLOUD_KEY = "__reset_skip_cloud__";
         public override string ModuleName => "Save Controller";
+        public static bool UseDevCloudSave { get; private set; }
 
         [SerializeField] float autoSaveDelay = 0;
         [SerializeField] bool clearSave = false;
@@ -35,7 +36,7 @@ namespace BumiMobile
 
             // Debug.Log("[Save Controller] Authenticated? " + PlayGamesPlatform.Instance.localUser.authenticated);
 
-#if UNITY_ANDROID 
+#if UNITY_ANDROID
             bool done = false;
             void PhaseHandler(SaveController.SaveLoadPhase phase)
             {
@@ -61,6 +62,7 @@ namespace BumiMobile
 
         void ApplyCloudSaveEnvironment()
         {
+            UseDevCloudSave = devCloudSave;
 #if BUMI_SAVE_CLOUD_FIREBASE
             FirebaseSaveWrapper.UseDevCollection = devCloudSave;
 #endif

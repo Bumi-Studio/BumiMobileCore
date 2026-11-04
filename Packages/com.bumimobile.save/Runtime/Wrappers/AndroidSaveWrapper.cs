@@ -25,6 +25,8 @@ namespace BumiMobile
         public override bool SupportsCloud => true;
 
         // ===== Lokal I/O selalu tersedia (fallback) =====
+        public override bool SupportsDurableLocalSave => local.SupportsDurableLocalSave;
+
         public override GlobalSave Load(string fileName) => local.Load(fileName);
 
         public override void Save(GlobalSave globalSave, string fileName)
@@ -32,6 +34,8 @@ namespace BumiMobile
             local.Save(globalSave, fileName);
             SaveCloud(globalSave);
         }
+        public override void SaveLocal(GlobalSave globalSave, string fileName) => local.SaveLocal(globalSave, fileName);
+
         public override void Delete(string fileName) => local.Delete(fileName);
         public override bool UseThreads() => false;
 
@@ -182,7 +186,7 @@ namespace BumiMobile
 #endif
         }
 
-#if UNITY_ANDROID 
+#if UNITY_ANDROID
         private static void EnsureActivated()
         {
             PlayGamesPlatform.Activate();

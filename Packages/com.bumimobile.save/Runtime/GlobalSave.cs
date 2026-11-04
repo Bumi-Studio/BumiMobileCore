@@ -58,6 +58,24 @@ namespace BumiMobile
             if(updateLastExitTime) lastExitTime = DateTime.Now;
         }
 
+        /// <summary>Call on the Unity thread. The returned save shares no live modules.</summary>
+        public GlobalSave CreateSnapshot(bool updateLastExitTime)
+        {
+            Flush(updateLastExitTime);
+            GlobalSave snapshot = new GlobalSave();
+            snapshot.saveObjects = new SavedDataContainer[saveObjects.Length];
+            for (int i = 0; i < saveObjects.Length; i++)
+            {
+                snapshot.saveObjects[i] = saveObjects[i].CreateSnapshot();
+            }
+            snapshot.saveObjectsList = new List<SavedDataContainer>(snapshot.saveObjects);
+            snapshot.gameTime = gameTime;
+            snapshot.lastExitTime = lastExitTime;
+            snapshot.Time = Time;
+            snapshot.lastFlushTime = lastFlushTime;
+            return snapshot;
+        }
+
         public T GetSaveObject<T>(int hash) where T : ISaveObject, new()
         {
             SavedDataContainer container = saveObjectsList.Find((container) => container.Hash == hash);

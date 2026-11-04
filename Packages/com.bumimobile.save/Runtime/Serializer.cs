@@ -22,34 +22,31 @@ namespace BumiMobile
         public static T Deserialize<T>(string fileName, bool logIfFileNotExists = false) where T : new()
         {
             string absolutePath = Path.Combine(GetPersistentDataPath(), fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
 
-            if (FileExistsAtPath(absolutePath))
+            try
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Open(absolutePath, FileMode.Open);
-
-                try
+                using (FileStream file = new FileStream(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    T deserializedObject = (T)bf.Deserialize(file);
-
-                    return deserializedObject;
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError(ex.Message);
-                    return new T();
-                }
-                finally
-                {
-                    file.Close();
+                    object value = new BinaryFormatter().Deserialize(file);
+                    if (value is T result) return result;
+                    throw new InvalidDataException("The save contains an unexpected root object.");
                 }
             }
-            else
+            catch (FileNotFoundException)
             {
-                if (logIfFileNotExists)
+                if (logIfFileNotExists) Debug.LogWarning("Save file does not exist: " + absolutePath);
+                return new T();
+            }
+            catch (Exception exception)
+            {
+                if (!TryQuarantine(absolutePath, out string quarantinePath))
                 {
-                    Debug.LogWarning("File at path : \"" + absolutePath + "\" does not exist.");
+                    Debug.LogError("Save data is corrupt and could not be quarantined: " + absolutePath);
+                    throw;
                 }
+
+                Debug.LogError("Save data was corrupt and was moved to " + quarantinePath + ". " + exception.Message);
                 return new T();
             }
         }
@@ -61,17 +58,11 @@ namespace BumiMobile
         /// <param name="objectToSerialize">Reference to object that should be serialized.</param>
         public static void Serialize<T>(T objectToSerialize, string fileName)
         {
-            try
+            // Preserve the existing format, but finish serialization before touching the destination.
+            using (MemoryStream stream = new MemoryStream())
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                using (FileStream file = File.Open(Path.Combine(GetPersistentDataPath(), fileName), FileMode.Create))
-                {
-                    bf.Serialize(file, objectToSerialize);
-                }
-            }
-            catch
-            {
-                // Failed to serialize file
+                new BinaryFormatter().Serialize(stream, objectToSerialize);
+                AtomicFile.Write(Path.Combine(GetPersistentDataPath(), fileName), stream.ToArray());
             }
         }
 
@@ -144,6 +135,24 @@ namespace BumiMobile
             }
 
             return persistentDataPath;
+        }
+
+        private static bool TryQuarantine(string absolutePath, out string quarantinePath)
+        {
+            quarantinePath = absolutePath + ".corrupt-" +
+                DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" +
+                Guid.NewGuid().ToString("N");
+            try
+            {
+                File.Move(absolutePath, quarantinePath);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("Could not quarantine corrupt save: " + exception.GetType().Name);
+                quarantinePath = null;
+                return false;
+            }
         }
     }
 }

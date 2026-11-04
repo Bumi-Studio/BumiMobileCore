@@ -9,6 +9,8 @@ namespace BumiMobile
 
         public override bool SupportsCloud => false;
 
+        public override bool SupportsDurableLocalSave => _local.SupportsDurableLocalSave;
+
         public override GlobalSave Load(string fileName) => _local.Load(fileName);
         public override void Save(GlobalSave globalSave, string fileName) => _local.Save(globalSave, fileName);
         public override void Delete(string fileName) => _local.Delete(fileName);
@@ -26,4 +28,3 @@ namespace BumiMobile
         }
     }
 }
-
