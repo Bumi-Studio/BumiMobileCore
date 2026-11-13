@@ -203,7 +203,7 @@ public class NotificationTemplateEditor : Editor
         var eventDelayProp = triggerProp.FindPropertyRelative("eventDelayMinutes");
         var competitionLastCallProp = triggerProp.FindPropertyRelative("competitionLastCallLeadHours");
         var reengagementBlockProp = triggerProp.FindPropertyRelative("reengagementBlockHours");
-        var skipIfLoggedInTodayProp = triggerProp.FindPropertyRelative("skipIfLoggedInToday");
+        var sendOnDaysProp = triggerProp.FindPropertyRelative("sendOnDaysAfterLastPlay");
         var skipIfDailyRewardClaimedProp = triggerProp.FindPropertyRelative("skipIfDailyRewardClaimed");
         var skipIfFeatureInteractedProp = triggerProp.FindPropertyRelative("skipIfFeatureInteracted");
         var includeStartEventProp = triggerProp.FindPropertyRelative("includeStartEvent");
@@ -230,7 +230,7 @@ public class NotificationTemplateEditor : Editor
         if (_showAllFields)
         {
             EditorGUILayout.LabelField("All Trigger Fields (Advanced Mode)", EditorStyles.miniBoldLabel);
-            EditorGUILayout.PropertyField(skipIfLoggedInTodayProp, new GUIContent("Skip If Logged In Today"));
+            EditorGUILayout.PropertyField(sendOnDaysProp, new GUIContent("Send On Days After Last Play"), true);
             EditorGUILayout.PropertyField(skipIfDailyRewardClaimedProp, new GUIContent("Skip If Daily Reward Claimed"));
             EditorGUILayout.PropertyField(skipIfFeatureInteractedProp, new GUIContent("Skip If Feature Interacted"));
             EditorGUILayout.PropertyField(requiresCompletedLevelProp, new GUIContent("Requires Completed Level"));
@@ -251,17 +251,15 @@ public class NotificationTemplateEditor : Editor
             {
                 case NotificationType.DailyRetention:
                     EditorGUILayout.LabelField("Daily Retention Conditions", EditorStyles.miniBoldLabel);
-                    EditorGUILayout.PropertyField(skipIfLoggedInTodayProp, new GUIContent("Skip If Logged In Today"));
-                    EditorGUILayout.PropertyField(inactivityThresholdProp, new GUIContent("Inactivity Threshold (Hours)", "Used to calculate H+1 and H+2. Default is 24 hours."));
-                    EditorGUILayout.HelpBox("Rules:\n• Max 1 per day\n• Only send on H+1 and H+2 after last game open\n• Do not send on the same day the player last opened\n• If player reaches H+3, move to Re-engagement category", MessageType.Info);
+                    EditorGUILayout.PropertyField(sendOnDaysProp, new GUIContent("Send On Days After Last Play", "Empty uses H+1 and H+2."), true);
+                    EditorGUILayout.HelpBox("Rules:\n• Max 1 per day\n• Scheduled for each listed day after the last play\n• Opening the game cancels and reschedules, so returning players never get them", MessageType.Info);
                     break;
 
                 case NotificationType.Reengagement:
                     EditorGUILayout.LabelField("Re-engagement Conditions", EditorStyles.miniBoldLabel);
                     EditorGUILayout.PropertyField(requiresCompletedLevelProp, new GUIContent("Requires Completed Level", "Only send to players who have completed at least 1 level."));
-                    EditorGUILayout.PropertyField(skipIfLoggedInTodayProp, new GUIContent("Skip If Logged In Today"));
-                    EditorGUILayout.PropertyField(inactivityThresholdProp, new GUIContent("Inactivity Threshold (Hours)", "H+3 = 72 hours, H+7 = 168 hours."));
-                    EditorGUILayout.HelpBox("Rules:\n• Max 1 on H+3\n• Max 1 additional on H+7\n• Reset inactive-day count if player opens the game\n• Only send at 10:00", MessageType.Info);
+                    EditorGUILayout.PropertyField(sendOnDaysProp, new GUIContent("Send On Days After Last Play", "Empty uses H+3 and H+7."), true);
+                    EditorGUILayout.HelpBox("Rules:\n• Scheduled for each listed day after the last play\n• Opening the game cancels and reschedules (resets the inactive-day count)\n• Only send at 10:00", MessageType.Info);
                     break;
 
                 case NotificationType.MotivateLevelProgression:

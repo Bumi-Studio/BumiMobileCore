@@ -12,10 +12,10 @@ using Unity.Notifications.iOS;
 public static class NotificationManager
 {
     private const string DefaultChannelId = "default_channel";
-    private const int SameTimeThresholdMinutes = 5;
-    private const int MinimumIntervalHours = 4;
-    private const int GlobalMaxPerDay = 1;
     private const int GlobalCooldownHours = 4;
+
+    private static readonly int[] DefaultDailyRetentionDays = { 1, 2 };
+    private static readonly int[] DefaultReengagementDays = { 3, 7 };
 
     private static NotificationTemplateCatalog _catalog;
     private static bool _enableDeduplication = true;
@@ -23,6 +23,12 @@ public static class NotificationManager
     private static readonly HashSet<string> _idempotencyKeys = new HashSet<string>();
 
     public static NotificationTemplateCatalog Catalog => LoadCatalog();
+
+    /// <summary>
+    /// Supplies the player state when scheduling runs without an explicit context
+    /// (the app moving to the background). Set by the game.
+    /// </summary>
+    public static Func<NotificationScheduleContext> ContextProvider { get; set; }
 
     public static void RegisterCatalog(NotificationTemplateCatalog customCatalog)
     {
@@ -59,12 +65,6 @@ public static class NotificationManager
         return context?.PlayerLocalTime ?? context?.Now ?? DateTime.Now;
     }
 
-    private static DateTime GetPlayerDate(NotificationScheduleContext context)
-    {
-        var time = GetPlayerTime(context);
-        return new DateTime(time.Year, time.Month, time.Day, 0, 0, 0, time.Kind);
-    }
-
     private static string GenerateIdempotencyKey(NotificationTemplate template, NotificationScheduleContext context, DateTime deliveryDate)
     {
         var playerId = !string.IsNullOrEmpty(context?.PlayerId) ? context.PlayerId : "unknown";
@@ -73,46 +73,6 @@ public static class NotificationManager
         var entityId = !string.IsNullOrEmpty(template.relatedEntityId) ? template.relatedEntityId : "none";
         var dateKey = deliveryDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         return $"{playerId}:{type}:{trigger}:{dateKey}:{entityId}";
-    }
-
-    private static bool HasAnyNotificationToday(NotificationScheduleContext context)
-    {
-        if (context == null)
-        {
-            return false;
-        }
-
-        var today = GetPlayerDate(context);
-        foreach (var type in Enum.GetValues(typeof(NotificationType)))
-        {
-            var history = context.GetHistory((NotificationType)type);
-            if (history != null && history.Any(h => h.Date == today.Date))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsInGlobalCooldown(NotificationScheduleContext context, DateTime now)
-    {
-        if (context == null)
-        {
-            return false;
-        }
-
-        var threshold = now.AddHours(-GlobalCooldownHours);
-        foreach (var type in Enum.GetValues(typeof(NotificationType)))
-        {
-            var history = context.GetHistory((NotificationType)type);
-            if (history != null && history.Any(h => h >= threshold))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static bool IsDuplicateByIdempotency(NotificationTemplate template, NotificationScheduleContext context, DateTime deliveryDate)
@@ -127,10 +87,13 @@ public static class NotificationManager
         _idempotencyKeys.Add(key);
     }
 
+    /// <summary>
+    /// Clears pending notifications and schedules the upcoming ones. Called when the app goes to
+    /// the background, so every projected notification is cancelled again if the player returns.
+    /// </summary>
     public static IReadOnlyList<ScheduledNotification> ScheduleAllNotifications(NotificationScheduleContext context = null)
     {
-        context ??= new NotificationScheduleContext();
-        _idempotencyKeys.Clear();
+        context ??= ContextProvider?.Invoke() ?? new NotificationScheduleContext();
 
         ClearScheduledNotifications();
 
@@ -141,43 +104,55 @@ public static class NotificationManager
             return Array.Empty<ScheduledNotification>();
         }
 
-        var now = GetPlayerTime(context);
-
-        // Global Rule 3: Do not send if player is currently active
-        if (context.IsPlayerActive)
+        var delivered = NotificationHistoryStore.LoadDelivered(GetPlayerTime(context));
+        foreach (var entry in delivered)
         {
-            Debug.Log("[NotificationManager] Player is currently active. Skipping all notifications.");
-            return Array.Empty<ScheduledNotification>();
+            context.AppendHistory(entry.Type, entry.Time);
         }
 
-        // Global Rule 1 & 2: Max 1 per day, 4h cooldown
-        if (HasAnyNotificationToday(context))
+        var scheduled = BuildSchedule(context, catalog.Notifications);
+        foreach (var notification in scheduled)
         {
-            Debug.Log("[NotificationManager] Player already received a notification today. Skipping all.");
-            return Array.Empty<ScheduledNotification>();
+            SchedulePlatformNotification(notification);
         }
 
-        if (IsInGlobalCooldown(context, now))
-        {
-            Debug.Log("[NotificationManager] Player is in global cooldown (4h). Skipping all.");
-            return Array.Empty<ScheduledNotification>();
-        }
+        NotificationHistoryStore.Save(delivered.Concat(scheduled.Select(s => new NotificationHistoryEntry(s.Type, s.FireTime))));
 
-        // First, collect ALL candidates
+        Debug.Log($"[NotificationManager] Scheduled {scheduled.Count} notification(s): {string.Join(", ", scheduled.Select(s => $"{s.Type}@{s.FireTime:yyyy-MM-dd HH:mm}"))}");
+        return scheduled;
+    }
+
+    /// <summary>
+    /// Resolves which templates fire and when, without touching the platform scheduler.
+    /// History in <paramref name="context"/> is treated as already delivered notifications.
+    /// </summary>
+    public static List<ScheduledNotification> BuildSchedule(NotificationScheduleContext context, IReadOnlyList<NotificationTemplate> templates)
+    {
+        context ??= new NotificationScheduleContext();
+        _idempotencyKeys.Clear();
+
+        // First, collect ALL candidates that pass their template rules and the delivery history.
         var allCandidates = new List<ScheduledNotification>();
-        foreach (var template in catalog.Notifications)
+        if (templates != null)
         {
-            if (template == null)
+            foreach (var template in templates)
             {
-                continue;
-            }
-            foreach (var candidate in DetermineSchedule(template, context))
-            {
-                allCandidates.Add(candidate);
+                if (template == null)
+                {
+                    continue;
+                }
+
+                foreach (var candidate in DetermineSchedule(template, context))
+                {
+                    if (!IsBlockedByHistory(candidate, context))
+                    {
+                        allCandidates.Add(candidate);
+                    }
+                }
             }
         }
 
-        // Global Rule 7: Priority filtering - if multiple qualify on same day, keep only highest priority
+        // Global Rule 1 & 7: max one per day; if multiple qualify on the same day, keep only the highest priority
         allCandidates = FilterByPriority(allCandidates);
 
         // Global Rule 9 & 16: Copy variation deduplication and merge duplicates
@@ -188,18 +163,16 @@ public static class NotificationManager
 
         // Global Rules 13-18: Idempotency and duplicate prevention
         var scheduled = new List<ScheduledNotification>();
-        foreach (var candidate in allCandidates)
+        foreach (var candidate in allCandidates.OrderBy(c => c.FireTime))
         {
-            var deliveryDate = new DateTime(candidate.FireTime.Year, candidate.FireTime.Month, candidate.FireTime.Day);
+            var deliveryDate = candidate.FireTime.Date;
             if (IsDuplicateByIdempotency(candidate.Template, context, deliveryDate))
             {
                 Debug.Log($"[NotificationManager] Skipping duplicate notification for {candidate.Type} on {deliveryDate:yyyy-MM-dd}.");
                 continue;
             }
 
-            SchedulePlatformNotification(candidate);
             scheduled.Add(candidate);
-            context.AppendHistory(candidate.Type, candidate.FireTime);
             RegisterIdempotencyKey(candidate.Template, context, deliveryDate);
         }
 
@@ -240,67 +213,15 @@ public static class NotificationManager
 
         var now = GetPlayerTime(context);
 
-        if (IsInCooldown(template, context, now))
-        {
-            yield break;
-        }
-
-        var slots = GetRemainingSlots(template, context, now);
-        if (slots <= 0)
-        {
-            yield break;
-        }
-
-        var scheduledCount = 0;
-
-        bool HasCapacity()
-        {
-            return slots == int.MaxValue || scheduledCount < slots;
-        }
-
         switch (template.type)
         {
             case NotificationType.DailyRetention:
-                // Rule: Only send to players who have opened the game before
-                if (context?.LastGameOpenTime == null)
+                // Rule: send on H+1 and H+2 after the last play. Reopening the game clears and
+                // reschedules, so a player who returns never receives the stale ones.
+                foreach (var fireTime in GetFireTimesAfterLastPlay(template.trigger, now, DefaultDailyRetentionDays))
                 {
-                    yield break;
+                    yield return CreateSchedule(template, fireTime, false, now);
                 }
-
-                // Rule: Only send if player has not opened the game since 00:00 today
-                if (template.trigger.skipIfLoggedInToday && context.HasLoggedInToday)
-                {
-                    yield break;
-                }
-
-                // Rule: Send only on H+1 and H+2 after last open
-                var daysSinceLastOpen = (now.Date - context.LastGameOpenTime.Value.Date).Days;
-                if (daysSinceLastOpen != 1 && daysSinceLastOpen != 2)
-                {
-                    yield break;
-                }
-
-                // Rule: Do not send on the same day the player last opened the game
-                if (now.Date == context.LastGameOpenTime.Value.Date)
-                {
-                    yield break;
-                }
-
-                // Rule: If player still has not opened by H+3, move to Re-engagement (don't send DailyRetention)
-                if (daysSinceLastOpen >= 3)
-                {
-                    yield break;
-                }
-
-                if (!HasCapacity())
-                {
-                    yield break;
-                }
-
-                var dailyFireTime = GetNextFixedTime(template.trigger, now);
-                var dailySchedule = CreateSchedule(template, dailyFireTime, false, now);
-                scheduledCount++;
-                yield return dailySchedule;
                 break;
 
             case NotificationType.Reengagement:
@@ -310,33 +231,11 @@ public static class NotificationManager
                     yield break;
                 }
 
-                if (context?.LastGameOpenTime == null)
+                // Rule: Send on H+3 and H+7 after the last play
+                foreach (var fireTime in GetFireTimesAfterLastPlay(template.trigger, now, DefaultReengagementDays))
                 {
-                    yield break;
+                    yield return CreateSchedule(template, fireTime, false, now);
                 }
-
-                // Rule: Do not send if the player has already opened the game on that day
-                if (template.trigger.skipIfLoggedInToday && context.HasLoggedInToday)
-                {
-                    yield break;
-                }
-
-                // Rule: Send on H+3 and H+7
-                var inactiveDays = (now.Date - context.LastGameOpenTime.Value.Date).Days;
-                if (inactiveDays != 3 && inactiveDays != 7)
-                {
-                    yield break;
-                }
-
-                if (!HasCapacity())
-                {
-                    yield break;
-                }
-
-                var reengagementFire = GetNextFixedTime(template.trigger, now);
-                var reengagementSchedule = CreateSchedule(template, reengagementFire, false, now);
-                scheduledCount++;
-                yield return reengagementSchedule;
                 break;
 
             case NotificationType.MotivateLevelProgression:
@@ -359,17 +258,15 @@ public static class NotificationManager
                     yield break;
                 }
 
-                if (!HasCapacity())
+                // Rule: Same-day push only; the slot has passed if the next one is tomorrow
+                var motivateFire = GetNextFixedTime(template.trigger, now);
+                if (motivateFire.Date != now.Date)
                 {
                     yield break;
                 }
 
-                var motivateFire = GetNextFixedTime(template.trigger, now);
-                var motivateSchedule = CreateSchedule(template, motivateFire, false, now);
-                scheduledCount++;
-                yield return motivateSchedule;
+                yield return CreateSchedule(template, motivateFire, false, now);
                 break;
-
             case NotificationType.RewardReminder:
                 // Rule: Only send if the player has an available reward or bonus that has not been claimed
                 if (template.trigger.skipIfDailyRewardClaimed && context?.DailyRewardClaimedToday == true)
@@ -389,14 +286,8 @@ public static class NotificationManager
                     yield break;
                 }
 
-                if (!HasCapacity())
-                {
-                    yield break;
-                }
-
                 var rewardFire = GetNextFixedTime(template.trigger, now);
                 var rewardSchedule = CreateSchedule(template, rewardFire, false, now);
-                scheduledCount++;
                 yield return rewardSchedule;
                 break;
 
@@ -425,11 +316,6 @@ public static class NotificationManager
                     yield break;
                 }
 
-                if (!HasCapacity())
-                {
-                    yield break;
-                }
-
                 var featureFire = GetNextFixedTime(template.trigger, now);
                 // Ensure it's after the feature release date
                 if (featureFire < context.FeatureReleaseDate.Value)
@@ -438,7 +324,6 @@ public static class NotificationManager
                 }
 
                 var featureSchedule = CreateSchedule(template, featureFire, false, now);
-                scheduledCount++;
                 yield return featureSchedule;
                 break;
 
@@ -460,14 +345,8 @@ public static class NotificationManager
                     yield break;
                 }
 
-                if (!HasCapacity())
-                {
-                    yield break;
-                }
-
                 var competitionFire = GetNextFixedTime(template.trigger, now);
                 var competitionSchedule = CreateSchedule(template, competitionFire, false, now);
-                scheduledCount++;
                 yield return competitionSchedule;
                 break;
         }
@@ -656,51 +535,57 @@ public static class NotificationManager
         return new TimeSpan(sign * hours, sign * minutes, 0);
     }
 
-    private static bool IsInCooldown(NotificationTemplate template, NotificationScheduleContext context, DateTime now)
+    private static IEnumerable<DateTime> GetFireTimesAfterLastPlay(NotificationTriggerSettings trigger, DateTime lastPlay, int[] fallbackDays)
     {
-        if (template.rules.cooldownHours <= 0 || context == null)
-        {
-            return false;
-        }
+        var days = trigger.sendOnDaysAfterLastPlay != null && trigger.sendOnDaysAfterLastPlay.Length > 0
+            ? trigger.sendOnDaysAfterLastPlay
+            : fallbackDays;
 
-        var history = context.GetHistory(template.type);
-        if (history == null || history.Count == 0)
-        {
-            return false;
-        }
+        var offset = ParseTimezoneOffset(trigger.timezone);
+        var lastPlayInZone = new DateTimeOffset(lastPlay, TimeZoneInfo.Local.GetUtcOffset(lastPlay)).ToOffset(offset);
 
-        var threshold = now.AddHours(-template.rules.cooldownHours);
-        return history.Any(t => t >= threshold);
+        foreach (var day in days.Where(d => d > 0).Distinct().OrderBy(d => d))
+        {
+            var date = lastPlayInZone.Date.AddDays(day);
+            var fire = new DateTimeOffset(date.Year, date.Month, date.Day, trigger.hour, trigger.minute, 0, offset);
+            yield return fire.ToLocalTime().DateTime;
+        }
     }
 
-    private static int GetRemainingSlots(NotificationTemplate template, NotificationScheduleContext context, DateTime now)
+    private static bool IsBlockedByHistory(ScheduledNotification candidate, NotificationScheduleContext context)
     {
-        if (template.rules.maxPerPeriod <= 0)
+        var fireTime = candidate.FireTime;
+
+        foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
         {
-            return int.MaxValue;
+            foreach (var sent in context.GetHistory(type))
+            {
+                // Global Rule 1: max 1 push per player per day
+                if (sent.Date == fireTime.Date)
+                {
+                    return true;
+                }
+
+                // Global Rule 2: 4-hour cooldown between any notifications
+                if (Math.Abs((fireTime - sent).TotalHours) < GlobalCooldownHours)
+                {
+                    return true;
+                }
+            }
         }
 
-        var window = GetPeriodWindow(template.rules);
-        if (window == TimeSpan.Zero)
+        var rules = candidate.Template.rules;
+        var ownHistory = context.GetHistory(candidate.Type);
+
+        if (rules.cooldownHours > 0 && ownHistory.Any(t => t <= fireTime && t > fireTime.AddHours(-rules.cooldownHours)))
         {
-            return template.rules.maxPerPeriod;
+            return true;
         }
 
-        if (context == null)
-        {
-            return template.rules.maxPerPeriod;
-        }
-
-        var history = context.GetHistory(template.type);
-        if (history == null || history.Count == 0)
-        {
-            return template.rules.maxPerPeriod;
-        }
-
-        var windowStart = now - window;
-        var count = history.Count(t => t >= windowStart);
-        var remaining = template.rules.maxPerPeriod - count;
-        return remaining > 0 ? remaining : 0;
+        var window = GetPeriodWindow(rules);
+        return rules.maxPerPeriod > 0
+            && window > TimeSpan.Zero
+            && ownHistory.Count(t => t <= fireTime && t > fireTime - window) >= rules.maxPerPeriod;
     }
 
     private static TimeSpan GetPeriodWindow(NotificationRules rules)
@@ -712,23 +597,6 @@ public static class NotificationManager
             NotificationPeriod.Custom when rules.periodHoursOverride > 0 => TimeSpan.FromHours(rules.periodHoursOverride),
             _ => TimeSpan.Zero,
         };
-    }
-
-    private static bool HasRecentNotification(NotificationType type, TimeSpan window, NotificationScheduleContext context, DateTime now)
-    {
-        if (context == null || window <= TimeSpan.Zero)
-        {
-            return false;
-        }
-
-        var history = context.GetHistory(type);
-        if (history == null || history.Count == 0)
-        {
-            return false;
-        }
-
-        var threshold = now - window;
-        return history.Any(t => t >= threshold);
     }
 
     private static void SchedulePlatformNotification(ScheduledNotification scheduled)
@@ -850,9 +718,7 @@ public sealed class NotificationScheduleContext
     public DateTime Now { get; set; } = DateTime.Now;
     public DateTime? PlayerLocalTime { get; set; }
     public DateTime? LastLogin { get; set; }
-    public bool HasLoggedInToday { get; set; }
     public DateTime? LastGameOpenTime { get; set; }
-    public bool IsPlayerActive { get; set; }
     public bool HasEverCompletedLevel { get; set; }
     public int LevelsCompletedToday { get; set; }
     public int LevelsStartedToday { get; set; }

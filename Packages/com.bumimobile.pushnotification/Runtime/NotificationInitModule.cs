@@ -28,9 +28,9 @@ public class NotificationInitModule : InitModule
             AuthorizationOption.Alert |
             AuthorizationOption.Badge |
             AuthorizationOption.Sound, true);
-        ApplyPostPermissionSettings();
+        StartBackgroundScheduling();
 #else
-        ApplyPostPermissionSettings();
+        StartBackgroundScheduling();
 #endif
     }
 
@@ -64,10 +64,7 @@ public class NotificationInitModule : InitModule
         };
         AndroidNotificationCenter.RegisterNotificationChannel(channel);
 
-        // Optional: Clear previous notifications on app start
-        AndroidNotificationCenter.CancelAllScheduledNotifications();
-
-        ApplyPostPermissionSettings();
+        StartBackgroundScheduling();
     }
 #endif
 
@@ -83,13 +80,21 @@ public class NotificationInitModule : InitModule
         }
     }
 
-    private void ApplyPostPermissionSettings()
+    private void StartBackgroundScheduling()
     {
-        if (settings == null)
+        // Anything scheduled during the last session is stale now that the player is back.
+        NotificationManager.ClearScheduledNotifications();
+
+        if (settings == null || !settings.ScheduleOnBackground)
         {
             return;
         }
 
-        settings.ScheduleIfNeeded();
+        if (Application.isEditor && !settings.ScheduleInEditor)
+        {
+            return;
+        }
+
+        NotificationBackgroundScheduler.Create();
     }
 }

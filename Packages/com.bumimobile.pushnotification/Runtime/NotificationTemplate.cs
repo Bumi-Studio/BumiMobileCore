@@ -117,12 +117,14 @@ public class NotificationTriggerSettings
     public string timezone = "GMT+8";
 
     public int inactivityThresholdHours = 72;
+
+    [Tooltip("Daily Retention / Re-engagement: days after the last play to deliver at hour:minute. Empty uses the type default (H+1, H+2 / H+3, H+7).")]
+    public int[] sendOnDaysAfterLastPlay = Array.Empty<int>();
     public int levelStuckThresholdHours = 24;
     public int eventDelayMinutes;
     public int competitionLastCallLeadHours = 48;
     public int reengagementBlockHours = 72;
 
-    public bool skipIfLoggedInToday;
     public bool skipIfDailyRewardClaimed;
     public bool skipIfFeatureInteracted;
     public bool includeStartEvent = true;
@@ -203,8 +205,8 @@ public static class NotificationTemplateDefaults
             template.trigger.hour = 10;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
-            template.trigger.skipIfLoggedInToday = true;
             template.trigger.inactivityThresholdHours = 24;
+            template.trigger.sendOnDaysAfterLastPlay = new[] { 1, 2 };
             template.trigger.description = "Send at 10:00 on H+1 or H+2 after the player last opened the game. Do not send on the same day the player last opened.";
 
             template.message.title = "We miss you! Come back 🎁";
@@ -226,11 +228,11 @@ public static class NotificationTemplateDefaults
 
             template.trigger.triggerType = NotificationTriggerType.InactivityThreshold;
             template.trigger.inactivityThresholdHours = 72;
+            template.trigger.sendOnDaysAfterLastPlay = new[] { 3, 7 };
             template.trigger.hour = 10;
             template.trigger.minute = 0;
             template.trigger.timezone = "GMT+8";
             template.trigger.requiresCompletedLevel = true;
-            template.trigger.skipIfLoggedInToday = true;
             template.trigger.description = "Send at 10:00 on H+3 (and optionally H+7). Only if player has not opened the game on that day.";
 
             template.message.title = "We miss you! 🔧";

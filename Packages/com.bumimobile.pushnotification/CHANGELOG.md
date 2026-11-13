@@ -8,6 +8,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - (Add unreleased changes here)
 
+## [0.4.0] - 2026-11-13
+
+### Changed
+
+- **Breaking:** scheduling now runs when the app goes to the background (`NotificationBackgroundScheduler`, created by `NotificationInitModule`) instead of at init. Returning to the app clears pending notifications.
+- **Breaking:** `NotificationSettings.scheduleOnInit` renamed to `scheduleOnBackground` (serialized value migrated); `ScheduleIfNeeded` removed.
+- Daily Retention and Re-engagement are projected forward from the last play (`sendOnDaysAfterLastPlay`, defaults H+1/H+2 and H+3/H+7) instead of requiring the scheduling moment to be the delivery day, which never matched while the player was in the app.
+- Global 1-per-day, 4-hour cooldown, per-template cooldown and period caps are evaluated per candidate fire time against delivered history instead of aborting the whole run.
+- Motivate Level Progression only schedules for the same day.
+
+### Added
+
+- `NotificationManager.ContextProvider` for games to supply player state.
+- `NotificationManager.BuildSchedule(context, templates)` returning the schedule without platform calls.
+- Delivered notification history persisted in `PlayerPrefs` (30 days).
+
+### Removed
+
+- `NotificationTriggerSettings.skipIfLoggedInToday`, `NotificationScheduleContext.HasLoggedInToday` and `IsPlayerActive`: returning to the app cancels pending notifications instead.
+- Duplicate `CancelAllScheduledNotifications` on Android init.
+
 ## [0.3.1] - 2026-07-09
 
 ### Fixed

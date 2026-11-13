@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "NotificationSettings", menuName = "BumiMobile/Push Notifications/Notification Settings")]
 public class NotificationSettings : ScriptableObject
@@ -8,11 +9,12 @@ public class NotificationSettings : ScriptableObject
     private NotificationTemplateCatalog templateCatalog;
 
     [SerializeField]
-    [Tooltip("Schedule notifications automatically when the module initializes.")]
-    private bool scheduleOnInit;
+    [FormerlySerializedAs("scheduleOnInit")]
+    [Tooltip("Schedule notifications when the app goes to the background and clear them when it returns.")]
+    private bool scheduleOnBackground;
 
     [SerializeField]
-    [Tooltip("Allow automatic scheduling to run while in the Unity Editor (when not in Play Mode).")]
+    [Tooltip("Allow background scheduling while running in the Unity Editor.")]
     private bool scheduleInEditor;
 
     [SerializeField]
@@ -24,7 +26,7 @@ public class NotificationSettings : ScriptableObject
     private bool enableDeduplication = true;
 
     public NotificationTemplateCatalog TemplateCatalog => templateCatalog;
-    public bool ScheduleOnInit => scheduleOnInit;
+    public bool ScheduleOnBackground => scheduleOnBackground;
     public bool ScheduleInEditor => scheduleInEditor;
     public bool EnableDeduplication => enableDeduplication;
 
@@ -44,20 +46,5 @@ public class NotificationSettings : ScriptableObject
         {
             Debug.LogWarning("[NotificationSettings] No NotificationTemplateCatalog assigned. Falling back to the built-in defaults.");
         }
-    }
-
-    public void ScheduleIfNeeded(NotificationScheduleContext context = null)
-    {
-        if (!scheduleOnInit)
-        {
-            return;
-        }
-
-        if (!Application.isPlaying && !scheduleInEditor)
-        {
-            return;
-        }
-
-        NotificationManager.ScheduleAllNotifications(context);
     }
 }

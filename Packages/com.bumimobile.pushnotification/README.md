@@ -36,7 +36,7 @@ This package provides a simple, data-driven push notification solution for Bumi 
 
    - Choose `Create ▸ BumiMobile ▸ Push Notifications ▸ Notification Settings`.
    - Assign the catalog asset to the `Template Catalog` field.
-   - Enable `Schedule On Init` if you want automatic scheduling after permissions are granted. Optionally enable `Schedule In Editor` to allow scheduling when running in the editor.
+   - Enable `Schedule On Background` so notifications are scheduled when the app goes to the background and cleared when it returns. Optionally enable `Schedule In Editor` to run this in the editor.
 
 4. **Hook into the init pipeline**
 
@@ -47,8 +47,11 @@ This package provides a simple, data-driven push notification solution for Bumi 
 
    - On Android, `NotificationInitModule` registers a default notification channel (`default_channel`) after permissions are granted. Adjust the channel data inside `NotificationInitModule.cs` if you need a different channel ID, name, or importance.
 
-6. **Optional: Programmatic scheduling**
-   - You can call `NotificationManager.ScheduleAllNotifications(new NotificationScheduleContext { ... })` manually if you need to run scheduling at custom times or with a populated context.
+6. **Provide the player context**
+   - Set `NotificationManager.ContextProvider` to a function that builds a `NotificationScheduleContext` from your save data (last finished level, login streak, unclaimed rewards, leaderboard rank, ...). Without it every template sees an empty context and only Daily Retention is scheduled.
+   - Daily Retention and Re-engagement are projected from the moment the app is backgrounded (`Send On Days After Last Play`, defaults H+1/H+2 and H+3/H+7). Returning to the app cancels them.
+   - Delivered notifications are persisted in `PlayerPrefs` so the 1-per-day and 4-hour rules hold across sessions.
+   - `NotificationManager.BuildSchedule(context, templates)` returns the schedule without touching the platform scheduler (useful for tests).
    - Use `NotificationManager.RegisterCatalog(customCatalog)` if you prefer to load the catalog from a non-Resources location at runtime.
 
 ## Extending Templates
@@ -88,7 +91,7 @@ The system logs deduplication actions to help with debugging.
 ## Troubleshooting
 
 - **No catalog assigned:** If `NotificationSettings` has an empty catalog reference, the package falls back to an in-memory default catalog and logs a warning when `Log Missing Catalog Warning` is enabled.
-- **Notifications not scheduling:** Ensure `Schedule On Init` is enabled or call `NotificationManager.ScheduleAllNotifications` manually. Double-check that the `NotificationScheduleContext` used has the necessary properties populated (e.g., `LastLogin`, `LevelStuckSince`). The scheduler automatically clears previously scheduled notifications before enqueuing fresh ones, so you always have a single instance per template.
+- **Notifications not scheduling:** Ensure `Schedule On Background` is enabled and `NotificationManager.ContextProvider` is set. Scheduling happens on `OnApplicationPause(true)`; check the `[NotificationManager] Scheduled N notification(s)` log line. Returning to the app clears pending notifications by design.
 - **Android channel conflicts:** Update the channel ID in `NotificationInitModule.RequestNotificationPermission` to avoid collisions with other packages.
 
 ## License
